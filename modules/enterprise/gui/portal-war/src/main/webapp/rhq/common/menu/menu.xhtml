@@ -337,6 +337,13 @@
 
 
         <rich:menuItem submitMode="none"
+                       onclick="window.location = '/rhq/admin/remote/remoteAgentInstall.xhtml'">
+            <h:outputText value="Remote Agent Install"/>
+       </rich:menuItem>
+
+
+
+        <rich:menuItem submitMode="none"
                        onclick="window.location = '/admin/license/LicenseAdmin.do?mode=view'"
                        rendered="#{GlobalPermissionsUIBean.settings}">
             <h:outputText value="License"/>
