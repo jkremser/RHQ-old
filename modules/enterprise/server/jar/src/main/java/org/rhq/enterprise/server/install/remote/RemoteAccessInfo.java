@@ -26,7 +26,7 @@ import java.io.Serializable;
 public class RemoteAccessInfo implements Serializable {
 
     private String host,  user,  pass;
-    private int port;
+    private int port = 22;
 
     public RemoteAccessInfo(String host, String user, String pass) {
         this(host, 22, user, pass);
@@ -37,6 +37,10 @@ public class RemoteAccessInfo implements Serializable {
         this.port = port;
         this.user = user;
         this.pass = pass;
+    }
+
+    public RemoteAccessInfo() {
+
     }
 
     public String getHost() {

@@ -20,7 +20,6 @@ package org.rhq.enterprise.server.install.remote;
 
 import javax.ejb.Stateless;
 
-import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
@@ -34,12 +33,16 @@ public class RemoteInstallManagerBean implements RemoteInstallManagerLocal, Remo
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public AgentInstallInfo agentInstallCheck(Subject subject, RemoteAccessInfo remoteAccessInfo) {
-        return null;
+        SSHInstallUtility sshUtil = new SSHInstallUtility(remoteAccessInfo);
+
+        return sshUtil.installAgent();
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public void installAgent(Subject subject, RemoteAccessInfo remoteAccessInfo, String path) {
+    public AgentInstallInfo installAgent(Subject subject, RemoteAccessInfo remoteAccessInfo, String path) {
+        SSHInstallUtility sshUtil = new SSHInstallUtility(remoteAccessInfo);
 
+        return sshUtil.installAgent();
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
@@ -50,12 +53,22 @@ public class RemoteInstallManagerBean implements RemoteInstallManagerLocal, Remo
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public void startAgent(Subject subject, RemoteAccessInfo remoteAccessInfo) {
-
+    public String startAgent(Subject subject, RemoteAccessInfo remoteAccessInfo) {
+        SSHInstallUtility sshUtil = new SSHInstallUtility(remoteAccessInfo);
+        return sshUtil.agentStart();
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public void stopAgent(Subject subject, RemoteAccessInfo remoteAccessInfo) {
+    public String stopAgent(Subject subject, RemoteAccessInfo remoteAccessInfo) {
+        SSHInstallUtility sshUtil = new SSHInstallUtility(remoteAccessInfo);
+        return sshUtil.agentStop();
+    }
 
+    public String agentStatus(Subject subject, RemoteAccessInfo remoteAccessInfo) {
+        if (remoteAccessInfo.getHost() == null) {
+            return "Enter a host";
+        }
+        SSHInstallUtility sshUtil = new SSHInstallUtility(remoteAccessInfo);
+        return sshUtil.agentStatus();
     }
 }

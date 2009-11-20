@@ -95,6 +95,8 @@ import org.rhq.enterprise.server.discovery.DiscoveryBossBean;
 import org.rhq.enterprise.server.discovery.DiscoveryBossLocal;
 import org.rhq.enterprise.server.event.EventManagerBean;
 import org.rhq.enterprise.server.event.EventManagerLocal;
+import org.rhq.enterprise.server.install.remote.RemoteInstallManagerBean;
+import org.rhq.enterprise.server.install.remote.RemoteInstallManagerLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerBean;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.measurement.CallTimeDataManagerBean;
@@ -430,6 +432,10 @@ public final class LookupUtil {
 
     public static CacheConsistencyManagerLocal getCacheConsistenyManager() {
         return lookupLocal(CacheConsistencyManagerBean.class);
+    }
+
+    public static RemoteInstallManagerLocal getRemoteInstallManager() {
+        return lookupLocal(RemoteInstallManagerBean.class);
     }
 
     public static ResourceMetadataManagerLocal getResourceMetadataManager() {

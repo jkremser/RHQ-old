@@ -35,4 +35,14 @@
         <managed-bean-scope>request</managed-bean-scope>
     </managed-bean>
 
+
+    <managed-bean>
+        <description>Agent remote installation facilities</description>
+        <managed-bean-name>AgentRemoteInstallUIBean</managed-bean-name>
+        <managed-bean-class>org.rhq.enterprise.gui.remote.AgentRemoteInstallUIBean</managed-bean-class>
+        <managed-bean-scope>session</managed-bean-scope>
+    </managed-bean>
+
+
+
 </faces-config>

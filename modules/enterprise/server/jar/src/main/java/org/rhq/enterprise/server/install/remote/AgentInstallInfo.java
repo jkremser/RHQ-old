@@ -19,6 +19,8 @@
 package org.rhq.enterprise.server.install.remote;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Greg Hinkle
@@ -32,6 +34,9 @@ public class AgentInstallInfo implements Serializable {
     private String owner;
     private String version;
 
+
+    public List<Step> steps = new ArrayList<Step>();
+
     public static final String SETUP_PROP = "rhq.agent.configuration-setup-flag";
 
 
@@ -43,6 +48,10 @@ public class AgentInstallInfo implements Serializable {
 
     public static final int DEFAULT_SERVER_PORT = 7080;
     public static final int DEFAULT_AGENT_PORT = 16163;
+
+
+
+
 
     public AgentInstallInfo(String serverAddress, String agentAddress) {
         this.serverAddress = serverAddress;
@@ -80,6 +89,17 @@ public class AgentInstallInfo implements Serializable {
     }
 
 
+    public void addStep(Step step) {
+        steps.add(step);
+    }
+
+    public List<Step> getSteps() {
+        return steps;
+    }
+
+
+
+
     public String getConfigurationStartString() {
         StringBuilder buf = new StringBuilder();
 
@@ -95,6 +115,43 @@ public class AgentInstallInfo implements Serializable {
 
         return buf.toString();
     }
-    
+
+
+
+    public static class Step {
+        int resultCode;
+        String command;
+        String description;
+        String result;
+        long time;
+
+        public Step(int resultCode, String command, String description, String result, long time) {
+            this.resultCode = resultCode;
+            this.command = command;
+            this.description = description;
+            this.result = result;
+            this.time = time;
+        }
+
+        public int getResultCode() {
+            return resultCode;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public String getCommand() {
+            return command;
+        }
+
+        public String getResult() {
+            return result;
+        }
+
+        public long getTime() {
+            return time;
+        }
+    }
 
 }

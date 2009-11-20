@@ -23,12 +23,14 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.InputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Properties;
 
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -43,25 +45,57 @@ import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 import com.jcraft.jsch.UIKeyboardInteractive;
 import com.jcraft.jsch.UserInfo;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
+ *
+ *
  * @author Greg Hinkle
  */
 public class SSHInstallUtility {
 
+    static final int DEFAULT_BUFFER_SIZE = 4096;
+    static final long TIMEOUT = 10000L;
+    static final long POLL_TIMEOUT = 1000L;
+
+    private Log log = LogFactory.getLog(SSHInstallUtility.class);
+
     private RemoteAccessInfo accessInfo;
     private Session session;
-    private String agentFile = "rhq-enterprise-agent-1.4.0-SNAPSHOT.jar";
-    private String agentDestination = "/tmp/rhqAgent";
+
+    private String agentDestination = "/tmp/rhqAgent"; // todo: Make configurable
+
+    private String agentFile = "rhq-enterprise-agent-1.4.0-SNAPSHOT.jar"; // Corrected below
+    private String agentPath = "/projects/rhq/dev-container/jbossas/server/default/deploy/rhq.ear/rhq-downloads/rhq-agent/" + agentFile; // corrected below
+
+
 
     public SSHInstallUtility(RemoteAccessInfo accessInfo) {
         this.accessInfo = accessInfo;
+
+        try {
+            File agentBinaryFile = LookupUtil.getAgentManager().getAgentUpdateBinaryFile();
+            agentPath = agentBinaryFile.getCanonicalPath();
+            agentFile = agentBinaryFile.getName();
+        } catch (Exception e) {
+            // Could not find agent file, leave the default
+            log.warn("Failed agent binary file lookup",e);
+        }
+
+        if (!new File(agentPath).exists()) {
+            throw new RuntimeException("Unable to find agent binary file for installation at [" + agentPath + "]");
+        }
+
+        connect();
     }
+
 
     public void connect() {
         try {
             JSch jsch = new JSch();
-            session = jsch.getSession(accessInfo.getUser(), accessInfo.getHost(), accessInfo.getPort());
+            session = jsch.getSession(accessInfo.getUser(), accessInfo.getHost(), 22); // accessInfo.getPort());
 
             session.setPassword(accessInfo.getPass());
             java.util.Properties config = new java.util.Properties();
@@ -72,37 +106,37 @@ public class SSHInstallUtility {
             session.connect(30000);   // making a connection with timeout.
         } catch (JSchException e) {
             e.printStackTrace();
+            throw new RuntimeException(e);
         }
     }
-
-
+    
     public void disconnect() {
         session.disconnect();
     }
 
-    public String getUname() {
-        String result = executeCommand("uname -a");
-        System.out.println("uname: " + result);
-        return result;
-    }
-
 
     public String[] pathDiscovery(String parentPath) {
-        String result = executeCommand("ls " + parentPath);
-        System.out.println(result);
-        return null;
-
+        String full = executeCommand("ls" + parentPath);
+        return full.split("\n");
     }
 
-    static final int DEFAULT_BUFFER_SIZE = 4096;
-    static final long TIMEOUT = 10000L;
-    static final long POLL_TIMEOUT = 1000L;
 
     private String executeCommand(String command, String description) {
+        return executeCommand(command, description, new AgentInstallInfo(null,null));
+    }
 
-        System.out.println("Running: " + description);
-        String result = executeCommand(command);
-        System.out.println("Result [" + description + "]: " + result);
+
+    private String executeCommand(String command, String description, AgentInstallInfo info) {
+        log.info("Running: " + description);
+        long start = System.currentTimeMillis();
+        String result = null;
+        try {
+            result = executeCommand(command);
+            info.addStep(new AgentInstallInfo.Step(0,command,description, result, (System.currentTimeMillis()-start)));
+        } catch (ExecuteException e) {
+            info.addStep(new AgentInstallInfo.Step(e.errorCode, command, e.message, description, (System.currentTimeMillis()-start)));
+        }
+        log.info("Result [" + description + "]: " + result);
         return result;
     }
 
@@ -111,38 +145,46 @@ public class SSHInstallUtility {
         ChannelExec channel = null;
         int exitStatus = 0;
 
+        InputStream is = null;
+        InputStream es = null;
+
         try {
             channel = (ChannelExec) session.openChannel("exec");
             ((ChannelExec) channel).setCommand(command);
 
-            InputStream is = channel.getInputStream();
-            InputStream es = channel.getErrStream();
-
+            is = channel.getInputStream();
+            es = channel.getErrStream();
 
             channel.connect(10000); // connect and execute command
-
 
             String out = read(is, channel);
             String err = read(es, channel);
 
-            //System.out.println("Output: " + out);
+            // System.out.println("Output: " + out);
             if (err.length() > 0) {
-//                System.out.println("Error [" + channel.getExitStatus() + "]: " + err);
-                if (channel.getExitStatus() != 0 || out.length() == 0) {
-                    return "Error[" + channel.getExitStatus() + "]: " + err;
+                // System.out.println("Error [" + channel.getExitStatus() + "]: " + err);
+                if (channel.getExitStatus() != 0) {
+                    throw new ExecuteException(channel.getExitStatus(), err);
+                } else if (out.length() == 0){
+                    return err;
                 }
             }
             return out;
 
         } catch (Exception e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            e.printStackTrace();
         } finally {
-//            try {
-//                stdoutReader.close();
-//                stdoutReader.close();
-//            } catch (IOException e) {
-//                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-//            }
+            try {
+                is.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            try {
+                es.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
             if (channel != null) {
                 channel.disconnect();
             }
@@ -152,7 +194,6 @@ public class SSHInstallUtility {
 
 
     public String read(InputStream is, Channel channel) throws IOException {
-
         // read command output
         byte[] buffer = new byte[DEFAULT_BUFFER_SIZE];
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -167,8 +208,8 @@ public class SSHInstallUtility {
                 }
             }
             if (channel.isClosed()) {
-//                    int exitStatus = channel.getExitStatus();
-//                    System.out.println("exit status: " + exitStatus);
+                // int exitStatus = channel.getExitStatus();
+                // System.out.println("exit status: " + exitStatus);
                 break;
             }
             try {
@@ -193,42 +234,45 @@ public class SSHInstallUtility {
         return buf.toString();
     }
 
-    public void agentStop() {
+    public String agentStop() {
         String agentWrapperScript = agentDestination + "/rhq-agent/bin/rhq-agent-wrapper.sh ";
 
-        String result = executeCommand(agentWrapperScript + " stop", "Agent Stop");
+        return executeCommand(agentWrapperScript + " stop", "Agent Stop");
     }
 
-    public void agentStart() {
+    public String agentStart() {
         String agentWrapperScript = agentDestination + "/rhq-agent/bin/rhq-agent-wrapper.sh ";
 
-        String result = executeCommand(agentWrapperScript + " start", "Agent Start");
+        return executeCommand(agentWrapperScript + " start", "Agent Start");
     }
 
-    public void agentStatus() {
+    public String agentStatus() {
         String agentWrapperScript = agentDestination + "/rhq-agent/bin/rhq-agent-wrapper.sh ";
 
-        String result = executeCommand(agentWrapperScript + " status", "Agent Status");
+        return executeCommand(agentWrapperScript + " status", "Agent Status");
     }
 
-    public void installAgent() {
-        String agentPath = "/projects/rhq/dev-container/jbossas/server/default/deploy/rhq.ear/rhq-downloads/rhq-agent/" + agentFile;
-        String result;
+    public AgentInstallInfo installAgent() {
 
 
-        result = executeCommand("uname -a", "Machine uname");
-
-        result = executeCommand("java -version", "Java Version Check");
-
-        result = executeCommand("mkdir -p " + agentDestination, "Create Agent Install Directory");
+        AgentInstallInfo info = new AgentInstallInfo(agentDestination + "/rhq-agent",accessInfo.getUser(),"1.4fixme");
 
 
-        System.out.println("Copying Agent Distribution");
-        SSHFileSend.sendFile(session, agentPath, agentDestination);
-        System.out.println("Agent Distribution Copied");
+        executeCommand("uname -a", "Machine uname", info);
+
+        executeCommand("java -version", "Java Version Check", info);
+
+        executeCommand("mkdir -p " + agentDestination, "Create Agent Install Directory", info);
 
 
-        result = executeCommand("java -jar " + agentDestination + "/" + agentFile + " --install", "Install Agent");
+        log.info("Copying Agent Distribution");
+        long start = System.currentTimeMillis();
+        boolean fileSent = SSHFileSend.sendFile(session, agentPath, agentDestination);
+        info.addStep(new AgentInstallInfo.Step(0,"scp agent-installer", "Remote copy the agent distribution", fileSent ? "Success":"Failed", (System.currentTimeMillis()-start)));
+        log.info("Agent Distribution Copied");
+
+
+        executeCommand("java -jar " + agentDestination + "/" + agentFile + " --install", "Install Agent", info);
 
 
         AgentInstallInfo agentInfo = new AgentInstallInfo("172.31.2.2", "172.31.2.4");
@@ -243,19 +287,33 @@ public class SSHInstallUtility {
         String pidFileProp = "export RHQ_AGENT_IN_BACKGROUND=" + agentDestination + "/rhq-agent/bin/rhq-agent.pid";
 
         String startCommand = pidFileProp + " ; nohup " + agentScript + properties + "&";
-        result = executeCommand(startCommand, "Agent Start With Configuration");
+        executeCommand(startCommand, "Agent Start With Configuration", info);
 
+
+
+        return info;
     }
 
 
+    public static class ExecuteException extends RuntimeException {
+        int errorCode;
+        String message;
+
+        public ExecuteException(int errorCode, String message) {
+            this.errorCode = errorCode;
+            this.message = message;
+        }
+    }
+
+
+
+
+
     public static void main(String[] args) {
-        RemoteAccessInfo info = new RemoteAccessInfo(
-                args[0], args[1], args[2]);
-                
+
+        RemoteAccessInfo info = new RemoteAccessInfo(args[0], args[1], args[2]);
 
         SSHInstallUtility ssh = new SSHInstallUtility(info);
-        ssh.connect();
-
 
         ssh.agentStatus();
         ssh.agentStop();
@@ -269,8 +327,6 @@ public class SSHInstallUtility {
         ssh.agentStart();
 
         ssh.disconnect();
-
-
     }
 
 }

@@ -13,13 +13,14 @@ public interface RemoteInstallManagerLocal {
 
     AgentInstallInfo agentInstallCheck(Subject subject, RemoteAccessInfo remoteAccessInfo);
 
-    void installAgent(Subject subject, RemoteAccessInfo remoteAccessInfo, String path);
+    AgentInstallInfo installAgent(Subject subject, RemoteAccessInfo remoteAccessInfo, String path);
 
     String[] remotePathDiscover(Subject subject, RemoteAccessInfo remoteAccessInfo, String parentPath);
 
-    void startAgent(Subject subject, RemoteAccessInfo remoteAccessInfo);
+    String startAgent(Subject subject, RemoteAccessInfo remoteAccessInfo);
 
-    void stopAgent(Subject subject, RemoteAccessInfo remoteAccessInfo);
+    String stopAgent(Subject subject, RemoteAccessInfo remoteAccessInfo);
 
+    String agentStatus(Subject subject, RemoteAccessInfo remoteAccessInfo);
 
 }

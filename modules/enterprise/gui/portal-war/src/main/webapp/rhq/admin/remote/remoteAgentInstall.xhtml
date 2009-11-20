@@ -1,0 +1,116 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+        PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich"
+      xmlns:a4j="http://richfaces.org/a4j">
+
+<ui:composition template="/rhq/layout/main.xhtml">
+
+    <ui:param name="pageTitle" value="Remote Agent Install"/>
+
+    <ui:define name="body">
+
+        <br/>
+
+        <a4j:form id="agentInstallForm">
+
+
+
+            
+            <rich:panel>
+                <f:facet name="header">SSH Access Info</f:facet>
+
+                <h:outputText value="Host"/>
+                <h:inputText value="#{AgentRemoteInstallUIBean.targetAccessInfo.host}"/>
+                <h:outputText value="User"/>
+                <h:inputText value="#{AgentRemoteInstallUIBean.targetAccessInfo.user}"/>
+                <h:outputText value="Password"/>
+                <h:inputSecret value="#{AgentRemoteInstallUIBean.targetAccessInfo.pass}"/>
+
+                <a4j:commandButton value="Update Status" reRender="agentStatus" status="commonStatus"
+                                   actionListener="#{AgentRemoteInstallUIBean.checkAgentStatus}"/>
+
+
+            </rich:panel>
+
+            <rich:panel id="agentStatus">
+                    <h:messages showSummary="true"
+                        showDetail="true"
+                        infoClass="InfoBlock"
+                        warnClass="WarnBlock"
+                        errorClass="ErrorBlock"
+                        fatalClass="FatalBlock"
+                        globalOnly="true"
+                        layout="table"
+                        width="100%"/>
+
+                <f:facet name="header">Agent Status</f:facet>
+
+                <br/>
+
+                <h:graphicImage value="/images/icons/availability_green_24.png" rendered="#{AgentRemoteInstallUIBean.agentAvailability == 'UP'}"/>
+                <h:graphicImage value="/images/icons/availability_red_24.png" rendered="#{AgentRemoteInstallUIBean.agentAvailability == 'DOWN'}"/>
+                <h:graphicImage value="/images/icons/availability_grey_24.png" rendered="#{AgentRemoteInstallUIBean.agentAvailability == null}"/>
+                <h:outputText value="#{AgentRemoteInstallUIBean.agentStatus}"/>
+
+                <br/>
+
+                <a4j:outputPanel ajaxRendered="true" rendered="#{AgentRemoteInstallUIBean.agentStatus != null}">
+
+                    <a4j:commandButton value="Stop" reRender="agentStatus" status="commonStatus"
+                                       actionListener="#{AgentRemoteInstallUIBean.stopAgent}"/>
+                    <a4j:commandButton value="Start" reRender="agentStatus" status="commonStatus"
+                                       actionListener="#{AgentRemoteInstallUIBean.startAgent}"/>
+                    <a4j:commandButton value="Install" reRender="agentStatus" status="commonStatus"
+                                       actionListener="#{AgentRemoteInstallUIBean.installAgent}"/>
+
+                    <br/>
+
+                    Last command result: <h:outputText value="#{AgentRemoteInstallUIBean.result}"/>
+                    <br/>
+
+                    <rich:dataTable value="#{AgentRemoteInstallUIBean.agentInstallInfo.steps}" var="step" rendered="#{!empty AgentRemoteInstallUIBean.agentInstallInfo.steps}">
+                        <!--<rich:column>
+                            <f:facet name="header">Command</f:facet>
+                            <h:outputText value="#{step.command}"  />
+                        </rich:column>-->
+                        <rich:column>
+                            <f:facet name="header">Step</f:facet>
+                            <h:outputText value="#{step.description}"/>
+                        </rich:column>
+                        <rich:column>
+                            <f:facet name="header">Result</f:facet>
+                            <pre><h:outputText value="#{step.result}"/></pre>
+                        </rich:column>
+                        <rich:column>
+                            <f:facet name="header">Result Code</f:facet>
+                            <h:outputText value="#{step.resultCode}"/>
+                        </rich:column>
+                        <rich:column>
+                            <f:facet name="header">Time</f:facet>
+                            <h:outputText value="#{step.time}" converter="DurationConverter"/>
+                        </rich:column>
+
+                    </rich:dataTable>
+                </a4j:outputPanel>
+
+
+            </rich:panel>
+
+
+        </a4j:form>
+    </ui:define>
+
+</ui:composition>
+
+</html>
