@@ -17,22 +17,15 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.enterprise.server.plugin.pc;
+package org.rhq.core.domain.plugin;
 
 /**
- * A schedule that triggers based on a cron expression.
- * 
+ * Indicates if a plugin is to be deployed on the agent or the server. In other words,
+ * identifies a plugin as a server-side plugin or an agent plugin.
+ *  
  * @author John Mazzitelli
  */
-public class CronSchedule extends Schedule {
-    private final String cronExpression;
-
-    public CronSchedule(boolean concurrent, String cronExpression) {
-        super(concurrent);
-        this.cronExpression = cronExpression;
-    }
-
-    public String getCronExpression() {
-        return this.cronExpression;
-    }
+public enum PluginDeploymentType {
+    AGENT, SERVER
 }
+

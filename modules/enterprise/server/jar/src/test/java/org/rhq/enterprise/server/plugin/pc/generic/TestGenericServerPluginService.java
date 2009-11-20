@@ -25,13 +25,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.plugin.Plugin;
+import org.rhq.core.domain.plugin.PluginDeploymentType;
+import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.enterprise.server.plugin.pc.AbstractTypeServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainerConfiguration;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginEnvironment;
-import org.rhq.enterprise.server.plugin.pc.ServerPluginLifecycleListener;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginManager;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginService;
+import org.rhq.enterprise.server.xmlschema.ServerPluginDescriptorMetadataParser;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
 
 /**
@@ -86,6 +92,12 @@ public class TestGenericServerPluginService extends ServerPluginService implemen
             } else {
                 return super.preloadAllPlugins();
             }
+        }
+
+        @Override
+        protected List<String> getDisabledPluginNames() {
+            // in the real world, the db is checked for enable flag, here we say all plugins are enabled
+            return new ArrayList<String>();
         }
     }
 
@@ -154,19 +166,51 @@ public class TestGenericServerPluginService extends ServerPluginService implemen
      * The test plugin manager.
      */
     class TestGenericPluginManager extends ServerPluginManager {
-        public final Map<String, ServerPluginLifecycleListener> listeners;
+        public final Map<String, ServerPluginComponent> components;
 
         public TestGenericPluginManager(TestGenericServerPluginContainer pc) {
             super(pc);
-            listeners = new HashMap<String, ServerPluginLifecycleListener>();
+            components = new HashMap<String, ServerPluginComponent>();
         }
 
         @Override
-        protected ServerPluginLifecycleListener createServerPluginLifecycleListener(ServerPluginEnvironment environment)
+        protected Plugin getPlugin(ServerPluginEnvironment env) {
+
+            try {
+                Configuration pluginConfig = null;
+                Configuration scheduledJobsConfig = null;
+                ConfigurationDefinition configDef;
+
+                ServerPluginDescriptorType pluginDescriptor = env.getPluginDescriptor();
+
+                configDef = ServerPluginDescriptorMetadataParser.getPluginConfigurationDefinition(pluginDescriptor);
+                if (configDef != null) {
+                    pluginConfig = configDef.getDefaultTemplate().createConfiguration();
+                }
+
+                configDef = ServerPluginDescriptorMetadataParser.getScheduledJobsDefinition(pluginDescriptor);
+                if (configDef != null) {
+                    scheduledJobsConfig = configDef.getDefaultTemplate().createConfiguration();
+                }
+
+                File pluginFile = new File(env.getPluginUrl().toURI());
+                Plugin plugin = new Plugin(0, env.getPluginName(), pluginFile.getName(), pluginDescriptor
+                    .getDisplayName(), true, pluginDescriptor.getDescription(), "", MessageDigestGenerator
+                    .getDigestString(pluginFile), pluginDescriptor.getVersion(), pluginDescriptor.getVersion(),
+                    PluginDeploymentType.SERVER, pluginConfig, scheduledJobsConfig, System.currentTimeMillis(), System
+                        .currentTimeMillis());
+                return plugin;
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        @Override
+        protected ServerPluginComponent createServerPluginComponent(ServerPluginEnvironment environment)
             throws Exception {
-            ServerPluginLifecycleListener listener = super.createServerPluginLifecycleListener(environment);
-            listeners.put(environment.getPluginName(), listener);
-            return listener;
+            ServerPluginComponent component = super.createServerPluginComponent(environment);
+            components.put(environment.getPluginName(), component);
+            return component;
         }
     }
 }
