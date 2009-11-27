@@ -56,10 +56,15 @@ import org.rhq.core.util.MessageDigestGenerator;
 @Entity
 @NamedQueries( {
 //
+    @NamedQuery(name = Plugin.QUERY_GET_STATUS_BY_NAME_AND_TYPE, query = "" //
+        + " SELECT p.status " //
+        + "   FROM Plugin AS p " //
+        + "  WHERE p.name = :name AND p.deployment = :type "), //
+
     @NamedQuery(name = Plugin.QUERY_GET_NAMES_BY_ENABLED_AND_TYPE, query = "" //
         + " SELECT p.name " //
         + "   FROM Plugin AS p " //
-        + "  WHERE p.enabled = :enabled AND p.deployment = :type"), //
+        + "  WHERE p.enabled = :enabled AND p.deployment = :type AND p.status = 'INSTALLED' "), //
 
     // this query does not load the content blob, but loads everything else
     @NamedQuery(name = Plugin.QUERY_FIND_BY_IDS_AND_TYPE, query = "" //
@@ -69,6 +74,7 @@ import org.rhq.core.util.MessageDigestGenerator;
         + "        p.path, " //
         + "        p.displayName, " //
         + "        p.enabled, " //
+        + "        p.status, " //
         + "        p.description, " //
         + "        p.help, " //
         + "        p.md5, " //
@@ -82,7 +88,7 @@ import org.rhq.core.util.MessageDigestGenerator;
         + "   FROM Plugin AS p " // 
         + "        LEFT JOIN p.pluginConfiguration " // 
         + "        LEFT JOIN p.scheduledJobsConfiguration " // 
-        + "  WHERE p.id IN (:ids) AND p.deployment = :type"), //
+        + "  WHERE p.id IN (:ids) AND p.deployment = :type AND p.status = 'INSTALLED' "), //
 
     // this query does not load the content blob, but loads everything else
     @NamedQuery(name = Plugin.QUERY_FIND_BY_NAME, query = "" //
@@ -92,6 +98,7 @@ import org.rhq.core.util.MessageDigestGenerator;
         + "        p.path, " //
         + "        p.displayName, " //
         + "        p.enabled, " //
+        + "        p.status, " //
         + "        p.description, " //
         + "        p.help, " //
         + "        p.md5, " //
@@ -105,7 +112,32 @@ import org.rhq.core.util.MessageDigestGenerator;
         + "   FROM Plugin AS p " // 
         + "        LEFT JOIN p.pluginConfiguration " // 
         + "        LEFT JOIN p.scheduledJobsConfiguration " // 
-        + "  WHERE p.name=:name"), //
+        + "  WHERE p.name=:name AND p.status = 'INSTALLED' "), //
+
+    // gets the plugin, even if it is deleted
+    // this query does not load the content blob, but loads everything else
+    @NamedQuery(name = Plugin.QUERY_FIND_ANY_BY_NAME_AND_TYPE, query = "" //
+        + " SELECT new org.rhq.core.domain.plugin.Plugin( " //
+        + "        p.id, " //
+        + "        p.name, " //
+        + "        p.path, " //
+        + "        p.displayName, " //
+        + "        p.enabled, " //
+        + "        p.status, " //
+        + "        p.description, " //
+        + "        p.help, " //
+        + "        p.md5, " //
+        + "        p.version, " //
+        + "        p.ampsVersion, " //
+        + "        p.deployment, " //
+        + "        p.pluginConfiguration, " //
+        + "        p.scheduledJobsConfiguration, " //
+        + "        p.ctime, " //
+        + "        p.mtime) " //
+        + "   FROM Plugin AS p " // 
+        + "        LEFT JOIN p.pluginConfiguration " // 
+        + "        LEFT JOIN p.scheduledJobsConfiguration " // 
+        + "  WHERE p.name=:name AND p.deployment = :type "), //
 
     // this query does not load the content blob, but loads everything else
     @NamedQuery(name = Plugin.QUERY_FIND_ALL_AGENT, query = "" //
@@ -115,6 +147,7 @@ import org.rhq.core.util.MessageDigestGenerator;
         + "        p.path, " //
         + "        p.displayName, " //
         + "        p.enabled, " //
+        + "        p.status, " //
         + "        p.description, " //
         + "        p.help, " //
         + "        p.md5, " //
@@ -128,7 +161,7 @@ import org.rhq.core.util.MessageDigestGenerator;
         + "   FROM Plugin AS p " //
         + "        LEFT JOIN p.pluginConfiguration " // 
         + "        LEFT JOIN p.scheduledJobsConfiguration " //
-        + "   WHERE p.deployment = 'AGENT'"), //
+        + "   WHERE p.deployment = 'AGENT' AND p.status = 'INSTALLED' "), //
 
     // this query does not load the content blob, but loads everything else
     @NamedQuery(name = Plugin.QUERY_FIND_ALL_SERVER, query = "" //
@@ -138,6 +171,7 @@ import org.rhq.core.util.MessageDigestGenerator;
         + "        p.path, " //
         + "        p.displayName, " //
         + "        p.enabled, " //
+        + "        p.status, " //
         + "        p.description, " //
         + "        p.help, " //
         + "        p.md5, " //
@@ -151,25 +185,7 @@ import org.rhq.core.util.MessageDigestGenerator;
         + "   FROM Plugin AS p " //
         + "        LEFT JOIN p.pluginConfiguration " // 
         + "        LEFT JOIN p.scheduledJobsConfiguration " //
-        + "   WHERE p.deployment = 'SERVER'"), //
-
-    // this query does not update the content blob or ctime
-    @NamedQuery(name = Plugin.UPDATE_ALL_BUT_CONTENT, query = "" //
-        + "UPDATE Plugin p " //
-        + "   SET p.name = :name, " //
-        + "       p.displayName = :displayName, " //
-        + "       p.description = :description, " //
-        + "       p.enabled = :enabled, " //
-        + "       p.help = :help, " //
-        + "       p.version = :version, " //
-        + "       p.ampsVersion = :ampsVersion," //
-        + "       p.deployment = :deployment, " //
-        + "       p.pluginConfiguration = :pluginConfiguration, " //
-        + "       p.scheduledJobsConfiguration = :scheduledJobsConfiguration, " //
-        + "       p.path = :path, " //
-        + "       p.md5 = :md5, " //
-        + "       p.mtime = :mtime " //
-        + " WHERE p.id = :id"),
+        + "   WHERE p.deployment = 'SERVER' AND p.status = 'INSTALLED' "), //
 
     // this query is how you enable and disable plugins
     @NamedQuery(name = Plugin.UPDATE_PLUGINS_ENABLED_BY_IDS, query = "" //
@@ -185,6 +201,7 @@ import org.rhq.core.util.MessageDigestGenerator;
         + "         p.path, " //
         + "         p.displayName, " //
         + "         p.enabled, " //
+        + "         p.status, " //
         + "         p.description, " //
         + "         p.help, " //
         + "         p.md5, " //
@@ -198,7 +215,8 @@ import org.rhq.core.util.MessageDigestGenerator;
         + "    FROM Plugin p " //
         + "         LEFT JOIN p.pluginConfiguration " // 
         + "         LEFT JOIN p.scheduledJobsConfiguration " // 
-        + "   WHERE p.name IN ( SELECT rt.plugin " //
+        + "   WHERE p.status = 'INSTALLED' AND " //
+        + "         p.name IN ( SELECT rt.plugin " //
         + "                       FROM Resource res " //
         + "                       JOIN res.resourceType rt " //
         + "                      WHERE ( rt.category = :resourceCategory OR :resourceCategory IS NULL ) " //
@@ -215,9 +233,10 @@ public class Plugin implements Serializable {
     public static final String QUERY_FIND_ALL_AGENT = "Plugin.findAllAgent";
     public static final String QUERY_FIND_ALL_SERVER = "Plugin.findAllServer";
     public static final String QUERY_FIND_BY_NAME = "Plugin.findByName";
+    public static final String QUERY_FIND_ANY_BY_NAME_AND_TYPE = "Plugin.findAnyByNameAndType";
     public static final String QUERY_FIND_BY_IDS_AND_TYPE = "Plugin.findByIdsAndType";
     public static final String QUERY_GET_NAMES_BY_ENABLED_AND_TYPE = "Plugin.findByEnabledAndType";
-    public static final String UPDATE_ALL_BUT_CONTENT = "Plugin.updateAllButContent";
+    public static final String QUERY_GET_STATUS_BY_NAME_AND_TYPE = "Plugin.getStatusByNameAndType";
     public static final String UPDATE_PLUGINS_ENABLED_BY_IDS = "Plugin.updatePluginsEnabledByIds";
 
     @Column(name = "ID", nullable = false)
@@ -248,6 +267,10 @@ public class Plugin implements Serializable {
 
     @Column(name = "ENABLED", nullable = false)
     private boolean enabled = true;
+
+    @Column(name = "STATUS", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private PluginStatusType status = PluginStatusType.INSTALLED;
 
     @Column(name = "HELP", nullable = true)
     private String help;
@@ -334,6 +357,7 @@ public class Plugin implements Serializable {
      * @param path
      * @param displayName
      * @param enabled
+     * @param status
      * @param description
      * @param help
      * @param md5
@@ -345,14 +369,16 @@ public class Plugin implements Serializable {
      * @param ctime
      * @param mtime
      */
-    public Plugin(int id, String name, String path, String displayName, boolean enabled, String description,
-        String help, String md5, String version, String ampsVersion, PluginDeploymentType deployment,
-        Configuration pluginConfig, Configuration scheduledJobsConfig, long ctime, long mtime) {
+    public Plugin(int id, String name, String path, String displayName, boolean enabled, PluginStatusType status,
+        String description, String help, String md5, String version, String ampsVersion,
+        PluginDeploymentType deployment, Configuration pluginConfig, Configuration scheduledJobsConfig, long ctime,
+        long mtime) {
         this.id = id;
         this.name = name;
         this.path = path;
         this.displayName = displayName;
         this.enabled = enabled;
+        this.status = status;
         this.description = description;
         this.help = help;
         this.md5 = md5;
@@ -453,6 +479,17 @@ public class Plugin implements Serializable {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public PluginStatusType getStatus() {
+        return status;
+    }
+
+    public void setStatus(PluginStatusType status) {
+        this.status = status;
+        if (this.status == PluginStatusType.DELETED) {
+            this.enabled = false;
+        }
     }
 
     public String getHelp() {

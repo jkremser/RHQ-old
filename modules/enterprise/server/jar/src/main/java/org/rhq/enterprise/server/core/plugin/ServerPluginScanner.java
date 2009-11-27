@@ -53,6 +53,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.plugin.PluginDeploymentType;
+import org.rhq.core.domain.plugin.PluginStatusType;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.core.util.stream.StreamUtil;
@@ -175,8 +176,17 @@ public class ServerPluginScanner {
             }
 
             ServerPluginsLocal serverPluginsManager = LookupUtil.getServerPlugins();
-            SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
-            serverPluginsManager.registerPlugin(subjectManager.getOverlord(), plugin, descriptor, pluginFile);
+
+            // see if this plugin has been deleted previously; if so, don't register and delete the file
+            PluginStatusType status = serverPluginsManager.getServerPluginStatus(pluginName);
+            if (PluginStatusType.DELETED == status) {
+                log.warn("Plugin file [" + pluginFile + "] has been detected but that plugin with name [" + pluginName
+                    + "] was previously undeployed. Will not re-register that plugin and the file will be deleted.");
+                pluginFile.delete();
+            } else {
+                SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
+                serverPluginsManager.registerServerPlugin(subjectManager.getOverlord(), plugin, pluginFile);
+            }
         } catch (Exception e) {
             log.error("Failed to register RHQ plugin file [" + pluginFile + "]", e);
         }
@@ -353,7 +363,7 @@ public class ServerPluginScanner {
 
             // get all the plugins
             ps = conn.prepareStatement("SELECT NAME, PATH, MD5, MTIME, VERSION FROM " + Plugin.TABLE_NAME
-                + " WHERE DEPLOYMENT = 'SERVER'");
+                + " WHERE DEPLOYMENT = 'SERVER' AND STATUS = 'INSTALLED' ");
             rs = ps.executeQuery();
             while (rs.next()) {
                 String name = rs.getString(1);
@@ -451,7 +461,7 @@ public class ServerPluginScanner {
 
             // write all our updated plugins to the file system
             ps = conn.prepareStatement("SELECT CONTENT FROM " + Plugin.TABLE_NAME
-                + " WHERE DEPLOYMENT = 'SERVER' AND NAME = ?");
+                + " WHERE DEPLOYMENT = 'SERVER' AND STATUS = 'INSTALLED' AND NAME = ?");
             for (Plugin plugin : updatedPlugins) {
                 File file = new File(this.getServerPluginDir(), plugin.getPath());
 
@@ -516,8 +526,9 @@ public class ServerPluginScanner {
         ResultSet rs = null;
         TransactionManager tm = null;
 
-        String sql = "UPDATE " + Plugin.TABLE_NAME
-            + " SET CONTENT = ?, MD5 = ?, MTIME = ?, PATH = ? WHERE DEPLOYMENT = 'SERVER' AND NAME = ?";
+        String sql = "UPDATE "
+            + Plugin.TABLE_NAME
+            + " SET CONTENT = ?, MD5 = ?, MTIME = ?, PATH = ? WHERE DEPLOYMENT = 'SERVER' AND STATUS = 'INSTALLED' AND NAME = ?";
 
         // if 'different' is true, give bogus data so the plugin deployer will think the plugin on the file system is new
         String md5 = (!different) ? MessageDigestGenerator.getDigestString(file) : "TO BE UPDATED";
