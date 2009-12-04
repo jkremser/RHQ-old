@@ -121,6 +121,7 @@
       <module>snmptrapd</module>
       <module>sshd</module>
       <module>twitter</module>
+      <module>alt-lang</module>
       <!--<module>virt</module>-->
 
       <!-- make this the last - it will validate all the plugins -->
