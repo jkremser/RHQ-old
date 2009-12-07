@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<plugin name="AltLang"
+        displayName="AltLang"
+        description="Base plugin for alternative, scripting languages that run on the JVM"
+        package="org.rhq.plugins.altlang"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+    <server name="Alt Lang Server"
+            discovery="AltLangDiscoveryServerComponent"
+            class="AltLangServerComponent">
+        <!--
+        <plugin-configuration>
+            <c:simple-property name="discoveryScript" required="true"/>
+        </plugin-configuration>
+        -->
+    </server>
+</plugin>

@@ -12,9 +12,17 @@
    <artifactId>rhq-alt-lang-plugin</artifactId>
    <name>RHQ Alt Lang Plugin</name>
 
+   <dependencies>
+     <dependency>
+       <groupId>org.codehaus.groovy</groupId>
+       <artifactId>groovy-all</artifactId>
+       <version>1.6.4</version>
+       <scope>runtime</scope>
+     </dependency>
+   </dependencies>
+
    <build>
       <plugins>
-<!--<
          <plugin>
             <artifactId>maven-dependency-plugin</artifactId>
             <version>2.0</version>
@@ -28,9 +36,9 @@
                   <configuration>
                      <artifactItems>
                         <artifactItem>
-                           <groupId>org.snmp4j</groupId>
-                           <artifactId>snmp4j</artifactId>
-                           <version>1.8.2</version>
+                           <groupId>org.codehaus.groovy</groupId>
+                           <artifactId>groovy-all</artifactId>
+                           <version>1.6.4</version>
                         </artifactItem>
                      </artifactItems>
                      <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
@@ -38,7 +46,6 @@
                </execution>
             </executions>
          </plugin>
--->
       </plugins>
    </build>
 
