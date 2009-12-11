@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<plugin name="AltLangTest"
+        displayName="Alt Lang Test"
+        description="Base plugin for alternative, scripting languages that run on the JVM"
+        package="org.rhq.plugins.altlang.test"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+    
+    <depends plugin="AltLang" useClasses="true"/>
+
+    <server name="AltLangTestServer"
+            discovery="org.rhq.plugins.altlang.AltLangDiscoveryServerComponent"
+            class="org.rhq.plugins.altlang.AltLangServerComponent"
+            classLoader="shared">
+        <plugin-configuration>
+            <c:simple-property name="scriptsDirectory"
+                               displayName="Scripts Directory"
+                               default="/org/rhq/plugins/altlang/test/altlangtestserver"
+                               description="The directory on the classpath in which scripts can be found. This can be
+                                            in a JAR file or in an exploded format on the file system. It defaults to
+                                            the package as specifified in the package attribute in the top-level
+                                            plugin element of the descriptor."/>
+            <c:simple-property name="lang"
+                               displayName="Language"
+                               required="true"
+                               default="groovy"
+                               description="The language in which the scripts are written. More importantly, this
+                                            determines which script engine to load."/>
+            <c:simple-property name="scriptExtension"
+                               displayName="Script File Name Extension"
+                               default="groovy"/>
+
+        </plugin-configuration>
+    </server>
+</plugin>

@@ -23,6 +23,7 @@
 
 package org.rhq.plugins.altlang;
 
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
@@ -32,34 +33,46 @@ import javax.script.Bindings;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.Collections;
 import java.util.Set;
 
 public class AltLangDiscoveryServerComponent implements ResourceDiscoveryComponent {
 
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext resourceDiscoveryContext)
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext context)
         throws InvalidPluginConfigurationException, Exception {
 
+        if (context.getResourceType().getName().equals("Alt Lang Server")) {
+            return Collections.EMPTY_SET;
+        }
+
+        Configuration defaultPluginConfig = context.getDefaultPluginConfiguration();
+        
+        String lang = defaultPluginConfig.getSimple("lang").getStringValue();
+        String extension = defaultPluginConfig.getSimple("scriptExtension").getStringValue();
+        String scriptDir = defaultPluginConfig.getSimple("scriptsDirectory").getStringValue();
+
+        String discoveryScript = scriptDir + "/discovery." + extension;
+
         ScriptEngineManager scriptEngineMrg = new ScriptEngineManager();
-        ScriptEngine scriptEngine = scriptEngineMrg.getEngineByName("groovy");
+        ScriptEngine scriptEngine = scriptEngineMrg.getEngineByName(lang);
 
         Bindings bindings = scriptEngine.createBindings();
-        bindings.put("resourceDiscoveryContext", resourceDiscoveryContext);
+        bindings.put("discoveryContext", context);
+        bindings.put("action", new Action("discovery", "discovery", context.getResourceType()));
         scriptEngine.setBindings(bindings, ScriptContext.ENGINE_SCOPE);
-
+        
         Set<DiscoveredResourceDetails> details =
-            (Set<DiscoveredResourceDetails>) scriptEngine.eval(getDiscoveryScript());
+            (Set<DiscoveredResourceDetails>) scriptEngine.eval(getDiscoveryScript(discoveryScript));
 
         return details;
     }
 
-    private Reader getDiscoveryScript() throws IOException {
-        InputStream stream = getClass().getResourceAsStream("/discovery.groovy");
+    private Reader getDiscoveryScript(String script) throws IOException {
+        InputStream stream = getClass().getResourceAsStream(script);
         return new InputStreamReader(stream);
     }
     

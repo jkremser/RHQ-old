@@ -23,20 +23,46 @@
 
 package org.rhq.plugins.altlang;
 
-import org.rhq.core.domain.measurement.AvailabilityType;
-import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
-import org.rhq.core.pluginapi.inventory.ResourceComponent;
-import org.rhq.core.pluginapi.inventory.ResourceContext;
+import org.rhq.core.domain.resource.ResourceType;
 
-public class AltLangServerComponent implements ResourceComponent {
+public class Action {
 
-    public void start(ResourceContext resourceContext) throws InvalidPluginConfigurationException, Exception {
+    private String type;
+
+    private String name;
+
+    private ResourceType resourceType;
+
+    public Action() {
     }
 
-    public void stop() {
+    public Action(String type, String name, ResourceType resourceType) {
+        this.type = type;
+        this.name = name;
+        this.resourceType = resourceType;
     }
 
-    public AvailabilityType getAvailability() {
-        return AvailabilityType.UP;
+    public ResourceType getResourceType() {
+        return resourceType;
+    }
+
+    public void setResourceType(ResourceType resourceType) {
+        this.resourceType = resourceType;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 }

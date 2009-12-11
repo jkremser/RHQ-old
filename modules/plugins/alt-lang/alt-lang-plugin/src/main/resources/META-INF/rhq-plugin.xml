@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<plugin name="AltLang"
+        displayName="AltLang"
+        description="Base plugin for alternative, scripting languages that run on the JVM"
+        package="org.rhq.plugins.altlang"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+    <server name="Alt Lang Server"
+            discovery="AltLangDiscoveryServerComponent"
+            class="AltLangServerComponent"
+            classLoader="shared" createDeletePolicy="neither">
+        <!--
+        <plugin-configuration>
+            <c:simple-property name="scriptsDirectory"
+                               displayName="Scripts Directory"
+                               description="The directory on the classpath in which scripts can be found. This can be
+                                            in a JAR file or in an exploded format on the file system. It defaults to
+                                            the package name (as specifified in the package attribute in the top-level
+                                            plugin element of the descriptor) plus the server name (as specified in the
+                                            name attribute) all lower case."/>
+            <c:simple-property name="lang"
+                               displayName="Language"
+                               required="true"
+                               description="The language in which the scripts are written. More importantly, this
+                                            determines which script engine to load."/>
+            <c:simple-property name="scriptExtension"
+                               displayName="Script File Name Extension"/>
+        </plugin-configuration>
+        -->
+    </server>
+</plugin>
