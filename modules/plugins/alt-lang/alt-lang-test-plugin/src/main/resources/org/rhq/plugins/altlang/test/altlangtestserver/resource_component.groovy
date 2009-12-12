@@ -9,8 +9,11 @@ if (action.name == 'start') {
   testDir.mkdir()
   new File(testDir, "${action.resourceType.name}.start").createNewFile()
 }
-
-if (action.name == 'get_availability') {
+else if (action.name == 'get_availability') {
   println "[Groovy] checking availability"
   return AvailabilityType.UP 
+}
+else if (action.name == 'stop') {
+  println "[Groovy] stopping resource component"
+  new File(testDir, "${action.resourceType.name}.stop").createNewFile()
 }

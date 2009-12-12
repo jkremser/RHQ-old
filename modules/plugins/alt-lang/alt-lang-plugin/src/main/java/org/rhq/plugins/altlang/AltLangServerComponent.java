@@ -45,26 +45,30 @@ public class AltLangServerComponent implements ResourceComponent {
 
     public void start(ResourceContext resourceContext) throws InvalidPluginConfigurationException, Exception {
         this.resourceContext = resourceContext;
-
         String script = buildScriptName();
-
         ScriptEngine scriptEngine = createScriptEngine();
         createBindings(scriptEngine, "start");
-//        Bindings bindings = scriptEngine.createBindings();
-//        bindings.put("resourceContext", resourceContext);
-//        bindings.put("action", new Action("resourcecomponent", "start", resourceContext.getResourceType()));
-//        scriptEngine.setBindings(bindings, ScriptContext.ENGINE_SCOPE);
-
         scriptEngine.eval(loadScript(script));
     }
 
     public void stop() {
+        try {
+            String script = buildScriptName();
+            ScriptEngine scriptEngine = createScriptEngine();
+            createBindings(scriptEngine, "stop");
+            scriptEngine.eval(loadScript(script));
+        }
+        catch (ScriptException e) {
+            throw new RuntimeException(e);
+        }
+        catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public AvailabilityType getAvailability() {
         try {
             String script = buildScriptName();
-
             ScriptEngine scriptEngine = createScriptEngine();
             createBindings(scriptEngine, "get_availability");
 

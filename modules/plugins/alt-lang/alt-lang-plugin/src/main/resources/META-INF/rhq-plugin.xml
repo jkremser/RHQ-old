@@ -11,24 +11,5 @@
     <server name="Alt Lang Server"
             discovery="AltLangDiscoveryServerComponent"
             class="AltLangServerComponent"
-            classLoader="shared" createDeletePolicy="neither">
-        <!--
-        <plugin-configuration>
-            <c:simple-property name="scriptsDirectory"
-                               displayName="Scripts Directory"
-                               description="The directory on the classpath in which scripts can be found. This can be
-                                            in a JAR file or in an exploded format on the file system. It defaults to
-                                            the package name (as specifified in the package attribute in the top-level
-                                            plugin element of the descriptor) plus the server name (as specified in the
-                                            name attribute) all lower case."/>
-            <c:simple-property name="lang"
-                               displayName="Language"
-                               required="true"
-                               description="The language in which the scripts are written. More importantly, this
-                                            determines which script engine to load."/>
-            <c:simple-property name="scriptExtension"
-                               displayName="Script File Name Extension"/>
-        </plugin-configuration>
-        -->
-    </server>
+            classLoader="shared" createDeletePolicy="neither"/>            
 </plugin>
