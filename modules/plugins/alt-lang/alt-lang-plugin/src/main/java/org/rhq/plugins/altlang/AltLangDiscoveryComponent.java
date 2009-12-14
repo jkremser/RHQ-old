@@ -46,29 +46,28 @@ public class AltLangDiscoveryComponent implements ResourceDiscoveryComponent {
         throws InvalidPluginConfigurationException, Exception {
 
         Configuration defaultPluginConfig = context.getDefaultPluginConfiguration();
+        Action action = new Action("discovery", "discovery", context.getResourceType());
+
+        ScriptResolver resolver = new ScriptPerActionTypeResolver();
+
+        ScriptMetadata scriptMetadata = resolver.resolveScript(defaultPluginConfig, action);
         
-        String lang = defaultPluginConfig.getSimple("lang").getStringValue();
-        String extension = defaultPluginConfig.getSimple("scriptExtension").getStringValue();
-        String scriptDir = defaultPluginConfig.getSimple("scriptsDirectory").getStringValue();
-
-        String discoveryScript = scriptDir + "/discovery." + extension;
-
         ScriptEngineManager scriptEngineMrg = new ScriptEngineManager();
-        ScriptEngine scriptEngine = scriptEngineMrg.getEngineByName(lang);
+        ScriptEngine scriptEngine = scriptEngineMrg.getEngineByName(scriptMetadata.getLang());
 
         Bindings bindings = scriptEngine.createBindings();
         bindings.put("discoveryContext", context);
-        bindings.put("action", new Action("discovery", "discovery", context.getResourceType()));
+        bindings.put("action", action);
         scriptEngine.setBindings(bindings, ScriptContext.ENGINE_SCOPE);
         
         Set<DiscoveredResourceDetails> details =
-            (Set<DiscoveredResourceDetails>) scriptEngine.eval(getDiscoveryScript(discoveryScript));
+            (Set<DiscoveredResourceDetails>) scriptEngine.eval(loadScript(scriptMetadata));
 
         return details;
     }
 
-    private Reader getDiscoveryScript(String script) throws IOException {
-        InputStream stream = getClass().getResourceAsStream(script);
+    private Reader loadScript(ScriptMetadata metadata) throws IOException {
+        InputStream stream = getClass().getResourceAsStream(metadata.getScriptPath());
         return new InputStreamReader(stream);
     }
     
