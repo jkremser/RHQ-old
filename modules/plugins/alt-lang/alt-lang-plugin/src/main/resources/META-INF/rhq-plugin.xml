@@ -8,8 +8,10 @@
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
 
+    <!--
     <server name="Alt Lang Server"
-            discovery="AltLangDiscoveryServerComponent"
-            class="AltLangServerComponent"
-            classLoader="shared" createDeletePolicy="neither"/>            
+            discovery="AltLangDiscoveryComponent"
+            class="AltLangComponent"
+            classLoader="shared" createDeletePolicy="neither"/>
+    -->                        
 </plugin>

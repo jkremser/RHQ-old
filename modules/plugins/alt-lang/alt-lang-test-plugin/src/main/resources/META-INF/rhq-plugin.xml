@@ -11,8 +11,8 @@
     <depends plugin="AltLang" useClasses="true"/>
 
     <server name="AltLangTestServer"
-            discovery="org.rhq.plugins.altlang.AltLangDiscoveryServerComponent"
-            class="org.rhq.plugins.altlang.AltLangServerComponent"
+            discovery="org.rhq.plugins.altlang.AltLangDiscoveryComponent"
+            class="org.rhq.plugins.altlang.AltLangComponent"
             classLoader="shared">
         <plugin-configuration>
             <c:simple-property name="scriptsDirectory"

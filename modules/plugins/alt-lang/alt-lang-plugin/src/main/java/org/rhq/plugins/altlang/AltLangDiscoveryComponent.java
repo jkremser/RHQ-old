@@ -40,14 +40,10 @@ import java.io.Reader;
 import java.util.Collections;
 import java.util.Set;
 
-public class AltLangDiscoveryServerComponent implements ResourceDiscoveryComponent {
+public class AltLangDiscoveryComponent implements ResourceDiscoveryComponent {
 
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext context)
         throws InvalidPluginConfigurationException, Exception {
-
-        if (context.getResourceType().getName().equals("Alt Lang Server")) {
-            return Collections.EMPTY_SET;
-        }
 
         Configuration defaultPluginConfig = context.getDefaultPluginConfiguration();
         

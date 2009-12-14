@@ -53,7 +53,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.Set;
 
-public class AltLangDiscoveryServerComponentTest {
+public class AltLangComponentTest {
 
     private static final File ITEST_DIR = new File("target/itest");
 

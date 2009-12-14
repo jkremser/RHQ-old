@@ -39,7 +39,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 
-public class AltLangServerComponent implements ResourceComponent {
+public class AltLangComponent implements ResourceComponent {
 
     private ResourceContext resourceContext;
 
@@ -87,7 +87,6 @@ public class AltLangServerComponent implements ResourceComponent {
     private String buildScriptName() {
         Configuration pluginConfiguration = resourceContext.getPluginConfiguration();
 
-        String lang = getScriptLang();
         String extension = pluginConfiguration.getSimple("scriptExtension").getStringValue();
         String scriptDir = pluginConfiguration.getSimple("scriptsDirectory").getStringValue();
 
