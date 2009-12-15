@@ -5,9 +5,14 @@ import org.rhq.core.domain.measurement.AvailabilityType
 File testDir = new File(System.getProperty("java.io.tmpdir"), "altlang")
 
 if (action.name == 'start') {
+  try {
   println "[Groovy] starting resource component"
   testDir.mkdir()
   new File(testDir, "${action.resourceType.name}.start").createNewFile()
+  }
+  catch (NullPointerException e) {
+    e.printStackTrace()
+  }
 }
 else if (action.name == 'get_availability') {
   println "[Groovy] checking availability"

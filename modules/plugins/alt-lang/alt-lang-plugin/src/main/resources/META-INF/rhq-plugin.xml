@@ -6,12 +6,4 @@
         package="org.rhq.plugins.altlang"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"
-        xmlns:c="urn:xmlns:rhq-configuration">
-
-    <!--
-    <server name="Alt Lang Server"
-            discovery="AltLangDiscoveryComponent"
-            class="AltLangComponent"
-            classLoader="shared" createDeletePolicy="neither"/>
-    -->                        
-</plugin>
+        xmlns:c="urn:xmlns:rhq-configuration"/>

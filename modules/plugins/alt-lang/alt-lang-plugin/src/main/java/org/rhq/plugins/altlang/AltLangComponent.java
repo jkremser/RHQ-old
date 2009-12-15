@@ -39,80 +39,68 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 
-public class AltLangComponent implements ResourceComponent {
+public class AltLangComponent extends AltLangAbstractComponent implements ResourceComponent {
 
     private ResourceContext resourceContext;
 
     public void start(ResourceContext resourceContext) throws InvalidPluginConfigurationException, Exception {
         this.resourceContext = resourceContext;
-        String script = buildScriptName();
-        ScriptEngine scriptEngine = createScriptEngine();
-        createBindings(scriptEngine, "start");
-        scriptEngine.eval(loadScript(script));
+
+        Action action = createAction("start");
+        ScriptMetadata metadata = resolveScript(resourceContext.getPluginConfiguration(), action);
+
+        ScriptEngine scriptEngine = createScriptEngine(metadata);
+        setBindings(scriptEngine, action);
+
+        scriptEngine.eval(loadScript(metadata));
     }
 
     public void stop() {
         try {
-            String script = buildScriptName();
-            ScriptEngine scriptEngine = createScriptEngine();
-            createBindings(scriptEngine, "stop");
-            scriptEngine.eval(loadScript(script));
+            Action action = createAction("stop");
+            ScriptMetadata metadata = resolveScript(resourceContext.getPluginConfiguration(), action);
+
+            ScriptEngine scriptEngine = createScriptEngine(metadata);
+            setBindings(scriptEngine, action);
+
+            scriptEngine.eval(loadScript(metadata));
         }
         catch (ScriptException e) {
             throw new RuntimeException(e);
-        }
-        catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        }        
     }
 
     public AvailabilityType getAvailability() {
         try {
-            String script = buildScriptName();
-            ScriptEngine scriptEngine = createScriptEngine();
-            createBindings(scriptEngine, "get_availability");
+            Action action = createAction("get_availability");
+            ScriptMetadata metadata = resolveScript(resourceContext.getPluginConfiguration(), action);
 
-            AvailabilityType availabilityType = (AvailabilityType) scriptEngine.eval(loadScript(script));
+            ScriptEngine scriptEngine = createScriptEngine(metadata);
+            setBindings(scriptEngine, action);
+
+            AvailabilityType availabilityType = (AvailabilityType) scriptEngine.eval(loadScript(metadata));
 
             return availabilityType;
         }
         catch (ScriptException e) {
             throw new RuntimeException(e);
-        }
-        catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        }        
     }
 
-    private String buildScriptName() {
-        Configuration pluginConfiguration = resourceContext.getPluginConfiguration();
-
-        String extension = pluginConfiguration.getSimple("scriptExtension").getStringValue();
-        String scriptDir = pluginConfiguration.getSimple("scriptsDirectory").getStringValue();
-
-        return scriptDir + "/resource_component." + extension;
+    private Action createAction(String action) {
+        return new Action("resource_component", action, resourceContext.getResourceType());
     }
 
-    private String getScriptLang() {
-        Configuration pluginConfiguration = resourceContext.getPluginConfiguration();
-        return pluginConfiguration.getSimple("lang").getStringValue();
-    }
-
-    private Reader loadScript(String script) throws IOException {
-        InputStream stream = getClass().getResourceAsStream(script);
-        return new InputStreamReader(stream);
-    }
-
-    private ScriptEngine createScriptEngine() {
+    private ScriptEngine createScriptEngine(ScriptMetadata metadata) {
         ScriptEngineManager scriptEngineMrg = new ScriptEngineManager();
-        ScriptEngine scriptEngine = scriptEngineMrg.getEngineByName(getScriptLang());
+        ScriptEngine scriptEngine = scriptEngineMrg.getEngineByName(metadata.getLang());
         return scriptEngine;
     }
 
-    private Bindings createBindings(ScriptEngine scriptEngine, String action) {
+    private Bindings setBindings(ScriptEngine scriptEngine, Action action) {
         Bindings bindings = scriptEngine.createBindings();
         bindings.put("resourceContext", resourceContext);
-        bindings.put("action", new Action("resourcecomponent", action, resourceContext.getResourceType()));
+        bindings.put("action", action);
         scriptEngine.setBindings(bindings, ScriptContext.ENGINE_SCOPE);
 
         return bindings;

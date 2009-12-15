@@ -40,7 +40,7 @@ import java.io.Reader;
 import java.util.Collections;
 import java.util.Set;
 
-public class AltLangDiscoveryComponent implements ResourceDiscoveryComponent {
+public class AltLangDiscoveryComponent extends AltLangAbstractComponent implements ResourceDiscoveryComponent {
 
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext context)
         throws InvalidPluginConfigurationException, Exception {
@@ -48,9 +48,7 @@ public class AltLangDiscoveryComponent implements ResourceDiscoveryComponent {
         Configuration defaultPluginConfig = context.getDefaultPluginConfiguration();
         Action action = new Action("discovery", "discovery", context.getResourceType());
 
-        ScriptResolver resolver = new ScriptPerActionTypeResolver();
-
-        ScriptMetadata scriptMetadata = resolver.resolveScript(defaultPluginConfig, action);
+        ScriptMetadata scriptMetadata = resolveScript(defaultPluginConfig, action);
         
         ScriptEngineManager scriptEngineMrg = new ScriptEngineManager();
         ScriptEngine scriptEngine = scriptEngineMrg.getEngineByName(scriptMetadata.getLang());
@@ -64,11 +62,6 @@ public class AltLangDiscoveryComponent implements ResourceDiscoveryComponent {
             (Set<DiscoveredResourceDetails>) scriptEngine.eval(loadScript(scriptMetadata));
 
         return details;
-    }
-
-    private Reader loadScript(ScriptMetadata metadata) throws IOException {
-        InputStream stream = getClass().getResourceAsStream(metadata.getScriptPath());
-        return new InputStreamReader(stream);
     }
     
 }
