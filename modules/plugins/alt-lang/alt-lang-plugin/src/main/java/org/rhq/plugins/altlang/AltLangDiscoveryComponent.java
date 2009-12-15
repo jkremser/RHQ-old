@@ -33,11 +33,6 @@ import javax.script.Bindings;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.util.Collections;
 import java.util.Set;
 
 public class AltLangDiscoveryComponent extends AltLangAbstractComponent implements ResourceDiscoveryComponent {
