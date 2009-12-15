@@ -10,14 +10,14 @@
     
     <depends plugin="AltLang" useClasses="true"/>
 
-    <server name="AltLangTestServer"
+    <server name="GroovyServer"
             discovery="org.rhq.plugins.altlang.AltLangDiscoveryComponent"
             class="org.rhq.plugins.altlang.AltLangComponent"
             classLoader="shared">
         <plugin-configuration>
             <c:simple-property name="scriptsDirectory"
                                displayName="Scripts Directory"
-                               default="/org/rhq/plugins/altlang/test/altlangtestserver"
+                               default="/org/rhq/plugins/altlang/test/groovyserver"
                                description="The directory on the classpath in which scripts can be found. This can be
                                             in a JAR file or in an exploded format on the file system. It defaults to
                                             the package as specifified in the package attribute in the top-level

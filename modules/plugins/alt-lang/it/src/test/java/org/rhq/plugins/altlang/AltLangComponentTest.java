@@ -25,8 +25,8 @@ package org.rhq.plugins.altlang;
 
 import static org.testng.Assert.*;
 
+import org.apache.commons.io.FileUtils;
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
-import org.rhq.core.domain.discovery.InventoryReport;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
@@ -34,11 +34,9 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.inventory.InventoryManager;
-import org.rhq.core.pc.plugin.FileSystemPluginFinder;
 import org.rhq.core.pc.plugin.PluginFinder;
 import org.rhq.core.pc.plugin.PluginManager;
 import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
@@ -48,23 +46,26 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
 import java.util.Set;
 
 public class AltLangComponentTest {
 
     private static final File ITEST_DIR = new File("target/itest");
 
-    private static final String ALT_LANG_TEST_SERVER = "AltLangTestServer";
+    private static final String ALT_LANG_TEST_SERVER = "GroovyServer";
 
     private static final String M2_REPO_DIR = System.getProperty("user.home") + "/.m2/repository";
 
     private Resource testServer;
 
     @BeforeSuite
-    public void startPluginContainer() throws Exception {
+    public void initSuite() throws Exception {
+        cleanTestDir();
+        startPluginContainer();
+    }
+
+    private void startPluginContainer() throws Exception {
         PluginContainerConfiguration pcContainerConfig = createPluginContainerConfiguration();
 
         PluginContainer pluginContainer = PluginContainer.getInstance();
@@ -75,7 +76,7 @@ public class AltLangComponentTest {
         System.out.println("Plugin container started with the following plugins: " + pluginNames);
     }
 
-    PluginContainerConfiguration createPluginContainerConfiguration()
+    private PluginContainerConfiguration createPluginContainerConfiguration()
             throws IOException {
         PluginContainerConfiguration pcConfig = new PluginContainerConfiguration();
 
@@ -96,12 +97,13 @@ public class AltLangComponentTest {
         return pcConfig;
     }
 
-//    @BeforeClass
-//    public void setupClass() {
-//        File testDir = getTestDir();
-//        boolean deleted = !testDir.exists() || testDir.delete();
-//        assertTrue(deleted, "Failed to delete " + testDir.getName());
-//    }
+    private void cleanTestDir() throws IOException {
+        File testDir = getTestDir();
+        FileUtils.deleteDirectory(testDir);
+        boolean created = testDir.mkdir();
+
+        assertTrue(created, "Failed to recreate " + testDir.getName());
+    }
 
     @Test
     public void verifyDiscovery() throws Exception {
