@@ -81,10 +81,10 @@ import org.rhq.enterprise.server.content.ContentSourceManagerBean;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
 import org.rhq.enterprise.server.content.ContentUIManagerBean;
 import org.rhq.enterprise.server.content.ContentUIManagerLocal;
+import org.rhq.enterprise.server.content.DistributionManagerBean;
+import org.rhq.enterprise.server.content.DistributionManagerLocal;
 import org.rhq.enterprise.server.content.RepoManagerBean;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
-import org.rhq.enterprise.server.content.DistributionManagerLocal;
-import org.rhq.enterprise.server.content.DistributionManagerBean;
 import org.rhq.enterprise.server.content.metadata.ContentSourceMetadataManagerBean;
 import org.rhq.enterprise.server.content.metadata.ContentSourceMetadataManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerBean;
@@ -151,6 +151,8 @@ import org.rhq.enterprise.server.resource.group.definition.GroupDefinitionManage
 import org.rhq.enterprise.server.resource.group.definition.GroupDefinitionManagerLocal;
 import org.rhq.enterprise.server.resource.metadata.ResourceMetadataManagerBean;
 import org.rhq.enterprise.server.resource.metadata.ResourceMetadataManagerLocal;
+import org.rhq.enterprise.server.resource.relationship.ResourceRelManagerBean;
+import org.rhq.enterprise.server.resource.relationship.ResourceRelManagerLocal;
 import org.rhq.enterprise.server.scheduler.SchedulerBean;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.subsystem.AlertSubsystemManagerBean;
@@ -420,7 +422,6 @@ public final class LookupUtil {
         return lookupLocal(DistributionManagerBean.class);
     }
 
-
     public static AffinityGroupManagerLocal getAffinityGroupManager() {
         return lookupLocal(AffinityGroupManagerBean.class);
     }
@@ -451,6 +452,10 @@ public final class LookupUtil {
 
     public static ResourceGroupManagerLocal getResourceGroupManager() {
         return lookupLocal(ResourceGroupManagerBean.class);
+    }
+
+    public static ResourceRelManagerLocal getResourceRelManager() {
+        return lookupLocal(ResourceRelManagerBean.class);
     }
 
     public static ResourceManagerLocal getResourceManager() {
