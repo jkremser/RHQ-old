@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<dbsetup name="inventory-schema.xml"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="urn:xmlns:rhq-dbsetup-schema">
+
+	<table name="RHQ_REL_DEF">
+		<column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+		<column name="PLUGIN" type="VARCHAR2" size="100" required="true"/>
+		<column name="NAME" type="VARCHAR2" size="255" required="true" />
+		<column name="CARDINALITY" type="INTEGER" required="true"/>
+		<column name="SOURCE_TYPE_ID" type="INTEGER" references="RHQ_RESOURCE_TYPE" />
+		<column name="TARGET_TYPE_ID" type="INTEGER" references="RHQ_RESOURCE_TYPE" />
+		<column name="SOURCE_CONSTRAINT" type="INTEGER" required="true" />
+		<column name="TYPE" type="VARCHAR2" size="50" required="true"/>
+		<column name="USER_EDITABLE" type="BOOLEAN" required="true"/>
+		
+		<index name="RHQ_REL_DEF_NAME" unique="true">
+            <field ref="NAME"/>
+        </index>
+	</table>
+	
+	<table name="RHQ_REL_ASSIGN">
+		<column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+		<column name="RELATIONSHIP_DEFINITION_ID" type="INTEGER" references="RHQ_REL_DEF" required="true"/>
+		<column name="SOURCE_RESOURCE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE" />
+		<column name="TARGET_RESOURCE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE" />
+        <column name="CTIME" type="LONG"/>
+        <column name="MTIME" type="LONG"/>
+		<index name="RHQ_REL_ASSIGN_DEF_SOURCE_TARGET" unique="true">
+            <field ref="RELATIONSHIP_DEFINITION_ID"/>
+			<field ref="SOURCE_RESOURCE_ID"/>
+			<field ref="TARGET_RESOURCE_ID"/>
+        </index>
+	</table>
+	
+	<table name="RHQ_REL_HISTORY">
+		<column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+		<column name="RELATIONSHIP_DEFINITION_ID" type="INTEGER" references="RHQ_REL_DEF" required="true"/>
+		<column name="SOURCE_RESOURCE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE"/>
+		<column name="TARGET_RESOURCE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE"/>
+        <column name="START_TIME" type="LONG"/>
+        <column name="END_TIME" type="LONG"/>
+	</table>
+	
+</dbsetup>
