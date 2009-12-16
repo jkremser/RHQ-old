@@ -24,9 +24,14 @@
 package org.rhq.plugins.altlang;
 
 import org.apache.commons.io.FileUtils;
+import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
+import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.plugin.PluginFinder;
+import org.rhq.core.pc.plugin.PluginManager;
 import org.testng.annotations.BeforeSuite;
 
 import java.io.File;
@@ -38,6 +43,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
 public abstract class AltLangComponentTest {
@@ -92,6 +98,31 @@ public abstract class AltLangComponentTest {
 
     protected static File getTestDir() {
         return new File(System.getProperty("java.io.tmpdir"), "altlang");
+    }
+
+    protected Resource findResourceInInventory(String resourceTypeName) {
+        InventoryManager inventoryMgr = PluginContainer.getInstance().getInventoryManager();
+        ResourceType resourceType = getResourceType(resourceTypeName, "AltLangTest");
+        Set<Resource> resources = inventoryMgr.getResourcesWithType(resourceType);
+
+        for (Resource resource : resources) {
+            if (resource.getName().equals(resourceTypeName)) {
+                return resource;
+            }
+        }
+
+        return null;
+    }
+
+    protected ResourceType getResourceType(String resourceTypeName, String pluginName) {
+        PluginManager pluginManager = PluginContainer.getInstance().getPluginManager();
+        PluginMetadataManager pluginMetadataManager = pluginManager.getMetadataManager();
+        return pluginMetadataManager.getType(resourceTypeName, pluginName);
+    }
+
+    protected void executeServerScanImmediately() {
+        InventoryManager inventoryMgr = PluginContainer.getInstance().getInventoryManager();
+        inventoryMgr.executeServerScanImmediately();
     }
 
     static class M2RepoPluginFinder implements PluginFinder {

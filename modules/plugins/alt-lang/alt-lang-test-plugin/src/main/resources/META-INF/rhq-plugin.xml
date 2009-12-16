@@ -34,4 +34,29 @@
 
         </plugin-configuration>
     </server>
+
+    <server name="JavaScriptServer"
+            discovery="org.rhq.plugins.altlang.AltLangDiscoveryComponent"
+            class="org.rhq.plugins.altlang.AltLangComponent"
+            classLoader="shared">
+        <plugin-configuration>
+            <c:simple-property name="scriptsDirectory"
+                               displayName="Scripts Directory"
+                               default="/org/rhq/plugins/altlang/test/javascriptserver"
+                               description="The directory on the classpath in which scripts can be found. This can be
+                                            in a JAR file or in an exploded format on the file system. It defaults to
+                                            the package as specifified in the package attribute in the top-level
+                                            plugin element of the descriptor."/>
+            <c:simple-property name="lang"
+                               displayName="Language"
+                               required="true"
+                               default="javascript"
+                               description="The language in which the scripts are written. More importantly, this
+                                            determines which script engine to load."/>
+            <c:simple-property name="scriptExtension"
+                               displayName="Script File Name Extension"
+                               default="js"/>
+
+        </plugin-configuration>
+    </server>
 </plugin>
