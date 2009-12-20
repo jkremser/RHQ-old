@@ -1,0 +1,27 @@
+<plugin name="TestRelPlugin" displayName="Test One" package="org.rhq.plugins.test1"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+        
+	<relationships>
+		<relationship name="GroupToHost" cardinality="one:many" userEditable="true" type="ASSOCIATION" sourceConstraint="NONE">
+			<source type="Virtual Host Group" unique="false"/>
+    		<target type="Virtual Host"/>
+		</relationship>
+	</relationships>
+	
+	
+	<!-- Virtual Host Group -->
+	<server name="Virtual Host Group"
+		description="A group of hosts"
+		class="VirtualizationComponent">
+	</server>
+	
+	
+	<!-- Virtual Host Group -->
+	<server name="Virtual Guest"
+		description="A guest"
+		class="VirtualizationComponent">
+	</server>
+</plugin>

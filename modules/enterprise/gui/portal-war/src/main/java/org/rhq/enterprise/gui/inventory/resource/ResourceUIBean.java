@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.criteria.ResourceRelAssignCriteria;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
@@ -37,6 +38,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceAvailabilitySummary;
 import org.rhq.core.domain.resource.composite.ResourceFacets;
 import org.rhq.core.domain.resource.composite.ResourcePermission;
+import org.rhq.core.domain.resource.relationship.ResourceRelAssign;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
@@ -44,6 +46,7 @@ import org.rhq.enterprise.server.perspective.PerspectiveManagerLocal;
 import org.rhq.enterprise.server.perspective.Tab;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
+import org.rhq.enterprise.server.resource.relationship.ResourceRelManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -73,6 +76,7 @@ public class ResourceUIBean {
     private ResourceTypeManagerLocal resourceTypeManager = LookupUtil.getResourceTypeManager();
     private AuthorizationManagerLocal authorizationManager = LookupUtil.getAuthorizationManager();
     private PerspectiveManagerLocal perspectiveManager = LookupUtil.getPerspectiveManager();
+    private ResourceRelManagerLocal resourceRelManagerManager = LookupUtil.getResourceRelManager();
 
     private String message;
 
@@ -202,6 +206,13 @@ public class ResourceUIBean {
                 getId());
         }
         return availabilitySummary;
+    }
+
+    public Set<ResourceRelAssign> getRelationTargetResources() {
+        ResourceRelAssignCriteria crit = new ResourceRelAssignCriteria();
+        crit.addFilterSourceResourceId(resource.getId());
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
+        return resourceRelManagerManager.findRelationshipsByCriteria(subject, crit);
     }
 
     public boolean isCanShowParent() {

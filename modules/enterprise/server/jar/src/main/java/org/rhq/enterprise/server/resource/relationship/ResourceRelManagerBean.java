@@ -213,17 +213,24 @@ public class ResourceRelManagerBean implements ResourceRelManagerLocal {
         ResourceRelDefinition currentRelDef = entityManager.find(ResourceRelDefinition.class, relationshipDefinition
             .getId());
 
+        if (currentRelDef == null) {
+            throw new ResourceRelChangeableException("Relationship Definition [" + relationshipDefinition.getId() + ":"
+                + relationshipDefinition.getName() + "]' could not be found in repository.");
+        }
+
         if (currentRelDef.getId() != relationshipDefinition.getId())
             throw new ResourceRelChangeableException("Id field of ResourceRelDefinition is not changeable");
 
         if (!currentRelDef.getPlugin().equals(relationshipDefinition.getPlugin()))
             throw new ResourceRelChangeableException("Plugin field of ResourceRelDefinition is not changeable");
 
+        /*
         if (currentRelDef.getSourceResourceType().getId() != relationshipDefinition.getSourceResourceType().getId())
             throw new ResourceRelChangeableException("Source Type field of ResourceRelDefinition is not changeable");
 
         if (currentRelDef.getTargetResourceType().getId() != relationshipDefinition.getTargetResourceType().getId())
             throw new ResourceRelChangeableException("Target Type field of ResourceRelDefinition is not changeable");
+        */
 
         //if changing the cardinality from many-many to any or from one-many to one-one then all the assignment will be deleted
         if ((currentRelDef.getCardinality() == RelationshipCardinality.MANY_TO_MANY && relationshipDefinition
@@ -240,7 +247,9 @@ public class ResourceRelManagerBean implements ResourceRelManagerLocal {
             }
         }
 
-        entityManager.merge(relationshipDefinition);
+        //perform copy of the allowed properties
+        currentRelDef.updateAllowedProperties(relationshipDefinition);
+        entityManager.merge(currentRelDef);
     }
 
     public void removeRelationshipDefinition(Subject user, ResourceRelDefinition relationshipDefinition) {

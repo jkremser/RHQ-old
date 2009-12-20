@@ -48,6 +48,7 @@ import org.rhq.core.clientapi.descriptor.plugin.RunsInsideType;
 import org.rhq.core.clientapi.descriptor.plugin.ServerDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.ServiceDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.SubCategoryDescriptor;
+import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor.Relationships.Relationship;
 import org.rhq.core.domain.event.EventDefinition;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.resource.ClassLoaderType;
@@ -57,6 +58,7 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceCreationDataType;
 import org.rhq.core.domain.resource.ResourceSubCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.relationship.ResourceRelDefinition;
 
 /**
  * This is a stateful class intended to hold the related metadata for a single plugin descriptor. It is designed to be
@@ -73,6 +75,8 @@ public class PluginMetadataParser {
     private List<ResourceType> resourceTypes = new ArrayList<ResourceType>();
 
     private LinkedHashSet<ResourceType> rootResourceTypes = new LinkedHashSet<ResourceType>();
+
+    private List<ResourceRelDefinition> resourceRelationshiDefinitions = new ArrayList<ResourceRelDefinition>();
 
     // TODO: this isn't the most elegant... should we put these in the domain objects? or perhaps build another place for them to live?
     private Map<ResourceType, String> discoveryClasses = new HashMap<ResourceType, String>();
@@ -98,6 +102,10 @@ public class PluginMetadataParser {
 
     public List<ResourceType> getAllTypes() {
         return new ArrayList<ResourceType>(resourceTypes);
+    }
+
+    public List<ResourceRelDefinition> getAllResourceRelDefinitions() {
+        return new ArrayList<ResourceRelDefinition>(resourceRelationshiDefinitions);
     }
 
     /**
@@ -134,7 +142,51 @@ public class PluginMetadataParser {
             }
         }
 
+        if (pluginDescriptor.getRelationshipDescriptor() != null) {
+            ResourceRelDefinition relDef = null;
+            for (Relationship currRel : pluginDescriptor.getRelationshipDescriptor().getRelationships()) {
+                relDef = parseRelationshipDefinition(pluginDescriptor.getName(), currRel);
+
+                if (relDef != null) {
+                    resourceRelationshiDefinitions.add(relDef);
+                } else {
+                    LOG.warn("Couldnt parse relationship definition '" + currRel.getName() + "' as a part of plugin '"
+                        + pluginDescriptor.getName() + "'");
+                }
+            }
+        }
+
         return;
+    }
+
+    public ResourceRelDefinition parseRelationshipDefinition(String pluginName, Relationship relationship)
+        throws InvalidPluginDescriptorException {
+        ResourceRelDefinition relDef = new ResourceRelDefinition();
+        relDef.setName(relationship.getName());
+        relDef.setPlugin(pluginName);
+        relDef.setCardinality(relDef.getCardinality(relationship.getCardinality()));
+        relDef.setType(relDef.getRelationshipType(relationship.getType()));
+        relDef.setUserEditable(relationship.isUserEditable());
+        relDef.setSourceConstraint(relDef.getRelationshipConstraint(relationship.getSourceConstraint()));
+
+        ResourceType rtSource = getResourceTypeFromPlugin(relationship.getSource().getType(), pluginName);
+        ResourceType rtTarget = getResourceTypeFromPlugin(relationship.getTarget().getType(), pluginName);
+
+        if (rtSource == null) {
+            LOG.warn("Could not find source relationship with name '" + relationship.getSource().getType()
+                + "', skipping relationship definition.");
+            return null;
+        }
+        if (rtTarget == null) {
+            LOG.warn("Could not find target relationship with name '" + relationship.getTarget().getType()
+                + "', skipping relationship definition.");
+            return null;
+        }
+
+        relDef.setSourceResourceType(rtSource);
+        relDef.setTargetResourceType(rtTarget);
+
+        return relDef;
     }
 
     private ResourceType parsePlatformDescriptor(PlatformDescriptor platformDescriptor)
@@ -433,6 +485,7 @@ public class PluginMetadataParser {
         // 7) Process matches (for process scan auto-discovery)
         // 8) Artifacts
         // 9) Child subcategories
+        // 10) Resource relationships
 
         String classLoaderTypeString = resourceDescriptor.getClassLoader();
         if (classLoaderTypeString == null) {

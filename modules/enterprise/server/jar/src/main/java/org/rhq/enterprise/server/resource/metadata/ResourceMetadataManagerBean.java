@@ -62,6 +62,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceSubCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.relationship.ResourceRelDefinition;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
@@ -71,6 +72,7 @@ import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.resource.relationship.ResourceRelManagerLocal;
 
 /**
  * This class manages the metadata for resources. Plugins are registered against this bean so that their metadata can be
@@ -105,6 +107,8 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
     private ResourceManagerLocal resourceManager;
     @EJB
     private EventManagerLocal eventManager;
+    @EJB
+    private ResourceRelManagerLocal resourceRelManager;
 
     /**
      * Returns the information on the given plugin as found in the database.
@@ -181,6 +185,11 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
             if (newOrUpdated || forceUpdate) {
                 // Only merge the plugin's ResourceTypes into the DB if the plugin is new or updated or we were forced to
                 updateTypes(plugin.getName(), rootResourceTypes);
+            }
+
+            Set<ResourceRelDefinition> allResourceRelDefsForPlugin = PLUGIN_METADATA_MANAGER.getAllResourceRelDefs();
+            for (ResourceRelDefinition currResRelDef : allResourceRelDefsForPlugin) {
+                updateResourceRelationship(plugin.getName(), currResRelDef);
             }
         }
 
@@ -488,6 +497,59 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         } catch (NonUniqueResultException nure) {
             log.debug("Found more than one existing ResourceType for " + resourceType);
             throw new IllegalStateException(nure);
+        }
+    }
+
+    private void updateResourceRelationship(String pluginName, ResourceRelDefinition rrd) {
+        entityManager.flush();
+
+        // see if there is already an existing resource relationship definition that we need to update
+        log.debug("Updating relationship definition name [" + rrd.getName() + "] from plugin [" + rrd.getPlugin()
+            + "]...");
+
+        log.debug("Checking if relationship definition named is new or exists already");
+        Query q = entityManager.createNamedQuery(ResourceRelDefinition.QUERY_FIND_BY_NAME);
+        q.setParameter("name", rrd.getName());
+        List<ResourceRelDefinition> foundResRelDefsByName = q.getResultList();
+
+        //Reload managed instance of the source/target resource types
+        Query resTypeQuery = entityManager.createNamedQuery(ResourceType.QUERY_FIND_BY_NAME_AND_PLUGIN);
+        resTypeQuery.setParameter("name", rrd.getSourceResourceType().getName()).setParameter("plugin", pluginName);
+        List<ResourceType> sourceResTypeResults = resTypeQuery.getResultList();
+
+        ResourceType existingSourceType = null;
+        if (sourceResTypeResults.size() == 1) {
+            existingSourceType = sourceResTypeResults.get(0);
+        } else {
+            log.warn("Could not find source resource type!");
+            return;
+        }
+
+        resTypeQuery.setParameter("name", rrd.getTargetResourceType().getName()).setParameter("plugin", pluginName);
+        List<ResourceType> targetResTypeResults = resTypeQuery.getResultList();
+        ResourceType existingTargetType = null;
+        if (targetResTypeResults.size() == 1) {
+            existingTargetType = targetResTypeResults.get(0);
+        } else {
+            log.warn("Could not find target resource type!");
+            return;
+        }
+        rrd.setSourceResourceType(existingSourceType);
+        rrd.setTargetResourceType(existingTargetType);
+
+        ResourceRelDefinition existingResRelDef = null;
+        if (foundResRelDefsByName.size() == 1) {
+            log.debug("Relationship exists, performing relationship definition update... [" + pluginName + "]");
+            existingResRelDef = foundResRelDefsByName.get(0);
+
+            rrd.setId(existingResRelDef.getId());
+            //Perform update
+            resourceRelManager.modifyRelationshipDefinition(null, rrd);
+        } else {
+            //Persist a new relationship
+
+            log.info("Relationship does not exist, persisting a new relationship definition...");
+            resourceRelManager.addRelationshipDefinition(null, rrd);
         }
     }
 

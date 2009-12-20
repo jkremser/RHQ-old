@@ -35,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.relationship.ResourceRelDefinition;
 
 /**
  * This is meant to provide an interface to the underlying metadata of a plugin. It will load, translate and cache the
@@ -51,7 +52,9 @@ public class PluginMetadataManager {
 
     private Map<ResourceCategory, LinkedHashSet<ResourceType>> typesByCategory = new HashMap<ResourceCategory, LinkedHashSet<ResourceType>>();
     private Set<ResourceType> types = new HashSet<ResourceType>();
+    private Set<ResourceRelDefinition> resourceRelationshipDefs = new HashSet<ResourceRelDefinition>();
     private Object typesLock = new Object();
+    private Object resRelDefLock = new Object();
 
     private Map<String, PluginMetadataParser> parsersByPlugin = new HashMap<String, PluginMetadataParser>();
 
@@ -68,6 +71,12 @@ public class PluginMetadataManager {
 
             typesByCategory.get(category).add(type);
             types.add(type);
+        }
+    }
+
+    private void addResRelationshipDef(ResourceRelDefinition rrd) {
+        synchronized (resRelDefLock) {
+            resourceRelationshipDefs.add(rrd);
         }
     }
 
@@ -117,6 +126,12 @@ public class PluginMetadataManager {
                         this.types.remove(oldType);
                     }
                 }
+
+                synchronized (this.resRelDefLock) {
+                    for (ResourceRelDefinition oldResRelDef : oldParser.getAllResourceRelDefinitions()) {
+                        this.resourceRelationshipDefs.remove(oldResRelDef);
+                    }
+                }
             }
 
             this.parsersByPlugin.put(pluginDescriptor.getName(), parser);
@@ -128,6 +143,17 @@ public class PluginMetadataManager {
                             + "] is duplicate for this plugin. This is illegal.");
                     }
                     addType(resourceType);
+                }
+            }
+
+            synchronized (this.resourceRelationshipDefs) {
+                for (ResourceRelDefinition relDef : parser.getAllResourceRelDefinitions()) {
+                    if (resourceRelationshipDefs.contains(relDef)) {
+                        throw new InvalidPluginDescriptorException("Relationship [" + relDef.getName()
+                            + "] is duplicate for this plugin. This is illegal.");
+                    }
+
+                    addResRelationshipDef(relDef);
                 }
             }
 
@@ -194,6 +220,12 @@ public class PluginMetadataManager {
     public Set<ResourceType> getAllTypes() {
         synchronized (this.typesLock) {
             return new HashSet<ResourceType>(types);
+        }
+    }
+
+    public Set<ResourceRelDefinition> getAllResourceRelDefs() {
+        synchronized (this.resRelDefLock) {
+            return new HashSet<ResourceRelDefinition>(resourceRelationshipDefs);
         }
     }
 

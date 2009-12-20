@@ -36,6 +36,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
+import javax.persistence.QueryHint;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.xml.bind.annotation.XmlAccessType;
@@ -48,10 +49,15 @@ import org.rhq.core.domain.resource.ResourceType;
  * @author Noam Malki
  */
 @Entity
-@NamedQueries( { @NamedQuery(name = ResourceRelDefinition.QUERY_FIND_RELATIONSHIP_DEF_BY_NAME, query = "" //
-    + "  SELECT DISTINCT definition" //
-    + "  FROM ResourceRelDefinition definition"//
-    + "  WHERE definition.name = :name") })
+@NamedQueries( {
+    @NamedQuery(name = ResourceRelDefinition.QUERY_FIND_RELATIONSHIP_DEF_BY_NAME, query = "" //
+        + "  SELECT DISTINCT definition" //
+        + "  FROM ResourceRelDefinition definition"//
+        + "  WHERE definition.name = :name"),
+
+    @NamedQuery(name = ResourceRelDefinition.QUERY_FIND_BY_NAME, // TODO: QUERY: names are case-sensitive
+    hints = { @QueryHint(name = "org.hibernate.cacheable", value = "true"),
+        @QueryHint(name = "org.hibernate.cacheRegion", value = "metadata") }, query = "SELECT def FROM ResourceRelDefinition def  WHERE LOWER(def.name) = LOWER(:name)") })
 @Table(name = ResourceRelDefinition.TABLE_NAME)
 @SequenceGenerator(name = "idGenerator", sequenceName = "RHQ_REL_DEF_ID_SEQ")
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -59,8 +65,8 @@ public class ResourceRelDefinition implements Serializable {
     private static final long serialVersionUID = 1L;
 
     public static final String TABLE_NAME = "RHQ_REL_DEF";
-
     public static final String QUERY_FIND_RELATIONSHIP_DEF_BY_NAME = "ResourceRelDefinition.findRelationshipDefinitionByName";
+    public static final String QUERY_FIND_BY_NAME = "ResourceRelDefinition.findByNameAndPlugin";
 
     @Column(name = "ID", nullable = false)
     @Id
@@ -168,4 +174,23 @@ public class ResourceRelDefinition implements Serializable {
         this.userEditable = userEditable;
     }
 
+    public RelationshipCardinality getCardinality(String pluginCardinalityStructure) {
+        pluginCardinalityStructure = pluginCardinalityStructure.replace(":", "_TO_");
+        return RelationshipCardinality.valueOf(pluginCardinalityStructure.toUpperCase());
+    }
+
+    public RelationshipType getRelationshipType(String type) {
+        return RelationshipType.valueOf(type.toUpperCase());
+    }
+
+    public RelationshipConstraint getRelationshipConstraint(String sourceConstraint) {
+        return RelationshipConstraint.valueOf(sourceConstraint);
+    }
+
+    public void updateAllowedProperties(ResourceRelDefinition resRelDef) {
+        setCardinality(resRelDef.getCardinality());
+        setSourceConstraint(resRelDef.getSourceConstraint());
+        setType(resRelDef.getType());
+        setUserEditable(resRelDef.isUserEditable());
+    }
 }

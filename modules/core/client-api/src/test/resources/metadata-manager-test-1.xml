@@ -3,6 +3,13 @@
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
 
+   <relationships>
+		<relationship name="ServiceBDependsOnServerA" cardinality="one:many" userEditable="true" type="DEPENDENCY" sourceConstraint="NONE">
+			<source type="Service B" unique="false"/>
+    		<target type="Server A"/>
+		</relationship>
+	</relationships>
+
    <server name="Server A" discovery="ServerAComponent" class="ServerAServerComponent"
            description="Server A Test Server">
       <plugin-configuration>

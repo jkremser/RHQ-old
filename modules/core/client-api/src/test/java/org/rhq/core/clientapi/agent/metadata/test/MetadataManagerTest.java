@@ -25,11 +25,14 @@ package org.rhq.core.clientapi.agent.metadata.test;
 import java.net.URL;
 import java.util.Map;
 import java.util.Set;
+
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.util.ValidationEventCollector;
+
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 import org.rhq.core.clientapi.descriptor.DescriptorPackages;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
@@ -41,6 +44,7 @@ import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.configuration.definition.constraint.RegexConstraint;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.relationship.ResourceRelDefinition;
 
 /**
  * Test the management and loading of plugin metadata.
@@ -86,6 +90,11 @@ public class MetadataManagerTest {
         Set<ResourceType> allTypes = metadataManager.getRootTypes();
         for (ResourceType type : allTypes) {
             outputType(type, 0);
+        }
+
+        Set<ResourceRelDefinition> allRelDefs = metadataManager.getAllResourceRelDefs();
+        for (ResourceRelDefinition rrd : allRelDefs) {
+            outputRelDef(rrd);
         }
     }
 
@@ -258,5 +267,13 @@ public class MetadataManagerTest {
         for (ResourceType child : type.getChildResourceTypes()) {
             outputType(child, depth + 1);
         }
+    }
+
+    private void outputRelDef(ResourceRelDefinition rrd) {
+        System.out.println("Resource Relationship Definition: name [" + rrd.getName() + "], type [" + rrd.getType()
+            + "], cardinality: [" + rrd.getCardinality() + "], plugin: [" + rrd.getPlugin() + "], source constraint: ["
+            + rrd.getSourceConstraint() + "]");
+        System.out.println("\tSource: type '" + rrd.getSourceResourceType().getName() + "'");
+        System.out.println("\tTarget: type '" + rrd.getTargetResourceType().getName() + "'");
     }
 }
