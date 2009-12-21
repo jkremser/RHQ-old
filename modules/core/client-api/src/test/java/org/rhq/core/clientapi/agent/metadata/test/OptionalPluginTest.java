@@ -49,6 +49,7 @@ import org.rhq.core.domain.resource.ResourceType;
 @Test
 public class OptionalPluginTest {
     private static final String DESCRIPTOR = "test-optional-plugins.xml";
+    private static final String RELATIONSHIP_DESCRIPTOR = "test-optional-resource-relationships.xml";
 
     private PluginMetadataManager metadataManager;
 
@@ -63,6 +64,15 @@ public class OptionalPluginTest {
             t.printStackTrace();
             throw new RuntimeException(t);
         }
+    }
+
+    public void loadRelationshipsPluginDescriptor() throws Exception {
+        PluginDescriptor descriptor = loadPluginDescriptor(RELATIONSHIP_DESCRIPTOR);
+        outputAllTypes();
+
+        PluginDependencyGraph graph = new PluginDependencyGraph();
+        AgentPluginDescriptorUtil.addPluginToDependencyGraph(graph, descriptor);
+        assert graph.isComplete(null);
     }
 
     public void loadPluginDescriptors() throws Exception {

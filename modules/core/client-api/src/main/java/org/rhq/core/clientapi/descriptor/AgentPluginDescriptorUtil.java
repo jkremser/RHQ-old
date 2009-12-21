@@ -55,6 +55,9 @@ import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.RunsInsideType;
 import org.rhq.core.clientapi.descriptor.plugin.ServerDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.ServiceDescriptor;
+import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor.Relationships;
+import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor.Relationships.Relationship;
+import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor.Relationships.Relationship.Source;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.util.exception.WrappedRemotingException;
 
@@ -208,6 +211,19 @@ public abstract class AgentPluginDescriptorUtil {
         }
         for (ServiceDescriptor service : services) {
             addOptionalDependency(service, dependencies);
+        }
+
+        Relationships relationshipDescriptor = descriptor.getRelationshipDescriptor();
+        if (relationshipDescriptor != null) {
+            List<Relationship> relationships = relationshipDescriptor.getRelationships();
+            if (relationships != null && !relationships.isEmpty()) {
+                for (Relationship relationship : relationships) {
+                    Source source = relationship.getSource();
+                    if (source != null && source.getPlugin() != null) {
+                        addOptionalDependency(source.getPlugin(), dependencies);
+                    }
+                }
+            }
         }
 
         dependencyGraph.addPlugin(pluginName, dependencies);
