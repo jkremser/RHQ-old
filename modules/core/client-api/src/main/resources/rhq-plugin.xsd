@@ -58,84 +58,78 @@
             </xs:element>
 
 
-	    <xs:element name="relationships" minOccurs="0" maxOccurs="1">
-				<xs:annotation>
-					<xs:documentation>
-                    	A parent element which contains child relationship definition elements
-					</xs:documentation>
-					<xs:appinfo>
-						<jaxb:property name="RelationshipDescriptor" />
-					</xs:appinfo>
-				</xs:annotation>
-				<xs:complexType>
-					<xs:sequence>
-						<xs:element name="relationship" maxOccurs="unbounded">
-							<xs:annotation>
-								<xs:appinfo>
-									<jaxb:property name = "relationships" />
-								</xs:appinfo>
-							</xs:annotation>
-							<xs:complexType>
-								<xs:sequence>
-									<xs:element name="source" minOccurs="0" maxOccurs="1">
-										<xs:complexType>
-											<xs:attribute name="type" use="required" type="xs:string">
-           									</xs:attribute>
-           									<xs:attribute name="plugin" use="optional" type="xs:string">
-           									</xs:attribute>
-           									<xs:attribute name="unique" use="required" type="xs:boolean">
-											</xs:attribute>
-										</xs:complexType>
-									</xs:element>
-									<xs:element name="target" minOccurs="0" maxOccurs="1">
-										<xs:complexType>
-											<xs:attribute name="type" use="required" type="xs:string">
-           									</xs:attribute>
-           								</xs:complexType>
-									</xs:element>
-           						</xs:sequence>
-           						<xs:attribute name="name" use="required" type="xs:string">
-               						<xs:annotation>
-               							<xs:documentation>
-                  							The name of the relationship. This should be unique across all plugins deployed in the system.
-               							</xs:documentation>
-            						</xs:annotation>
-           						</xs:attribute>
-           						<xs:attribute name="cardinality" use="required">
-           							<xs:simpleType>
-               							<xs:restriction base="xs:string">
-               								<xs:enumeration value="one:one"/>
-	                  						<xs:enumeration value="one:many"/>
-	                  						<xs:enumeration value="many:many"/>
-               							</xs:restriction>
-            						</xs:simpleType>
-           						</xs:attribute>
-           						<xs:attribute name="type" use="required">
-           							<xs:simpleType>
-               							<xs:restriction base="xs:string">
-               								<xs:enumeration value="DEPENDENCY"/>
-	                  						<xs:enumeration value="COMPOSITION"/>
-	                  						<xs:enumeration value="ASSOCIATION"/>
-	                  						<xs:enumeration value="GENERALIZATION"/>
-               							</xs:restriction>
-            						</xs:simpleType>
-           						</xs:attribute>
-           						<xs:attribute name="sourceConstraint" use="required">
-           							<xs:simpleType>
-               							<xs:restriction base="xs:string">
-	                  						<xs:enumeration value="CASCADE_DELETE"/>
-	                  						<xs:enumeration value="NONE"/>
-               							</xs:restriction>
-            						</xs:simpleType>
-           						</xs:attribute>
-           						<xs:attribute name="userEditable" use="required" type="xs:boolean">
-           						</xs:attribute>
-							</xs:complexType>
-						</xs:element>
-					</xs:sequence>
-				</xs:complexType>
-			</xs:element>
-
+            <xs:element name="relationships" minOccurs="0" maxOccurs="1">
+               <xs:annotation>
+                  <xs:documentation>
+                     A parent element which contains child relationship definition elements
+                  </xs:documentation>
+                  <xs:appinfo>
+                     <jaxb:property name="RelationshipDescriptor" />
+                  </xs:appinfo>
+               </xs:annotation>
+               <xs:complexType>
+                  <xs:sequence>
+                     <xs:element name="relationship" maxOccurs="unbounded">
+                        <xs:annotation>
+                           <xs:appinfo>
+                              <jaxb:property name = "relationships" />
+                           </xs:appinfo>
+                        </xs:annotation>
+                        <xs:complexType>
+                           <xs:sequence>
+                              <xs:element name="source" minOccurs="0" maxOccurs="1">
+                                 <xs:complexType>
+                                    <xs:attribute name="type" use="required" type="xs:string" />
+                                    <xs:attribute name="plugin" use="optional" type="xs:string" />
+                                    <xs:attribute name="unique" use="required" type="xs:boolean" />
+                                 </xs:complexType>
+                              </xs:element>
+                              <xs:element name="target" minOccurs="0" maxOccurs="1">
+                                 <xs:complexType>
+                                    <xs:attribute name="type" use="required" type="xs:string" />
+                                 </xs:complexType>
+                              </xs:element>
+                           </xs:sequence>
+                           <xs:attribute name="name" use="required" type="xs:string">
+                              <xs:annotation>
+                                 <xs:documentation>
+                                    The name of the relationship. This should be unique across all plugins deployed in the system.
+                                 </xs:documentation>
+                              </xs:annotation>
+                           </xs:attribute>
+                           <xs:attribute name="cardinality" use="required">
+                              <xs:simpleType>
+                                 <xs:restriction base="xs:string">
+                                    <xs:enumeration value="one:one"/>
+                                    <xs:enumeration value="one:many"/>
+                                    <xs:enumeration value="many:many"/>
+                                 </xs:restriction>
+                              </xs:simpleType>
+                           </xs:attribute>
+                           <xs:attribute name="type" use="required">
+                              <xs:simpleType>
+                                 <xs:restriction base="xs:string">
+                                    <xs:enumeration value="DEPENDENCY"/>
+                                    <xs:enumeration value="COMPOSITION"/>
+                                    <xs:enumeration value="ASSOCIATION"/>
+                                    <xs:enumeration value="GENERALIZATION"/>
+                                 </xs:restriction>
+                              </xs:simpleType>
+                           </xs:attribute>
+                           <xs:attribute name="sourceConstraint" use="required">
+                              <xs:simpleType>
+                                 <xs:restriction base="xs:string">
+                                    <xs:enumeration value="CASCADE_DELETE"/>
+                                    <xs:enumeration value="NONE"/>
+                                 </xs:restriction>
+                              </xs:simpleType>
+                           </xs:attribute>
+                           <xs:attribute name="userEditable" use="required" type="xs:boolean" />
+                        </xs:complexType>
+                     </xs:element>
+                  </xs:sequence>
+               </xs:complexType>
+            </xs:element>
 
             <!--<xs:element ref="rhq:help" minOccurs="0" maxOccurs="unbounded" />-->
 
@@ -242,7 +236,7 @@
       </xs:complexType>
    </xs:element>
 
-   <!-- == Measurement ==================================================-->
+   <!-- == Measurement ================================================== -->
    <xs:element name="metric">
       <xs:annotation>
          <xs:documentation>A declared value that can be monitored for changes over time. Metrics are divided into
@@ -295,7 +289,7 @@
          </xs:attribute>
          <xs:attribute name="category" default="performance">
             <xs:annotation>
-                
+
             </xs:annotation>
             <xs:simpleType>
                <xs:restriction base="xs:string">
@@ -337,7 +331,7 @@
                   This defines whether the measurement values that get collected
                   consistently increase over time or are dynamic and can "randomly"
                   be higher or lower than previous values. The system will by itself generate
-                  per minute metris for data with measurementType of 
+                  per minute metris for data with measurementType of
                   trendsup or trendsdown.
                </xs:documentation>
             </xs:annotation>
@@ -484,7 +478,7 @@
                   Time interval, in milliseconds, between discovery scans being performed for packages of this type.
                </xs:documentation>
             </xs:annotation>
-         </xs:attribute> 
+         </xs:attribute>
          <xs:attribute name="isCreationType" type="xs:boolean" use="optional" default="false">
             <xs:annotation>
                <xs:documentation>
@@ -541,7 +535,7 @@
                   </xs:documentation>
                </xs:annotation>
             </xs:element>
-            <!-- resource versions this operation applies to; if omitted, it applies to all versions-->
+            <!-- resource versions this operation applies to; if omitted, it applies to all versions -->
             <xs:element ref="rhq:version" minOccurs="0" />
          </xs:sequence>
 
@@ -562,7 +556,7 @@
    </xs:element>
 
    <!-- BASE RESOURCE -->
-   
+
    <xs:element name="resource" type="rhq:resource">
       <xs:annotation>
          <xs:documentation>Represents an item in the management inventory</xs:documentation>
@@ -683,7 +677,7 @@
       </xs:attribute>
       <xs:anyAttribute/>
    </xs:complexType>
-   
+
    <xs:simpleType name="resourceCreateDeletePolicy">
       <xs:restriction base="xs:string">
          <xs:enumeration value="neither"/>
@@ -1011,11 +1005,11 @@
                is omitted, the user will be required to specify values for the resource configuration defined by
                this resource type. Alternatively, if this attribute is set to "content", the user will be required
                to upload one or more files when creating a new resource of this type. Content such as this is indicated
-               by the isCreationType attribute on the package type. At least one package must be marked in this way 
+               by the isCreationType attribute on the package type. At least one package must be marked in this way
                if this attribute is set to "content".
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
    </xs:attributeGroup>
-   
+
 </xs:schema>
