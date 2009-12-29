@@ -28,40 +28,41 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
+import org.rhq.core.pluginapi.operation.OperationFacet;
+import org.rhq.core.pluginapi.operation.OperationResult;
 
 import javax.script.Bindings;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
+import java.util.HashMap;
+import java.util.Map;
 
-public class AltLangComponent extends AltLangAbstractComponent implements ResourceComponent {
+public class AltLangComponent extends AltLangAbstractComponent
+    implements ResourceComponent, OperationFacet {
 
     private ResourceContext resourceContext;
 
     public void start(ResourceContext resourceContext) throws InvalidPluginConfigurationException, Exception {
         this.resourceContext = resourceContext;
 
-        Action action = createAction("start");
+        Action action = createAction("resource_component", "start");
         ScriptMetadata metadata = resolveScript(resourceContext.getPluginConfiguration(), action);
 
         ScriptEngine scriptEngine = createScriptEngine(metadata);
-        setBindings(scriptEngine, action);
+        setBindings(scriptEngine, action, null);
 
         scriptEngine.eval(loadScript(metadata));
     }
 
     public void stop() {
         try {
-            Action action = createAction("stop");
+            Action action = createAction("resource_component", "stop");
             ScriptMetadata metadata = resolveScript(resourceContext.getPluginConfiguration(), action);
 
             ScriptEngine scriptEngine = createScriptEngine(metadata);
-            setBindings(scriptEngine, action);
+            setBindings(scriptEngine, action, null);
 
             scriptEngine.eval(loadScript(metadata));
         }
@@ -72,14 +73,13 @@ public class AltLangComponent extends AltLangAbstractComponent implements Resour
 
     public AvailabilityType getAvailability() {
         try {
-            Action action = createAction("get_availability");
+            Action action = createAction("resource_component", "get_availability");
             ScriptMetadata metadata = resolveScript(resourceContext.getPluginConfiguration(), action);
 
             ScriptEngine scriptEngine = createScriptEngine(metadata);
-            setBindings(scriptEngine, action);
+            setBindings(scriptEngine, action, null);
 
             AvailabilityType availabilityType = (AvailabilityType) scriptEngine.eval(loadScript(metadata));
-
             return availabilityType;
         }
         catch (ScriptException e) {
@@ -87,8 +87,26 @@ public class AltLangComponent extends AltLangAbstractComponent implements Resour
         }        
     }
 
-    private Action createAction(String action) {
-        return new Action("resource_component", action, resourceContext.getResourceType());
+    public OperationResult invokeOperation(String name, Configuration parameters)
+        throws InterruptedException, Exception {
+
+        Action action = createAction("operations", name);
+        ScriptMetadata metadata = resolveScript(resourceContext.getPluginConfiguration(), action);
+
+        ScriptEngine scriptEngine = createScriptEngine(metadata);
+
+        Map<String, Object> vars = new HashMap<String, Object>();
+        vars.put("operation", name);
+        vars.put("parameters", parameters);
+
+        setBindings(scriptEngine, action, vars);
+
+        OperationResult result = (OperationResult) scriptEngine.eval(loadScript(metadata));
+        return result;
+    }
+
+    private Action createAction(String actionType, String action) {
+        return new Action(actionType, action, resourceContext.getResourceType());
     }
 
     private ScriptEngine createScriptEngine(ScriptMetadata metadata) {
@@ -97,10 +115,17 @@ public class AltLangComponent extends AltLangAbstractComponent implements Resour
         return scriptEngine;
     }
 
-    private Bindings setBindings(ScriptEngine scriptEngine, Action action) {
+    private Bindings setBindings(ScriptEngine scriptEngine, Action action, Map<String, ?> vars) {
         Bindings bindings = scriptEngine.createBindings();
         bindings.put("resourceContext", resourceContext);
         bindings.put("action", action);
+
+        if (vars != null) {
+            for (Map.Entry<String, ?> entry : vars.entrySet()) {
+                bindings.put(entry.getKey(), entry.getValue());
+            }
+        }
+
         scriptEngine.setBindings(bindings, ScriptContext.ENGINE_SCOPE);
 
         return bindings;

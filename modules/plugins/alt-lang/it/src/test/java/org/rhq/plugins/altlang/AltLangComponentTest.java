@@ -25,13 +25,18 @@ package org.rhq.plugins.altlang;
 
 import org.apache.commons.io.FileUtils;
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.inventory.InventoryManager;
+import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.pc.plugin.PluginFinder;
 import org.rhq.core.pc.plugin.PluginManager;
+import org.rhq.core.pc.util.FacetLockType;
+import org.rhq.core.pluginapi.operation.OperationFacet;
+import org.rhq.core.pluginapi.operation.OperationResult;
 import org.testng.annotations.BeforeSuite;
 
 import java.io.File;
@@ -123,6 +128,16 @@ public abstract class AltLangComponentTest {
     protected void executeServerScanImmediately() {
         InventoryManager inventoryMgr = PluginContainer.getInstance().getInventoryManager();
         inventoryMgr.executeServerScanImmediately();
+    }
+
+    protected OperationResult invokeOperation(int resourceId, String name, Configuration parameters) throws Exception {
+        InventoryManager inventoryMgr = PluginContainer.getInstance().getInventoryManager();
+        ResourceContainer container = inventoryMgr.getResourceContainer(resourceId);
+
+        OperationFacet facet = container.createResourceComponentProxy(OperationFacet.class, FacetLockType.WRITE,
+            3000L, false, true);
+
+        return facet.invokeOperation(name, parameters);
     }
 
     static class M2RepoPluginFinder implements PluginFinder {

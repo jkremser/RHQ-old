@@ -23,11 +23,14 @@
 
 package org.rhq.plugins.altlang;
 
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.inventory.InventoryManager;
+import org.rhq.core.pluginapi.operation.OperationResult;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
@@ -68,6 +71,23 @@ public class JavaScriptComponentTest extends AltLangComponentTest {
             availability.getAvailabilityType(),
             AvailabilityType.UP,
             "Resource component script may not have been called. Expected resource to be available."
+        );
+    }
+
+    @Test(dependsOnMethods = {"verifyResourceComponentStarted"})
+    public void scriptShouldBeCalledToInvokeOperation() throws Exception {
+        PropertySimple msg = new PropertySimple("msg", "hello world");
+        Configuration params = new Configuration();
+        params.put(msg);
+
+        String operationName = "echo";
+
+        OperationResult result = invokeOperation(testServer.getId(), operationName, params);
+
+        assertEquals(
+            result.getSimpleResult(),
+            msg.getStringValue(),
+            "Operations script may not have been called. Got back the wrong results"
         );
     }
 

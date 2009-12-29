@@ -33,6 +33,15 @@
                                default="groovy"/>
 
         </plugin-configuration>
+
+        <operation name="echo">
+           <parameters>
+              <c:simple-property name="msg"/>
+           </parameters>
+           <results>
+              <c:simple-property name="output" type="string"/>
+           </results>
+        </operation>
     </server>
 
     <server name="JavaScriptServer"
@@ -58,5 +67,14 @@
                                default="js"/>
 
         </plugin-configuration>
+
+        <operation name="echo">
+           <parameters>
+              <c:simple-property name="msg"/>
+           </parameters>
+           <results>
+              <c:simple-property name="output" type="string"/>
+           </results>
+        </operation>
     </server>
 </plugin>
