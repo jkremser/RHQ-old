@@ -50,6 +50,16 @@ public class AltLangComponent extends AltLangAbstractComponent
         this.scriptExecutor = scriptExecutor;
     }
 
+    /**
+     * This is just a test hook for unit tests. The resourceContext field is initialized in the
+     * {@link #start(org.rhq.core.pluginapi.inventory.ResourceContext)} method.
+     * 
+     * @param resourceContext
+     */
+    void setResourceContext(ResourceContext resourceContext) {
+        this.resourceContext = resourceContext;
+    }
+
     public void start(ResourceContext resourceContext) throws InvalidPluginConfigurationException, Exception {
         this.resourceContext = resourceContext;
 
@@ -64,34 +74,27 @@ public class AltLangComponent extends AltLangAbstractComponent
     }
 
     public void stop() {
-        try {
-            Action action = createAction("resource_component", "stop");
-            ScriptMetadata metadata = resolveScript(resourceContext.getPluginConfiguration(), action);
+        Action action = createAction("resource_component", "stop");
+        ScriptMetadata metadata = resolveScript(resourceContext.getPluginConfiguration(), action);
 
-            ScriptEngine scriptEngine = createScriptEngine(metadata);
-            setBindings(scriptEngine, action, null);
+        Map<String, Object> bindings = new HashMap<String, Object>();
+        bindings.put("action", action);
+        bindings.put("resourceContext", resourceContext);
 
-            scriptEngine.eval(loadScript(metadata));
-        }
-        catch (ScriptException e) {
-            throw new RuntimeException(e);
-        }        
+        scriptExecutor.executeScript(metadata, bindings);
     }
 
     public AvailabilityType getAvailability() {
-        try {
-            Action action = createAction("resource_component", "get_availability");
-            ScriptMetadata metadata = resolveScript(resourceContext.getPluginConfiguration(), action);
+        Action action = createAction("resource_component", "get_availability");
+        ScriptMetadata metadata = resolveScript(resourceContext.getPluginConfiguration(), action);
 
-            ScriptEngine scriptEngine = createScriptEngine(metadata);
-            setBindings(scriptEngine, action, null);
+        Map<String, Object> bindings = new HashMap<String, Object>();
+        bindings.put("action", action);
+        bindings.put("resourceContext", resourceContext);
 
-            AvailabilityType availabilityType = (AvailabilityType) scriptEngine.eval(loadScript(metadata));
-            return availabilityType;
-        }
-        catch (ScriptException e) {
-            throw new RuntimeException(e);
-        }        
+        AvailabilityType availabilityType = scriptExecutor.executeScript(metadata, bindings);
+
+        return availabilityType;
     }
 
     public OperationResult invokeOperation(String name, Configuration parameters)

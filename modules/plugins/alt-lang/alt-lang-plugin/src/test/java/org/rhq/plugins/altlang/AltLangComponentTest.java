@@ -23,17 +23,20 @@
 
 package org.rhq.plugins.altlang;
 
+import static org.testng.Assert.*;
 import static org.hamcrest.core.AllOf.*;
 import static org.hamcrest.collection.IsMapContaining.*;
 
 import org.hamcrest.Matcher;
 import org.jmock.Expectations;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.test.JMockTest;
 import org.rhq.test.jmock.PropertyMatcher;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.HashMap;
@@ -41,27 +44,46 @@ import java.util.Map;
 
 public class AltLangComponentTest extends JMockTest {
 
-    @Test
-    public void testStart() throws Exception {
-        AltLangComponent component = new AltLangComponent();
+    AltLangComponent component;
 
-        final ResourceContext resourceContext = new FakeResourceContext(createResource());
+    ScriptResolverFactory scriptResolverFactory;
 
-        final ScriptResolverFactory scriptResolverFactory = context.mock(ScriptResolverFactory.class);
+    ScriptResolver scriptResolver;
+
+    ScriptExecutorService scriptExecutor;
+
+    ResourceContext resourceContext;
+
+    ScriptMetadata metadata;
+
+    Action action;
+
+    @BeforeMethod
+    public void setup() {
+        component = new AltLangComponent();
+
+        scriptResolverFactory = context.mock(ScriptResolverFactory.class);
         component.setScriptResolverFactory(scriptResolverFactory);
 
-        final ScriptResolver scriptResolver = context.mock(ScriptResolver.class);
+        scriptResolver = context.mock(ScriptResolver.class);
 
-        final ScriptExecutorService scriptExecutor = context.mock(ScriptExecutorService.class);
+        scriptExecutor = context.mock(ScriptExecutorService.class);
         component.setScriptExecutor(scriptExecutor);
 
-        final Action action = new Action("resource_component", "start", resourceContext.getResourceType());
+        resourceContext = new FakeResourceContext(createResource());
+
+        metadata = new ScriptMetadata();
+
+        action = null;
+    }
+
+    @Test
+    public void scriptToStartComponentShouldBeCalledWithCorrectBindings() throws Exception {
+        action = new Action("resource_component", "start", resourceContext.getResourceType());
 
         final Map<String, Object> bindings = new HashMap<String, Object>();
         bindings.put("resourceContext", resourceContext);
         bindings.put("action", action);
-
-        final ScriptMetadata metadata = new ScriptMetadata();
 
         context.checking(new Expectations() {{
             allowing(scriptResolverFactory).getScriptResolver(); will(returnValue(scriptResolver));
@@ -69,7 +91,11 @@ public class AltLangComponentTest extends JMockTest {
             atLeast(1).of(scriptResolver).resolveScript(with(resourceContext.getPluginConfiguration()),
                 with(matchingAction(action))); will(returnValue(metadata));
 
-            oneOf(scriptExecutor).executeScript(with(aNonNull(ScriptMetadata.class)),
+            // This expectation verifies that scriptExecutor is passes the correct arguments. First, it checks that
+            // the metadata argument matches and then it checks the bindings argument. The bindings argument is a map
+            // of objects to be bound as script variables. This expectation verifies that the minimum, required
+            // variables are bound.
+            oneOf(scriptExecutor).executeScript(with(matchingMetadata(metadata)),
                                                 with(allOf(hasEntry(equal("action"), matchingAction(action)),
                                                            hasEntry(equal("resourceContext"), same(resourceContext)))));
         }});
@@ -77,8 +103,76 @@ public class AltLangComponentTest extends JMockTest {
         component.start(resourceContext);
     }
 
+    @Test
+    public void scriptToStopComponentShouldBeCalledWithCorrectBindings() throws Exception {
+        component.setResourceContext(resourceContext);
+
+        action = new Action("resource_component", "stop", resourceContext.getResourceType());
+
+        final Map<String, Object> bindings = new HashMap<String, Object>();
+        bindings.put("resourceContext", resourceContext);
+        bindings.put("action", action);
+
+        context.checking(new Expectations() {{
+            allowing(scriptResolverFactory).getScriptResolver(); will(returnValue(scriptResolver));
+
+            atLeast(1).of(scriptResolver).resolveScript(with(resourceContext.getPluginConfiguration()),
+                with(matchingAction(action))); will(returnValue(metadata));
+
+            // This expectation verifies that scriptExecutor is passes the correct arguments. First, it checks that
+            // the metadata argument matches and then it checks the bindings argument. The bindings argument is a map
+            // of objects to be bound as script variables. This expectation verifies that the minimum, required
+            // variables are bound.
+            oneOf(scriptExecutor).executeScript(with(matchingMetadata(metadata)),
+                                                with(allOf(hasEntry(equal("action"), matchingAction(action)),
+                                                           hasEntry(equal("resourceContext"), same(resourceContext)))));
+        }});
+
+        component.stop();
+    }
+
+    @Test
+    public void scriptToCheckAvailabilityShouldBeCalledWithCorrectBindings() throws Exception {
+        component.setResourceContext(resourceContext);
+
+        action = new Action("resource_component", "get_availability", resourceContext.getResourceType());
+
+        final Map<String, Object> bindings = new HashMap<String, Object>();
+        bindings.put("resourceContext", resourceContext);
+        bindings.put("action", action);
+
+        context.checking(new Expectations() {{
+            allowing(scriptResolverFactory).getScriptResolver(); will(returnValue(scriptResolver));
+
+            atLeast(1).of(scriptResolver).resolveScript(with(resourceContext.getPluginConfiguration()),
+                with(matchingAction(action))); will(returnValue(metadata));
+
+            // This expectation verifies that scriptExecutor is passes the correct arguments. First, it checks that
+            // the metadata argument matches and then it checks the bindings argument. The bindings argument is a map
+            // of objects to be bound as script variables. This expectation verifies that the minimum, required
+            // variables are bound.
+            oneOf(scriptExecutor).executeScript(with(matchingMetadata(metadata)),
+                                                with(allOf(hasEntry(equal("action"), matchingAction(action)),
+                                                           hasEntry(equal("resourceContext"), same(resourceContext)))));
+            will(returnValue(AvailabilityType.UP));
+        }});
+
+        AvailabilityType expectedAvailability = AvailabilityType.UP;
+        AvailabilityType actualAvailability = component.getAvailability();
+
+        assertEquals(
+            actualAvailability,
+            expectedAvailability,
+            "Expected to get back the availability returned from the script"
+        );
+    }
+
     public static Matcher<Action> matchingAction(Action expected) {
         return new PropertyMatcher<Action>(expected);
+    }
+
+    public static Matcher<ScriptMetadata> matchingMetadata(ScriptMetadata expected) {
+        return new PropertyMatcher<ScriptMetadata>(expected);
     }
 
     private Resource createResource() {
