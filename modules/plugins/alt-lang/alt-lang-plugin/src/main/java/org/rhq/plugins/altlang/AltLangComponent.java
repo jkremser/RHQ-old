@@ -44,16 +44,23 @@ public class AltLangComponent extends AltLangAbstractComponent
 
     private ResourceContext resourceContext;
 
+    private ScriptExecutorService scriptExecutor = new ScriptExecutorServiceImpl();
+
+    void setScriptExecutor(ScriptExecutorService scriptExecutor) {
+        this.scriptExecutor = scriptExecutor;
+    }
+
     public void start(ResourceContext resourceContext) throws InvalidPluginConfigurationException, Exception {
         this.resourceContext = resourceContext;
 
         Action action = createAction("resource_component", "start");
         ScriptMetadata metadata = resolveScript(resourceContext.getPluginConfiguration(), action);
 
-        ScriptEngine scriptEngine = createScriptEngine(metadata);
-        setBindings(scriptEngine, action, null);
+        Map<String, Object> bindings = new HashMap<String, Object>();
+        bindings.put("action", action);
+        bindings.put("resourceContext", resourceContext);
 
-        scriptEngine.eval(loadScript(metadata));
+        scriptExecutor.executeScript(metadata, bindings);
     }
 
     public void stop() {

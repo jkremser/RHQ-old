@@ -23,51 +23,10 @@
 
 package org.rhq.plugins.altlang;
 
-import org.rhq.core.domain.resource.ResourceType;
+import java.util.Map;
 
-public class Action {
+public interface ScriptExecutorService {
 
-    private String type;
+    <T> T executeScript(ScriptMetadata scriptMetadata, Map<String, ?> scriptBindings);
 
-    private String name;
-
-    private ResourceType resourceType;
-
-    public Action() {
-    }
-
-    public Action(String type, String name, ResourceType resourceType) {
-        this.type = type;
-        this.name = name;
-        this.resourceType = resourceType;
-    }
-
-    public ResourceType getResourceType() {
-        return resourceType;
-    }
-
-    public void setResourceType(ResourceType resourceType) {
-        this.resourceType = resourceType;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    @Override
-    public String toString() {
-        return "Action[type=" + type + ", name=" + name + ", resourceType=" + resourceType + "]";
-    }
 }

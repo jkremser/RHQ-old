@@ -23,31 +23,44 @@
 
 package org.rhq.plugins.altlang;
 
-import org.rhq.core.domain.configuration.Configuration;
-
+import javax.script.Bindings;
+import javax.script.ScriptContext;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.Map;
 
-public abstract class AltLangAbstractComponent {
+public class ScriptExecutorServiceImpl implements ScriptExecutorService {
 
-    private ScriptResolverFactory scriptResolverFactory = new ScriptResolverFactoryImpl();
+    public <T> T executeScript(ScriptMetadata scriptMetadata, Map<String, ?> scriptBindings) {
+        ScriptEngineManager scriptEngineMrg = new ScriptEngineManager();
+        ScriptEngine scriptEngine = scriptEngineMrg.getEngineByName(scriptMetadata.getLang());
+        Bindings bindings = scriptEngine.createBindings();
 
-    public void setScriptResolverFactory(ScriptResolverFactory scriptResolverFactory) {
-        this.scriptResolverFactory = scriptResolverFactory;
+        setBindings(scriptBindings, scriptEngine, bindings);
+        Reader scriptReader = loadScript(scriptMetadata);
+
+        try {
+            return (T) scriptEngine.eval(scriptReader);
+        }
+        catch (ScriptException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    protected ScriptMetadata resolveScript(Configuration pluginConfiguration, Action action) {
-//        ScriptResolver resolver = new ScriptPerActionTypeResolver();
-        ScriptResolver resolver = scriptResolverFactory.getScriptResolver();
-        ScriptMetadata scriptMetadata = resolver.resolveScript(pluginConfiguration, action);
-
-        return scriptMetadata;
-    }
-
-    protected Reader loadScript(ScriptMetadata metadata) {
+    private Reader loadScript(ScriptMetadata metadata) {
         InputStream stream = getClass().getResourceAsStream(metadata.getScriptPath());
         return new InputStreamReader(stream);
+    }
+
+    private <T> void setBindings(Map<String, ?> scriptBindings, ScriptEngine scriptEngine, Bindings bindings) {
+        if (scriptBindings != null) {
+            bindings.putAll(scriptBindings);
+        }
+        scriptEngine.setBindings(bindings, ScriptContext.ENGINE_SCOPE);
     }
 
 }
