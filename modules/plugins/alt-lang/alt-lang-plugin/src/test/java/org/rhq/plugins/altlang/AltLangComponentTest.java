@@ -30,10 +30,13 @@ import static org.hamcrest.collection.IsMapContaining.*;
 import org.hamcrest.Matcher;
 import org.jmock.Expectations;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
+import org.rhq.core.pluginapi.operation.OperationFacet;
+import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.test.JMockTest;
 import org.rhq.test.jmock.PropertyMatcher;
 import org.testng.annotations.BeforeMethod;
@@ -73,6 +76,10 @@ public class AltLangComponentTest extends JMockTest {
         resourceContext = new FakeResourceContext(createResource());
 
         metadata = new ScriptMetadata();
+        metadata.setClasspathDirectory("/");
+        metadata.setExtension("js");
+        metadata.setLang("javascript");
+        metadata.setScriptName("altlang_test");
 
         action = null;
     }
@@ -167,6 +174,46 @@ public class AltLangComponentTest extends JMockTest {
         );
     }
 
+    @Test
+    public void scriptToInvokeOperationShouldBeCalledWithCorrectBindings() throws Exception {
+        component.setResourceContext(resourceContext);
+
+        String operationName = "testOp";
+
+        action = new Action("operations", operationName, resourceContext.getResourceType());
+
+        final Configuration parameters = new Configuration();
+        parameters.put(new PropertySimple("foo", "bar"));
+
+        final OperationResult expectedResult = new OperationResult();
+        expectedResult.setSimpleResult("testOp executed");
+
+        final Map<String, Object> bindings = new HashMap<String, Object>();
+        bindings.put("resourceContext", resourceContext);
+        bindings.put("action", action);
+
+        context.checking(new Expectations() {{
+            allowing(scriptResolverFactory).getScriptResolver(); will(returnValue(scriptResolver));
+
+            atLeast(1).of(scriptResolver).resolveScript(with(resourceContext.getPluginConfiguration()),
+                with(matchingAction(action))); will(returnValue(metadata));
+
+            // This expectation verifies that scriptExecutor is passes the correct arguments. First, it checks that
+            // the metadata argument matches and then it checks the bindings argument. The bindings argument is a map
+            // of objects to be bound as script variables. This expectation verifies that the minimum, required
+            // variables are bound.
+            oneOf(scriptExecutor).executeScript(with(matchingMetadata(metadata)),
+                                                with(allOf(hasEntry(equal("action"), matchingAction(action)),
+                                                           hasEntry(equal("resourceContext"), same(resourceContext)),
+                                                           hasEntry(equal("parameters"), equal(parameters)))));
+            will(returnValue(expectedResult));
+        }});
+
+        OperationResult actualResult = component.invokeOperation(operationName, parameters);
+
+        assertEquals(actualResult, expectedResult, "Expected to get back operation result from the executed script");
+    }
+
     public static Matcher<Action> matchingAction(Action expected) {
         return new PropertyMatcher<Action>(expected);
     }
@@ -183,10 +230,7 @@ public class AltLangComponentTest extends JMockTest {
         return resource;
     }
 
-    static class FakeResourceContext extends ResourceContext {
-        private Configuration pluginConfiguration;
-        private ResourceType resourceType;
-
+    static class FakeResourceContext extends ResourceContext {        
         public FakeResourceContext(Resource resource) {
             super(resource, null, null, null, null, null, null, null, null, null, null, null);
         }

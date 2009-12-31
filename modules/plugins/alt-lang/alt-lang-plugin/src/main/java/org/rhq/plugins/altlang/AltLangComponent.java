@@ -103,15 +103,13 @@ public class AltLangComponent extends AltLangAbstractComponent
         Action action = createAction("operations", name);
         ScriptMetadata metadata = resolveScript(resourceContext.getPluginConfiguration(), action);
 
-        ScriptEngine scriptEngine = createScriptEngine(metadata);
+        Map<String, Object> bindings = new HashMap<String, Object>();
+        bindings.put("action", action);
+        bindings.put("resourceContext", resourceContext);
+        bindings.put("parameters", parameters);
 
-        Map<String, Object> vars = new HashMap<String, Object>();
-        vars.put("operation", name);
-        vars.put("parameters", parameters);
+        OperationResult result = scriptExecutor.executeScript(metadata, bindings);
 
-        setBindings(scriptEngine, action, vars);
-
-        OperationResult result = (OperationResult) scriptEngine.eval(loadScript(metadata));
         return result;
     }
 
