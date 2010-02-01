@@ -84,6 +84,7 @@ import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.stream.StreamUtil;
@@ -132,6 +133,9 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
     @EJB
     private ResourceTypeManagerLocal resourceTypeManager;
+
+    @EJB
+    private ContentSourceManagerBean contentSourceManager;
 
     // ContentManagerLocal Implementation  --------------------------------------------
 
@@ -1229,6 +1233,125 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         newPackageVersion = persistOrMergePackageVersionSafely(newPackageVersion);
 
         existingPackage.addVersion(newPackageVersion);
+
+        return newPackageVersion;
+    }
+
+    public PackageVersion uploadPlatformPackageVersion(Subject subject, String packageName, int packageTypeId,
+        String version, Integer architectureId, String fileName, byte[] packageBytes, boolean dbmode) {
+
+        // Check permissions first
+        if (!authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_CONTENT)) {
+            throw new PermissionException("User [" + subject.getName()
+                + "] does not have permission to Upload Packages");
+        }
+
+        return uploadPlatformPackageVersion(packageName, packageTypeId, version,
+            (null == architectureId) ? getNoArchitecture().getId() : architectureId, fileName,
+            new ByteArrayInputStream(packageBytes), dbmode);
+    }
+
+    public PackageVersion uploadPlatformPackageVersion(String packageName, int packageTypeId, String version,
+        int architectureId, String fileName, InputStream packageBitStream, boolean dbmode) {
+        // See if the package version already exists and return that if it does
+        Query packageVersionQuery = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_VER_ARCH);
+        packageVersionQuery.setParameter("name", packageName);
+        packageVersionQuery.setParameter("packageTypeId", packageTypeId);
+        packageVersionQuery.setParameter("architectureId", architectureId);
+        packageVersionQuery.setParameter("version", version);
+
+        // Result of the query should be either 0 or 1
+        List existingVersionList = packageVersionQuery.getResultList();
+        if (existingVersionList.size() > 0) {
+            return (PackageVersion) existingVersionList.get(0);
+        }
+
+        // If the package doesn't exist, create that here
+        Query packageQuery = entityManager.createNamedQuery(Package.QUERY_FIND_BY_NAME_PKG_TYPE_ID);
+        packageQuery.setParameter("name", packageName);
+        packageQuery.setParameter("packageTypeId", packageTypeId);
+
+        Package existingPackage;
+
+        List existingPackageList = packageQuery.getResultList();
+
+        if (existingPackageList.size() == 0) {
+            PackageType packageType = entityManager.find(PackageType.class, packageTypeId);
+            existingPackage = new Package(packageName, packageType);
+            existingPackage = persistOrMergePackageSafely(existingPackage);
+        } else {
+            existingPackage = (Package) existingPackageList.get(0);
+        }
+
+        // Create a package version and add it to the package
+        Architecture architecture = entityManager.find(Architecture.class, architectureId);
+
+        PackageVersion newPackageVersion = new PackageVersion(existingPackage, version, architecture);
+        newPackageVersion.setDisplayName(existingPackage.getName());
+        // TODO: Add metadata info for each package
+        //newPackageVersion.setMetadata(metadata);
+        newPackageVersion.setFileName(fileName);
+        if (dbmode) {
+            // Write the content into the newly created package version. This may eventually move, but for now we'll just
+            // use the byte array in the package version to store the bits.
+            byte[] packageBits;
+            try {
+                packageBits = StreamUtil.slurp(packageBitStream);
+            } catch (RuntimeException re) {
+                throw new RuntimeException("Error reading in the package file", re);
+            }
+
+            PackageBits bits = new PackageBits();
+            bits.setBits(packageBits);
+
+            newPackageVersion.setPackageBits(bits);
+
+            newPackageVersion = persistOrMergePackageVersionSafely(newPackageVersion);
+
+            existingPackage.addVersion(newPackageVersion);
+        } else {
+            try {
+                // store content to local file system
+                File outputFile = contentSourceManager.getPackageBitsLocalFileAndCreateParentDir(newPackageVersion
+                    .getId(), newPackageVersion.getFileName());
+                log.info("OutPutFile is located at: " + outputFile);
+                boolean store = false;
+
+                if (outputFile.exists()) {
+                    String expectedMD5 = (newPackageVersion.getMD5() != null) ? newPackageVersion.getMD5()
+                        : "<unspecified MD5>";
+                    String actualMD5 = MessageDigestGenerator.getDigestString(outputFile);
+                    if (!expectedMD5.trim().toLowerCase().equals(actualMD5.toLowerCase())) {
+                        log.info("Package [" + fileName + "] Already exists, Nothing to do");
+                        store = true;
+                    } else {
+                        store = false;
+                    }
+                } else {
+                    store = true;
+                }
+                if (store) {
+                    StreamUtil.copy(packageBitStream, new FileOutputStream(outputFile), true);
+                    packageBitStream = null;
+                }
+
+                newPackageVersion = persistOrMergePackageVersionSafely(newPackageVersion);
+
+                existingPackage.addVersion(newPackageVersion);
+            } catch (Throwable t) {
+                throw new RuntimeException("Did not store the package bits for [" + fileName + "]. Cause: "
+                    + ThrowableUtil.getAllMessages(t), t);
+            } finally {
+                if (packageBitStream != null) {
+                    try {
+                        packageBitStream.close();
+                    } catch (Exception e) {
+                        log.warn("Failed to close stream to package bits located ");
+                    }
+                }
+            }
+
+        }
 
         return newPackageVersion;
     }

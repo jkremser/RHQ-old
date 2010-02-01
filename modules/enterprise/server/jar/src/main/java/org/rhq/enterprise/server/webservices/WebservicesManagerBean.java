@@ -1076,4 +1076,10 @@ public class WebservicesManagerBean implements WebservicesRemote {
     public List<EntitlementCertificate> getCertificates(Subject subject, int resourceId) {
         return entitlementManager.getCertificates(subject, resourceId);
     }
+
+    public PackageVersion uploadPlatformPackageVersion(Subject user, String packageName, int packageTypeId,
+        String version, Integer architectureId, String fileName, byte[] packageBytes, boolean dbmode) {
+        return contentManager.uploadPlatformPackageVersion(user, packageName, packageTypeId, version, architectureId,
+            fileName, packageBytes, dbmode);
+    }
 }

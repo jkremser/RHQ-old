@@ -163,4 +163,13 @@ public interface ContentManagerRemote {
     byte[] getPackageBytes(@WebParam(name = "subject") Subject user, @WebParam(name = "resourceId") int resourceId,
         @WebParam(name = "installedPackageId") int installedPackageId);
 
+    @WebMethod
+    PackageVersion uploadPlatformPackageVersion(@WebParam(name = "subject") Subject user,
+        @WebParam(name = "packageName") String packageName, //
+        @WebParam(name = "packageTypeId") int packageTypeId, //
+        @WebParam(name = "version") String version, //
+        @WebParam(name = "architectureId") Integer architectureId, //
+        @WebParam(name = "fileName") String fileName, //
+        @WebParam(name = "packageBytes") byte[] packageBytes, //
+        @WebParam(name = "dbmode") boolean dbmode);
 }

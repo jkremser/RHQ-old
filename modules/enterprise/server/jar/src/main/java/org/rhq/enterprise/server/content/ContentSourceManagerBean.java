@@ -2022,7 +2022,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         return distBitsFile;
     }
 
-    private File getPackageBitsLocalFilesystemFile(int packageVersionId, String fileName) {
+    protected File getPackageBitsLocalFilesystemFile(int packageVersionId, String fileName) {
 
         String filesystem = System.getProperty(FILESYSTEM_PROPERTY);
 
@@ -2074,7 +2074,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         return distBitsFile;
     }
 
-    private File getPackageBitsLocalFileAndCreateParentDir(int packageVersionId, String fileName) throws Exception {
+    File getPackageBitsLocalFileAndCreateParentDir(int packageVersionId, String fileName) throws Exception {
 
         File packageBitsFile = getPackageBitsLocalFilesystemFile(packageVersionId, fileName);
         File parentDir = packageBitsFile.getParentFile();
