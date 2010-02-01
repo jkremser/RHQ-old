@@ -2074,7 +2074,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         return distBitsFile;
     }
 
-    File getPackageBitsLocalFileAndCreateParentDir(int packageVersionId, String fileName) throws Exception {
+    public File getPackageBitsLocalFileAndCreateParentDir(int packageVersionId, String fileName) throws Exception {
 
         File packageBitsFile = getPackageBitsLocalFilesystemFile(packageVersionId, fileName);
         File parentDir = packageBitsFile.getParentFile();

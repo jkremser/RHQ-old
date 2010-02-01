@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.content;
 
+import java.io.File;
 import java.io.OutputStream;
 import java.util.Collection;
 import java.util.List;
@@ -622,4 +623,6 @@ public interface ContentSourceManagerLocal {
      *                                the given object are not valid
      */
     ContentSource simpleCreateContentSource(Subject subject, ContentSource contentSource) throws ContentSourceException;
+
+    File getPackageBitsLocalFileAndCreateParentDir(int packageVersionId, String fileName) throws Exception;
 }

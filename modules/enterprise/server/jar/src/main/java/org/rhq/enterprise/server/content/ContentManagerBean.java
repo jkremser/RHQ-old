@@ -46,6 +46,7 @@ import javax.sql.DataSource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.jboss.annotation.IgnoreDependency;
 import org.jboss.annotation.ejb.TransactionTimeout;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
@@ -134,8 +135,9 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
     @EJB
     private ResourceTypeManagerLocal resourceTypeManager;
 
+    @IgnoreDependency
     @EJB
-    private ContentSourceManagerBean contentSourceManager;
+    private ContentSourceManagerLocal contentSourceManager;
 
     // ContentManagerLocal Implementation  --------------------------------------------
 
@@ -1612,4 +1614,5 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
         return result;
     }
+
 }
