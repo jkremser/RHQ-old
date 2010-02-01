@@ -3014,6 +3014,12 @@
                 <schema-deleteColumn table="RHQ_ALERT_NOTIFICATION" column="snmp_oid"/>
                 <schema-deleteColumn table="RHQ_ALERT_NOTIFICATION" column="email_address"/>
             </schemaSpec>
+	    <schemaSpec version="2.78">
+	      <schema-addColumn table="RHQ_PACKAGE_VERSION" column="RELEASE" columnType="VARCHAR2" precision="255"/>
+              <schema-alterColumn table="RHQ_PACKAGE_VERSION" column="RELEASE" nullable="TRUE" />
+	      <schema-addColumn table="RHQ_PACKAGE_VERSION" column="EPOCH" columnType="VARCHAR2" precision="255"/>
+	      <schema-alterColumn table="RHQ_PACKAGE_VERSION" column="EPOCH" nullable="TRUE" />
+            </schemaSpec>
         </dbupgrade>
     </target>
 </project>

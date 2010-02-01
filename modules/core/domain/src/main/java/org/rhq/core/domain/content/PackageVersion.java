@@ -284,6 +284,12 @@ public class PackageVersion implements Serializable {
 
     @Column(name = "VERSION", nullable = false)
     private String version;
+    
+    @Column(name = "RELEASE", nullable = true)
+    private String release;
+    
+    @Column(name = "EPOCH", nullable = true)
+    private String epoch;
 
     @Column(name = "DISPLAY_VERSION", nullable = true)
     private String displayVersion;
@@ -417,7 +423,26 @@ public class PackageVersion implements Serializable {
     public void setVersion(String version) {
         this.version = version;
     }
+    
+    
+    public String getRelease() {
+        return release;
+    }
 
+    public void setRelease(String release) {
+        this.release = release;
+    }
+
+    public String getEpoch() {
+        return epoch;
+    }
+
+    public void setEpoch(String epoch) {
+        this.epoch = epoch;
+    }
+
+    
+    
     /**
      * A version string suitable for displaying to a user. It may or may not be the same as {#getVersion()}.
      */
@@ -736,6 +761,8 @@ public class PackageVersion implements Serializable {
         toString.append("PackageVersion[");
         toString.append("package=").append(generalPackage).append(",");
         toString.append("version=").append(version).append(",");
+        toString.append("release=").append(release).append(",");
+        toString.append("epoch=").append(epoch).append(",");
         toString.append("architecture=").append(architecture);
         toString.append("]");
 
@@ -769,7 +796,15 @@ public class PackageVersion implements Serializable {
         if ((version != null) ? (!version.equals(that.version)) : (that.version != null)) {
             return false;
         }
+        
+        if ((release != null) ? (!release.equals(that.release)) : (that.release != null)) {
+            return false;
+        }
 
+        if ((epoch != null) ? (!epoch.equals(that.epoch)) : (that.epoch != null)) {
+            return false;
+        }
+        
         return true;
     }
 
@@ -778,6 +813,8 @@ public class PackageVersion implements Serializable {
         int result;
         result = ((generalPackage != null) ? generalPackage.hashCode() : 0);
         result = (31 * result) + ((version != null) ? version.hashCode() : 0);
+        result = (31 * result) + ((release != null) ? release.hashCode() : 0);
+        result = (31 * result) + ((epoch != null) ? epoch.hashCode() : 0);
         result = (31 * result) + ((architecture != null) ? architecture.hashCode() : 0);
         return result;
     }

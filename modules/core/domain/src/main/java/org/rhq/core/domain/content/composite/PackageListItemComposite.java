@@ -36,6 +36,8 @@ public class PackageListItemComposite implements Serializable {
     private final String packageName;
     private final String packageTypeName;
     private final String version;
+    private final String release;
+    private final String epoch;
     private final Long timestamp;
 
     // Constructors  --------------------------------------------
@@ -46,6 +48,8 @@ public class PackageListItemComposite implements Serializable {
         this.packageTypeName = packageTypeName;
         this.version = version;
         this.timestamp = null;
+        this.release = null;
+        this.epoch = null;
     }
 
     public PackageListItemComposite(int id, String packageName, String packageTypeName, String version, Long timestamp) {
@@ -53,6 +57,19 @@ public class PackageListItemComposite implements Serializable {
         this.packageName = packageName;
         this.packageTypeName = packageTypeName;
         this.version = version;
+        this.timestamp = timestamp;
+        this.release = null;
+        this.epoch = null;
+    }
+    
+    public PackageListItemComposite(int id, String packageName, String packageTypeName, String version, String release, 
+        String epoch, Long timestamp) {
+        this.id = id;
+        this.packageName = packageName;
+        this.packageTypeName = packageTypeName;
+        this.version = version;
+        this.release = release;
+        this.epoch = epoch;
         this.timestamp = timestamp;
     }
 
@@ -73,6 +90,14 @@ public class PackageListItemComposite implements Serializable {
     public String getVersion() {
         return version;
     }
+    
+    public String getRelease() {
+        return release;
+    }
+    
+    public String getEpoch() {
+        return epoch;
+    }    
 
     public Long getTimestamp() {
         return timestamp;
