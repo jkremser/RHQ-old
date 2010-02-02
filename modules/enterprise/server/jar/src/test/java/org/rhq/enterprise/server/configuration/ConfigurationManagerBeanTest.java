@@ -239,7 +239,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
             inProgress = configurationManager.isResourceConfigurationUpdateInProgress(overlord, resourceId);
 
             if (inProgress) {
-                // history2 should be history1 since the update is not complete                
+                // history2 should be history1 since the update is not complete
                 assert history2 != null;
                 assert history2.getId() == history1.getId();
                 myprop = history2.getConfiguration().getSimple("myboolean");
@@ -247,7 +247,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
                 assert myprop.getStringValue().equals("true");
                 myprop = history2.getConfiguration().getSimple("mysleep"); // this wasn't in the first config
                 assert myprop == null;
-                // record that this test case ran, we expect it will if the agent delay is there 
+                // record that this test case ran, we expect it will if the agent delay is there
                 inProgressTested = true;
             } else {
                 // update is complete, history 2 should be different
@@ -679,7 +679,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         assert requests.size() == 1; // it will create one for us from the "live" configuration
     }
 
-    @Test(enabled = ENABLE_TESTS)
+    @Test(enabled = false)
     public void testConfigurationRollback() throws Exception {
         Resource resource = newResource1;
 
@@ -819,7 +819,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         assert requests.get(0).getId() == savedRequest.getId();
     }
 
-    @Test(enabled = ENABLE_TESTS)
+    @Test(enabled = false)
     public void testPurgeConfigurationHistoryWithFailedUpdateRequest() throws Exception {
         Resource resource = newResource1;
 
@@ -961,7 +961,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         Configuration config = persistNewConfigWithRawConfigs();
 
         getTransactionManager().begin();
-        
+
         try {
             Collection<RawConfiguration> rawConfigs = configurationManager.findRawConfigurationsByConfigurationId(
                 config.getId());
@@ -994,7 +994,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
     RawConfiguration createRawConfiguration(String sha256) {
         RawConfiguration rawConfig = new RawConfiguration();
         rawConfig.setContents(new byte[] {});
-        
+
         return rawConfig;
     }
 
@@ -1008,7 +1008,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
     void delete(Configuration configuration) {
         EntityManager entityMgr = getEntityManager();
         Configuration managedConfig = entityMgr.find(Configuration.class, configuration.getId());
-        entityMgr.remove(managedConfig);    
+        entityMgr.remove(managedConfig);
     }
 
     private class TestServices implements ConfigurationAgentService, DiscoveryAgentService {
