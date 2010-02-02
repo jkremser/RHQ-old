@@ -103,6 +103,8 @@ import org.rhq.core.domain.resource.ProductVersion;
         + "                   pv.metadata, "
         + "                   pv.generalPackage.name, "
         + "                   pv.version, "
+        + "                   pv.release, "
+        + "                   pv.epoch, "
         + "                   pv.generalPackage.packageType.name, "
         + "                   pv.architecture.name "
         + "                ) "
@@ -284,10 +286,10 @@ public class PackageVersion implements Serializable {
 
     @Column(name = "VERSION", nullable = false)
     private String version;
-    
+
     @Column(name = "RELEASE", nullable = true)
     private String release;
-    
+
     @Column(name = "EPOCH", nullable = true)
     private String epoch;
 
@@ -423,8 +425,8 @@ public class PackageVersion implements Serializable {
     public void setVersion(String version) {
         this.version = version;
     }
-    
-    
+
+
     public String getRelease() {
         return release;
     }
@@ -441,8 +443,8 @@ public class PackageVersion implements Serializable {
         this.epoch = epoch;
     }
 
-    
-    
+
+
     /**
      * A version string suitable for displaying to a user. It may or may not be the same as {#getVersion()}.
      */
@@ -796,7 +798,7 @@ public class PackageVersion implements Serializable {
         if ((version != null) ? (!version.equals(that.version)) : (that.version != null)) {
             return false;
         }
-        
+
         if ((release != null) ? (!release.equals(that.release)) : (that.release != null)) {
             return false;
         }
@@ -804,7 +806,7 @@ public class PackageVersion implements Serializable {
         if ((epoch != null) ? (!epoch.equals(that.epoch)) : (that.epoch != null)) {
             return false;
         }
-        
+
         return true;
     }
 
