@@ -228,27 +228,11 @@ public class ContentUIManagerBean implements ContentUIManagerLocal {
     public PageList<PackageVersionComposite> getPackageVersionCompositesByFilter(Subject user, int resourceId,
         String filter, PageControl pc) {
         pc.initDefaultOrderingField("pv.generalPackage.name", PageOrdering.ASC);
-        PageControl unlimitedpc = PageControl.getUnlimitedInstance();
-
-        Query queryInstalled = PersistenceUtility.createQueryWithOrderBy(entityManager,
-            InstalledPackage.QUERY_FIND_PACKAGE_LIST_ITEM_COMPOSITE, unlimitedpc);
-
-        queryInstalled.setParameter("resourceId", resourceId);
-        queryInstalled.setParameter("packageTypeFilterId", null);
-        queryInstalled.setParameter("packageVersionFilter", null);
-        queryInstalled.setParameter("search", null);
-
-        List<PackageListItemComposite> packagesInstalled = queryInstalled.getResultList();
-
-        List<String> installedPackageNames = new ArrayList<String>();
-        for (PackageListItemComposite packageInstalled : packagesInstalled) {
-            installedPackageNames.add(packageInstalled.getPackageName());
-        }
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
-            PackageVersion.QUERY_FIND_COMPOSITE_BY_FILTERS, unlimitedpc);
+            PackageVersion.QUERY_FIND_INSTALL_COMPOSITE_BY_FILTERS, pc);
         Query queryCount = PersistenceUtility.createCountQuery(entityManager,
-            PackageVersion.QUERY_FIND_COMPOSITE_BY_FILTERS);
+            PackageVersion.QUERY_FIND_INSTALL_COMPOSITE_BY_FILTERS);
 
         query.setParameter("resourceId", resourceId);
         queryCount.setParameter("resourceId", resourceId);
@@ -258,27 +242,7 @@ public class ContentUIManagerBean implements ContentUIManagerLocal {
 
         long count = (Long) queryCount.getSingleResult();
         List<PackageVersionComposite> results = query.getResultList();
-        List<PackageVersionComposite> modifiedResults = new ArrayList<PackageVersionComposite>();
-
-        for (PackageVersionComposite result : results) {
-            if (installedPackageNames.contains(result.getPackageName())) {
-                if (count > 0)
-                    count--;
-            } else {
-                modifiedResults.add(result);
-            }
-        }
-
-        Collections.sort(modifiedResults, new Comparator() {
-
-            public int compare(Object o1, Object o2) {
-                PackageVersionComposite p1 = (PackageVersionComposite) o1;
-                PackageVersionComposite p2 = (PackageVersionComposite) o2;
-                return p1.getPackageName().compareToIgnoreCase(p2.getPackageName());
-            }
-        });
-
-        return new PageList<PackageVersionComposite>(modifiedResults, (int) count, pc);
+        return new PageList<PackageVersionComposite>(results, (int) count, pc);
     }
 
     @SuppressWarnings("unchecked")

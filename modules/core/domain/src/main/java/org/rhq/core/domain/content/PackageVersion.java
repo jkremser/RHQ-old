@@ -228,6 +228,36 @@ import org.rhq.core.domain.resource.ProductVersion;
         + "             WHERE pv1.id IN "
         + "                 (SELECT ip1.packageVersion.id FROM InstalledPackage ip1 WHERE ip1.resource.id = :resourceId)"
         + "            )" + "       )"),
+    @NamedQuery(name = PackageVersion.QUERY_FIND_INSTALL_COMPOSITE_BY_FILTERS, query = "SELECT new org.rhq.core.domain.content.composite.PackageVersionComposite( "
+        + "          pv, "
+        + "          pv.generalPackage.packageType.displayName, "
+        + "          pv.generalPackage.packageType.category, "
+        + "          pv.generalPackage.name, "
+        + "          pv.architecture.name, "
+        + "          pv.generalPackage.classification "
+        + "       ) "
+        + "  FROM PackageVersion pv "
+        + "  JOIN pv.repoPackageVersions cpv "
+        + "  JOIN cpv.repo.resourceRepos rc "
+        + "  LEFT JOIN pv.productVersionPackageVersions pvpv "
+        + " WHERE rc.resource.id = :resourceId "
+        + "   AND cpv.repo.id = rc.repo.id "
+        + "   AND (UPPER(pv.displayName) LIKE :filter "
+        + "        OR :filter IS NULL) "
+        + "   AND (pv.productVersionPackageVersions IS EMPTY "
+        + "        OR (pv.productVersionPackageVersions IS NOT EMPTY "
+        + "            AND pvpv.productVersion = rc.resource.productVersion)) "
+        + "   AND (pv.id NOT IN "
+        + "            (SELECT pv1.id FROM PackageVersion pv1 "
+        + "             WHERE pv1.id IN "
+        + "                 (SELECT ip1.packageVersion.id FROM InstalledPackage ip1 WHERE ip1.resource.id = :resourceId)"
+        + "            )"
+        + "       )"
+        + "   AND (pv.generalPackage.name NOT IN "
+        + "            (SELECT pv1.generalPackage.name FROM PackageVersion pv1 "
+        + "             WHERE pv1.generalPackage.name IN "
+        + "                 (SELECT ip1.packageVersion.generalPackage.name FROM InstalledPackage ip1 WHERE ip1.resource.id = :resourceId)"
+        + "        )" + "       )"),
     @NamedQuery(name = PackageVersion.QUERY_FIND_BY_ID, query = "SELECT pv FROM PackageVersion pv WHERE pv.id = :id"),
     @NamedQuery(name = PackageVersion.QUERY_FIND_PACKAGE_BY_FILENAME, query = "SELECT p FROM Package p "
         + "WHERE p.id IN (SELECT pv.generalPackage.id FROM PackageVersion AS pv WHERE pv.fileName = :rpmName)"),
@@ -261,6 +291,7 @@ public class PackageVersion implements Serializable {
     public static final String QUERY_FIND_COMPOSITE_BY_ID_WITH_PROPS = "PackageVersion.findCompositeByIdWithProps";
     public static final String QUERY_FIND_COMPOSITES_BY_IDS = "PackageVersion.findCompositesByIds";
     public static final String QUERY_FIND_COMPOSITE_BY_FILTERS = "PackageVersion.findCompositeByFilters";
+    public static final String QUERY_FIND_INSTALL_COMPOSITE_BY_FILTERS = "PackageVersion.findInstallCompositeByFilters";
     public static final String QUERY_FIND_BY_ID = "PackageVersion.findById";
     public static final String QUERY_FIND_PACKAGE_BY_FILENAME = "PackageVersion.findPackageByFilename";
     public static final String QUERY_FIND_PACKAGEVERSION_BY_FILENAME = "PackageVersion.findPackageVersionByFilename";
@@ -426,7 +457,6 @@ public class PackageVersion implements Serializable {
         this.version = version;
     }
 
-
     public String getRelease() {
         return release;
     }
@@ -442,8 +472,6 @@ public class PackageVersion implements Serializable {
     public void setEpoch(String epoch) {
         this.epoch = epoch;
     }
-
-
 
     /**
      * A version string suitable for displaying to a user. It may or may not be the same as {#getVersion()}.
