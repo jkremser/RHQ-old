@@ -173,11 +173,7 @@ public class Repo {
     private String encodeVersion(Element p) {
         Element version = p.getChild("version", Repodata.yumns);
         StringBuilder sb = new StringBuilder();
-        sb.append(version.getAttributeValue("epoch"));
-        sb.append('.');
         sb.append(version.getAttributeValue("ver"));
-        sb.append('.');
-        sb.append(version.getAttributeValue("rel"));
         return sb.toString();
     }
 
@@ -219,13 +215,11 @@ public class Repo {
      */
     private ContentProviderPackageDetails getDetails(Element p) throws Exception {
         String name = p.getChildText("name", Repodata.yumns);
-        String version = p.getAttributeValue("ver");
-        String release = p.getAttributeValue("rel");
-        String epoch = p.getAttributeValue("epoch");
+        String version = encodeVersion(p);
         String arch = p.getChildText("arch", Repodata.yumns);
 
-        ContentProviderPackageDetailsKey key = new ContentProviderPackageDetailsKey(name, version, release, epoch,
-            "rpm", arch, "Linux", "Platforms");
+        ContentProviderPackageDetailsKey key = new ContentProviderPackageDetailsKey(name, version, "rpm", arch,
+            "Linux", "Platforms");
         ContentProviderPackageDetails pkg = new ContentProviderPackageDetails(key);
         String filename = filename(p);
         pkg.setDisplayName(filename);
