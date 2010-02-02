@@ -1,25 +1,25 @@
- /*
-  * Jopr Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * Jopr Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.plugins.jbossas.util;
 
 import java.io.File;
@@ -89,25 +89,21 @@ public class JarContentDelegate extends FileContentDelegate {
                 jf = new JarFile(file);
 
                 Manifest manifest = jf.getManifest();
-                String version=null;
+                String version = null;
 
-                if (manifest!=null) {
+                if (manifest != null) {
                     Attributes attributes = manifest.getMainAttributes();
-                    
+
                     version = attributes.getValue(Attributes.Name.IMPLEMENTATION_VERSION);
 
                     config.put(new PropertySimple("version", version));
-                    config.put(new PropertySimple("title", attributes.getValue(
-                        Attributes.Name.IMPLEMENTATION_TITLE)));
-                    config.put(new PropertySimple("url", attributes.getValue(
-                        Attributes.Name.IMPLEMENTATION_URL)));
-                    config.put(new PropertySimple("vendor", attributes.getValue(
-                        Attributes.Name.IMPLEMENTATION_VENDOR)));
+                    config.put(new PropertySimple("title", attributes.getValue(Attributes.Name.IMPLEMENTATION_TITLE)));
+                    config.put(new PropertySimple("url", attributes.getValue(Attributes.Name.IMPLEMENTATION_URL)));
+                    config
+                        .put(new PropertySimple("vendor", attributes.getValue(Attributes.Name.IMPLEMENTATION_VENDOR)));
 
-                    config.put(new PropertySimple("classpath", attributes.getValue(
-                        Attributes.Name.CLASS_PATH)));
-                    config.put(new PropertySimple("sealed", attributes.getValue(
-                        Attributes.Name.SEALED)));
+                    config.put(new PropertySimple("classpath", attributes.getValue(Attributes.Name.CLASS_PATH)));
+                    config.put(new PropertySimple("sealed", attributes.getValue(Attributes.Name.SEALED)));
                 }
 
                 if (version == null) {
@@ -128,10 +124,10 @@ public class JarContentDelegate extends FileContentDelegate {
                 // If we can't open it, don't worry about it, we just won't know the version
             } finally {
                 try {
-                   if (jf!=null)
-                      jf.close();
+                    if (jf != null)
+                        jf.close();
                 } catch (Exception e) {
-                   // Nothing we can do here ...
+                    // Nothing we can do here ...
                 }
             }
         }

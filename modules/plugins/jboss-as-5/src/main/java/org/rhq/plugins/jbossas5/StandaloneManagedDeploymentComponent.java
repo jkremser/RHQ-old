@@ -37,11 +37,12 @@ import java.util.Set;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.jboss.deployers.spi.management.ManagementView;
 import org.jboss.deployers.spi.management.deploy.DeploymentManager;
 import org.jboss.deployers.spi.management.deploy.DeploymentProgress;
 import org.jboss.deployers.spi.management.deploy.DeploymentStatus;
-import org.jboss.profileservice.spi.NoSuchDeploymentException;
+
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.transfer.ContentResponseResult;
@@ -176,8 +177,7 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
         if (packages.size() != 1) {
             log.warn("Request to update " + resourceTypeName + " file contained multiple packages: " + packages);
             DeployPackagesResponse response = new DeployPackagesResponse(ContentResponseResult.FAILURE);
-            response
-                .setOverallRequestErrorMessage("Only one " + resourceTypeName + " can be updated at a time.");
+            response.setOverallRequestErrorMessage("Only one " + resourceTypeName + " can be updated at a time.");
             return response;
         }
 
@@ -217,8 +217,8 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
                 FileUtils.copyFile(this.deploymentFile, backupOfOriginalFile, true);
             }
         } catch (Exception e) {
-            throw new RuntimeException("Failed to backup existing "  + resourceTypeName + "'" + this.deploymentFile + "' to '"
-                + backupOfOriginalFile + "'.");
+            throw new RuntimeException("Failed to backup existing " + resourceTypeName + "'" + this.deploymentFile
+                + "' to '" + backupOfOriginalFile + "'.");
         }
 
         // Now stop the original app.
@@ -253,10 +253,9 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
                 if (this.deploymentFile.exists()) {
                     try {
                         FileUtils.forceDelete(this.deploymentFile);
-                    }
-                    catch (IOException e1) {
+                    } catch (IOException e1) {
                         log.debug("Failed to delete application file '" + this.deploymentFile
-                                + "' that failed to deploy.", e1);
+                            + "' that failed to deploy.", e1);
                     }
                 }
                 // Now redeploy the original file - this generally should succeed.
@@ -267,8 +266,8 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
                 errorMessage += " ***** FAILED TO ROLLBACK TO ORIGINAL APPLICATION FILE. *****: "
                     + ThrowableUtil.getAllMessages(e1);
             }
-            log.info("Failed to update " + resourceTypeName + " file '"
-                    + this.deploymentFile + "' using [" + packageDetails + "].");
+            log.info("Failed to update " + resourceTypeName + " file '" + this.deploymentFile + "' using ["
+                + packageDetails + "].");
             return failApplicationDeployment(errorMessage, packageDetails);
         }
 
@@ -282,7 +281,7 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
         response.addPackageResponse(packageResponse);
 
         log.debug("Updated " + resourceTypeName + " file '" + this.deploymentFile
-                + "' successfully - returning response [" + response + "]...");
+            + "' successfully - returning response [" + response + "]...");
 
         return response;
     }
@@ -297,10 +296,10 @@ public class StandaloneManagedDeploymentComponent extends AbstractManagedDeploym
         } catch (Exception e) {
             // The deployment no longer exists, so there's nothing for us to do. Someone most likely undeployed it
             // outside of Jopr or EmbJopr, e.g. via the jmx-console or by deleting the app file from the deploy dir.
-        	log.warn("Cannot delete the deployment [" + this.deploymentName + "], since it no longer exists");
+            log.warn("Cannot delete the deployment [" + this.deploymentName + "], since it no longer exists");
             return;
         }
-        
+
         log.debug("Stopping deployment [" + this.deploymentName + "]...");
         DeploymentProgress progress = deploymentManager.stop(this.deploymentName);
         DeploymentStatus stopStatus = DeploymentUtils.run(progress);

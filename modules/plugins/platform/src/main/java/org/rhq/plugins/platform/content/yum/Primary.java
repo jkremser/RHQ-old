@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.plugins.platform.content.yum;
 
 import java.io.ByteArrayInputStream;
@@ -35,6 +35,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
+
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.composite.PackageVersionMetadataComposite;
 import org.rhq.core.domain.util.PageControl;
@@ -280,6 +281,14 @@ public class Primary extends Content {
         sb.append(key.getName());
         sb.append(",ver=");
         sb.append(key.getVersion());
+        if (key.getRelease() != null) {
+            sb.append(",rel=");
+            sb.append(key.getRelease());
+        }
+        if (key.getEpoch() != null) {
+            sb.append(",epoch=");
+            sb.append(key.getEpoch());
+        }
         sb.append(",arch=");
         sb.append(key.getArchitectureName());
         return sb.toString();
@@ -293,6 +302,7 @@ public class Primary extends Content {
      * @return A package details key.
      */
     static PackageDetailsKey toKey(Map<String, String> args) {
-        return new PackageDetailsKey(args.get("name"), args.get("ver"), args.get("type"), args.get("arch"));
+        return new PackageDetailsKey(args.get("name"), args.get("ver"), args.get("rel"), args.get("epoch"), args
+            .get("type"), args.get("arch"));
     }
 }

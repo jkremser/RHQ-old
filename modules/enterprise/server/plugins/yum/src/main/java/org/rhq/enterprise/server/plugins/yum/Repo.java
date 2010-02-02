@@ -219,10 +219,13 @@ public class Repo {
      */
     private ContentProviderPackageDetails getDetails(Element p) throws Exception {
         String name = p.getChildText("name", Repodata.yumns);
-        String version = encodeVersion(p);
+        String version = p.getAttributeValue("ver");
+        String release = p.getAttributeValue("rel");
+        String epoch = p.getAttributeValue("epoch");
         String arch = p.getChildText("arch", Repodata.yumns);
-        ContentProviderPackageDetailsKey key = new ContentProviderPackageDetailsKey(name, version, "rpm", arch,
-            "Linux", "Platforms");
+
+        ContentProviderPackageDetailsKey key = new ContentProviderPackageDetailsKey(name, version, release, epoch,
+            "rpm", arch, "Linux", "Platforms");
         ContentProviderPackageDetails pkg = new ContentProviderPackageDetails(key);
         String filename = filename(p);
         pkg.setDisplayName(filename);

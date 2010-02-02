@@ -240,8 +240,8 @@ public class PackageSourceSynchronizer {
             ResourceType rt = p.getPackageType().getResourceType();
 
             ContentProviderPackageDetailsKey key;
-            key = new ContentProviderPackageDetailsKey(p.getName(), pv.getVersion(), p.getPackageType().getName(), pv
-                .getArchitecture().getName(), rt.getName(), rt.getPlugin());
+            key = new ContentProviderPackageDetailsKey(p.getName(), pv.getVersion(), pv.getRelease(), pv.getEpoch(), p
+                .getPackageType().getName(), pv.getArchitecture().getName(), rt.getName(), rt.getPlugin());
 
             ContentProviderPackageDetails details = new ContentProviderPackageDetails(key);
             details.setClassification(pv.getGeneralPackage().getClassification());

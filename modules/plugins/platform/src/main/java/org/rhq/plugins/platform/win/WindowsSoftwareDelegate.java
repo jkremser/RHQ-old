@@ -72,7 +72,7 @@ public class WindowsSoftwareDelegate {
                     }
                     try {
                         ResourcePackageDetails details = new ResourcePackageDetails(new PackageDetailsKey(displayName,
-                            version, type.getName(), "noarch"));
+                            version, null, null, type.getName(), "noarch"));
                         details.setFileCreatedDate(getDate(installDateString));
                         details.setInstallationTimestamp(getDate(installDateString));
                         details.setFileSize((long) packageKey.getIntValue("EstimatedSize", 0));

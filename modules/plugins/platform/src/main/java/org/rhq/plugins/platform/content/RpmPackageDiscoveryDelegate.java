@@ -105,6 +105,7 @@ public class RpmPackageDiscoveryDelegate {
         while ((rpmName = rpmNameReader.readLine()) != null) {
             String name = null;
             String version = null;
+            String release = null;
             String epoch = null;
             String architectureName = null;
 
@@ -116,7 +117,7 @@ public class RpmPackageDiscoveryDelegate {
                     .setArguments(new String[] {
                         "-q",
                         "--qf",
-                        "%{NAME}\\n%{VERSION}.%{RELEASE}\\n{EPOCH}\\n%{ARCH}\\n%{INSTALLTIME}\\n%{FILEMD5S}\\n%{GROUP}\\n%{FILENAMES}\\n%{SIZE}\\n%{LICENSE}\\n%{DESCRIPTION}",
+                        "%{NAME}\\n%{VERSION}\\n%{RELEASE}\\n{EPOCH}\\n%{ARCH}\\n%{INSTALLTIME}\\n%{FILEMD5S}\\n%{GROUP}\\n%{FILENAMES}\\n%{SIZE}\\n%{LICENSE}\\n%{DESCRIPTION}",
                         rpmName });
                 rpmQuery.setCaptureOutput(true);
 
@@ -127,6 +128,7 @@ public class RpmPackageDiscoveryDelegate {
 
                 name = rpmDataReader.readLine();
                 version = rpmDataReader.readLine();
+                release = rpmDataReader.readLine();
                 epoch = rpmDataReader.readLine();
                 architectureName = rpmDataReader.readLine();
                 String installTimeString = rpmDataReader.readLine();
@@ -168,10 +170,7 @@ public class RpmPackageDiscoveryDelegate {
                     continue;
                 }
 
-                if ((epoch != null) && (epoch.trim() != "")) {
-                    version = epoch + ":" + version;
-                }
-                PackageDetailsKey key = new PackageDetailsKey(name, version, "rpm", architectureName);
+                PackageDetailsKey key = new PackageDetailsKey(name, version, release, epoch, "rpm", architectureName);
                 ResourcePackageDetails packageDetails = new ResourcePackageDetails(key);
                 packageDetails.setClassification(category);
                 packageDetails.setDisplayName(name);

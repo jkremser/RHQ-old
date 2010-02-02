@@ -1752,8 +1752,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         // Used by export of content through http
 
         PackageDetailsKey packageDetailsKey = new PackageDetailsKey(packageVersion.getDisplayName(), packageVersion
-            .getDisplayVersion(), packageVersion.getGeneralPackage().getPackageType().toString(), packageVersion
-            .getArchitecture().toString());
+            .getDisplayVersion(), packageVersion.getRelease(), packageVersion.getEpoch(), packageVersion
+            .getGeneralPackage().getPackageType().toString(), packageVersion.getArchitecture().toString());
 
         int resourceId = 0; //set to dummy value
 
@@ -1769,8 +1769,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         // Used by export of content through http
 
         PackageDetailsKey packageDetailsKey = new PackageDetailsKey(packageVersion.getDisplayName(), packageVersion
-            .getDisplayVersion(), packageVersion.getGeneralPackage().getPackageType().toString(), packageVersion
-            .getArchitecture().toString());
+            .getDisplayVersion(), packageVersion.getRelease(), packageVersion.getEpoch(), packageVersion
+            .getGeneralPackage().getPackageType().toString(), packageVersion.getArchitecture().toString());
 
         int resourceId = 0; //set to dummy value
 

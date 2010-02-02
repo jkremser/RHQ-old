@@ -53,6 +53,22 @@ public class ContentProviderPackageDetailsKey extends PackageDetailsKey {
         this.resourceTypePluginName = resourceTypePluginName;
     }
 
+    public ContentProviderPackageDetailsKey(String name, String version, String release, String epoch,
+        String packageTypeName, String architectureName, String resourceTypeName, String resourceTypePluginName) {
+        super(name, version, release, epoch, packageTypeName, architectureName);
+
+        if (resourceTypeName == null) {
+            throw new IllegalArgumentException("resourceTypeName cannot be null");
+        }
+
+        if (resourceTypePluginName == null) {
+            throw new IllegalArgumentException("resourceTypePluginName cannot be null");
+        }
+
+        this.resourceTypeName = resourceTypeName;
+        this.resourceTypePluginName = resourceTypePluginName;
+    }
+
     /**
      * The name of the {@link ResourceType} that this package's type belongs to. All package types are defined and
      * supported by a particular {@link ResourceType}, this name is part of the natural key of a resource type. See

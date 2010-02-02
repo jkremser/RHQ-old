@@ -42,8 +42,8 @@ public class ContentUtils {
         Package pkg = packageVersion.getGeneralPackage();
         PackageType pkgType = pkg.getPackageType();
 
-        PackageDetailsKey key = new PackageDetailsKey(pkg.getName(), packageVersion.getVersion(), pkgType.getName(),
-            packageVersion.getArchitecture().getName());
+        PackageDetailsKey key = new PackageDetailsKey(pkg.getName(), packageVersion.getVersion(), packageVersion
+            .getRelease(), packageVersion.getEpoch(), pkgType.getName(), packageVersion.getArchitecture().getName());
 
         ResourcePackageDetails details = new ResourcePackageDetails(key);
         details.setClassification(pkg.getClassification());

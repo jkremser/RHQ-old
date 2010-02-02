@@ -80,7 +80,8 @@ public class ContentManagerHelper {
         Package generalPackage = packageVersion.getGeneralPackage();
 
         PackageDetailsKey key = new PackageDetailsKey(generalPackage.getName(), packageVersion.getVersion(),
-            packageVersion.getGeneralPackage().getPackageType().getName(), packageVersion.getArchitecture().getName());
+            packageVersion.getRelease(), packageVersion.getEpoch(), packageVersion.getGeneralPackage().getPackageType()
+                .getName(), packageVersion.getArchitecture().getName());
         ResourcePackageDetails details = new ResourcePackageDetails(key);
 
         details.setClassification(generalPackage.getClassification());

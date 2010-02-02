@@ -53,6 +53,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.PersistenceUtility;
+import org.rhq.core.util.RpmVersionComparator;
 import org.rhq.enterprise.server.RHQConstants;
 
 /**
@@ -329,13 +330,15 @@ public class ContentUIManagerBean implements ContentUIManagerLocal {
         List<PackageVersionComposite> latestResults = new ArrayList<PackageVersionComposite>();
 
         PackageVersionComposite latestPackage = null;
-
+        RpmVersionComparator rpmvercmp = new RpmVersionComparator();
+        int verCmpResult = 0;
         for (PackageVersionComposite newPackage : modifiedResults) {
             latestPackage = newPackage;
 
             for (PackageVersionComposite pack : testResults) {
-                if (pack.getPackageName().equals(latestPackage.getPackageName())
-                    && latestPackage.getPackageVersion().getVersion().compareTo(pack.getPackageVersion().getVersion()) < 0) {
+                verCmpResult = rpmvercmp.compare(latestPackage.getPackageVersion().getVersion(), pack
+                    .getPackageVersion().getVersion());
+                if (pack.getPackageName().equals(latestPackage.getPackageName()) && verCmpResult < 0) {
                     latestPackage = pack;
                 }
             }
