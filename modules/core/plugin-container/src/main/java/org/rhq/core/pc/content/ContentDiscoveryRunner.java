@@ -107,7 +107,6 @@ public class ContentDiscoveryRunner implements Runnable, Callable<ContentDiscove
             }
 
             // Check to see if the discovery is executing too far past its next scheduled discovery
-            // If it is, skip this discovery and increment its next discovery.
             if ((System.currentTimeMillis() - 120000L) > info.getNextDiscovery()) {
                 log.debug("Content discovery is falling behind. Missed discovery for " + info + " by: "
                     + (System.currentTimeMillis() - info.getNextDiscovery()) + "ms");
@@ -125,7 +124,7 @@ public class ContentDiscoveryRunner implements Runnable, Callable<ContentDiscove
         } finally {
             // Reschedule after this report has been sent (or failed). Putting this here will delay further discoveries
             // if the limited concurrency puts off sending this message for a while.
-            if (!oneTimeDiscovery) {                
+            if (!oneTimeDiscovery) {
                 contentManager.rescheduleDiscovery(info);
             }
         }
