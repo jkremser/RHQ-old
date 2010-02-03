@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.plugin.pc.content;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.lang.reflect.InvocationHandler;
@@ -89,10 +90,28 @@ public class ContentProviderManager {
      *             if the adapter failed to load the bits
      */
     public InputStream loadPackageBits(int contentSourceId, String location) throws Exception {
+        return __loadPackageBits(contentSourceId, location, 3);
+    }
+
+    protected InputStream __loadPackageBits(int contentSourceId, String location, int retryTimesLeft) throws Exception {
         ContentProvider adapter = getIsolatedContentProvider(contentSourceId);
 
         PackageSource packageSource = (PackageSource) adapter;
-        InputStream inputStream = packageSource.getInputStream(location);
+        InputStream inputStream = null;
+        try {
+            inputStream = packageSource.getInputStream(location);
+        } catch (IOException e) {
+            //
+            // Adding retry logic to try to work around when a ContentProvider has an intermittent failure
+            //
+            log.info("Exception: " + e);
+            if (retryTimesLeft <= 0) {
+                throw (e);
+            }
+            log.info("Ignoring exception, will retry " + retryTimesLeft + " more times before stopping");
+            retryTimesLeft = retryTimesLeft - 1;
+            return __loadPackageBits(contentSourceId, location, retryTimesLeft);
+        }
 
         if (inputStream == null) {
             throw new Exception("Adapter for content source [" + contentSourceId
@@ -118,10 +137,29 @@ public class ContentProviderManager {
      *             if the adapter failed to load the bits
      */
     public InputStream loadDistributionFileBits(int contentSourceId, String location) throws Exception {
+        return __loadDistributionFileBits(contentSourceId, location, 3);
+    }
+
+    protected InputStream __loadDistributionFileBits(int contentSourceId, String location, int retryTimesLeft)
+        throws Exception {
         ContentProvider adapter = getIsolatedContentProvider(contentSourceId);
 
         DistributionSource distSource = (DistributionSource) adapter;
-        InputStream inputStream = distSource.getInputStream(location);
+        InputStream inputStream = null;
+        try {
+            inputStream = distSource.getInputStream(location);
+        } catch (IOException e) {
+            //
+            // Adding retry logic to try to work around when a ContentProvider has an intermittent failure
+            //
+            log.info("Exception: " + e);
+            if (retryTimesLeft <= 0) {
+                throw (e);
+            }
+            log.info("Ignoring exception, will retry " + retryTimesLeft + " more times before stopping");
+            retryTimesLeft = retryTimesLeft - 1;
+            return __loadDistributionFileBits(contentSourceId, location, retryTimesLeft);
+        }
 
         if (inputStream == null) {
             throw new Exception("Adapter for content source [" + contentSourceId
