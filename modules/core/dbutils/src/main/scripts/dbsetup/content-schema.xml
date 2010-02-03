@@ -152,7 +152,7 @@
         <column name="DISPLAY_VERSION" size="500" type="VARCHAR2" required="false"/>
         <column name="FILE_NAME" size="255" type="VARCHAR2" required="false"/>
         <column name="FILE_SIZE" type="LONG" required="false"/>
-        <column name="FILE_MD5" size="32" type="VARCHAR2" required="false"/>
+        <column name="FILE_MD5" size="255" type="VARCHAR2" required="false"/>
         <column name="FILE_SHA256" size="64" type="VARCHAR2" required="false"/>
         <column name="FILE_CREATION_TIME" type="LONG" required="false"/>
         <column name="LICENSE_NAME" size="255" type="VARCHAR2" required="false"/>

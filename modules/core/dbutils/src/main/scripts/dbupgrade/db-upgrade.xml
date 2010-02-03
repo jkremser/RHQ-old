@@ -3020,6 +3020,10 @@
 	      <schema-addColumn table="RHQ_PACKAGE_VERSION" column="EPOCH" columnType="VARCHAR2" precision="255"/>
 	      <schema-alterColumn table="RHQ_PACKAGE_VERSION" column="EPOCH" nullable="TRUE" />
             </schemaSpec>
+            <schemaSpec version="2.79">
+                <!-- Make Filemd5 longer to avoid errors on F11 onwards -->
+                <schema-alterColumn table="RHQ_PACKAGE_VERSION" column="FILE_MD5" columnType="VARCHAR2" precision="255" />
+            </schemaSpec>
         </dbupgrade>
     </target>
 </project>
