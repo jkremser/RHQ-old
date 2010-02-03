@@ -174,7 +174,10 @@ public class RHNProvider implements ContentProvider, PackageSource, RepoSource, 
             // We are going to chunk the list to processing a smaller amount at a time.
             //
             long startTime = System.currentTimeMillis();
-            int sliceSize = 100;
+            // sliceSize was at 100 packages, this was causing us to receive XML streams sometimes going up to
+            // 35MB per 100 packages.  Trying a smaller slice to see if it reduces odd ISE and EOF errors seen from
+            // RHN Hosted
+            int sliceSize = 10;
             for (int index = 0; index < pkgIds.size(); index += sliceSize) {
                 int end = index + sliceSize;
                 if (end >= pkgIds.size()) {

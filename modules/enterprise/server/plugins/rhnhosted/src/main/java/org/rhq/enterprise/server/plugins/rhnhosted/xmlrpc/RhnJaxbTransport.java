@@ -1,7 +1,9 @@
 package org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -14,9 +16,6 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.xmlrpc.XmlRpcException;
 import org.apache.xmlrpc.client.XmlRpcClient;
 import org.apache.xmlrpc.common.XmlRpcStreamRequestConfig;
-import org.jdom.Document;
-import org.jdom.JDOMException;
-import org.jdom.input.SAXBuilder;
 
 public class RhnJaxbTransport extends CustomReqPropTransport {
 
@@ -36,36 +35,26 @@ public class RhnJaxbTransport extends CustomReqPropTransport {
         return jaxbDomain;
     }
 
-    protected boolean isJaxbMessage(File message) {
-        try {
-            FileInputStream in = new FileInputStream(message);
-            Document doc = new SAXBuilder().build(in);
-            String name = doc.getRootElement().getName();
-            log.info("Root element name is " + name);
-            if (name.equalsIgnoreCase("rhn-satellite")) {
-                return true;
-            }
-        } catch (JDOMException e) {
-            log.error("isJaxbMessage()", e);
-        } catch (IOException e) {
-            log.error("isJaxbMessage()", e);
-        }
+    protected boolean isJaxbMessage(BufferedInputStream bufIn) throws IOException {
+        // Requiring BufferedInputStream so it will support the mark/reset methods
+        // We want to read the beginning of the data stream to determine if it's a <rhn-satellite> XML message
+        // true = rhn-satellite xml message, false = some other form of xml
+        // before we return, we want to reset the BufferedInputStream so it's pointing back to where it was when
+        // we were called.
 
+        int readlimit = 1 * 1024;
+        byte[] buffer = new byte[readlimit];
+        bufIn.mark(readlimit);
+        bufIn.read(buffer);
+        bufIn.reset();
+        String temp = new String(buffer);
+        if (temp.contains("<rhn-satellite")) {
+            return true;
+        }
         return false;
     }
 
     protected Object readResponse(XmlRpcStreamRequestConfig pConfig, InputStream pStream) throws XmlRpcException {
-
-        log.debug("readResponse invoked");
-
-        long start = System.currentTimeMillis();
-        File tempFile = cacheResponseToFile(pStream);
-        long end = System.currentTimeMillis();
-        float bandwidth = (float) tempFile.length() / (1024);
-        bandwidth = (bandwidth / (end - start)) * 1000;
-        log.info("response cached " + ((float) tempFile.length() / 1024) + " KB in " + (end - start)
-            + "ms.  Estimated Bandwidth: " + bandwidth + " KB/sec");
-
         /**
          * Point of this method is to not require the traditional "methodResponse" xml wrapping
          * around the response.  RHN just returns the pure XML data.
@@ -75,35 +64,35 @@ public class RhnJaxbTransport extends CustomReqPropTransport {
          * if it's "methodResponse" do traditional XMLRPC parsing.
          *
          * */
-        FileInputStream dataStream = null;
+        BufferedInputStream bufIn = new BufferedInputStream(pStream);
         try {
-            dataStream = new FileInputStream(tempFile);
-            if (isJaxbMessage(tempFile) == false) {
+            if (isJaxbMessage(bufIn) == false) {
                 log.info("Message is not a JAXB element");
-                return super.readResponse(pConfig, dataStream);
+                return super.readResponse(pConfig, bufIn);
             }
-
+            if (getDumpMessageToFile()) {
+                File tempFile = cacheResponseToFile(bufIn);
+                bufIn.close();
+                try {
+                    bufIn = new BufferedInputStream(new FileInputStream(tempFile));
+                } catch (FileNotFoundException e) {
+                    log.error(e);
+                    throw new XmlRpcException(e.getMessage());
+                }
+            }
             JAXBContext jc = JAXBContext.newInstance(jaxbDomain);
             Unmarshaller u = jc.createUnmarshaller();
-            return u.unmarshal(dataStream);
+            return u.unmarshal(bufIn);
         } catch (JAXBException e) {
             log.error(e);
-            e.printStackTrace();
             throw new XmlRpcException(e.getMessage());
         } catch (IOException e) {
             log.error(e);
-            e.printStackTrace();
             throw new XmlRpcException(e.getMessage());
         } finally {
-            if (doWeDeleteTempFile(tempFile)) {
-                log.info("Deleting temp file: " + tempFile.getAbsolutePath());
-                tempFile.delete();
-            } else {
-                log.info("Temporary file of xmlrpc data is available at: " + tempFile.getAbsolutePath());
-            }
             try {
-                if (dataStream != null) {
-                    dataStream.close();
+                if (bufIn != null) {
+                    bufIn.close();
                 }
             } catch (Exception e) {
                 ; //ignore exception from close

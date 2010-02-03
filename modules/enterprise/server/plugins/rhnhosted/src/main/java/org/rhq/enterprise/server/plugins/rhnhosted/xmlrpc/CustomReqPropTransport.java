@@ -1,6 +1,5 @@
 package org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -16,6 +15,7 @@ import java.util.Map;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.log4j.lf5.util.StreamUtils;
 import org.apache.xmlrpc.XmlRpcException;
 import org.apache.xmlrpc.client.XmlRpcClient;
 import org.apache.xmlrpc.common.XmlRpcStreamRequestConfig;
@@ -94,26 +94,9 @@ public class CustomReqPropTransport extends RhnSSLTransport {
                 tempFile = File.createTempFile("RHQ-rhn-xmlrpc-output", ".tmp");
             }
             outStream = new BufferedOutputStream(new FileOutputStream(tempFile, false));
-            final byte[] buffer = new byte[0x100000];
-
-            BufferedInputStream buffInStream = new BufferedInputStream(inStream);
-
-            int read;
-            do {
-                //long startRead = System.currentTimeMillis();
-                read = buffInStream.read(buffer, 0, buffer.length);
-                //read = inStream.read(buffer, 0, buffer.length);
-                if (read > 0) {
-                    //long endRead = System.currentTimeMillis();
-                    //log.debug("Read " + read + " bytes took " + (endRead - startRead) + "ms");
-                    //long startWrite = System.currentTimeMillis();
-                    outStream.write(buffer, 0, read);
-                    //long endWrite = System.currentTimeMillis();
-                    //log.debug("Wrote " + read + " bytes in " + (endWrite - startWrite) + "ms");
-                }
-            } while (read >= 0);
+            StreamUtils.copy(inStream, outStream);
         } catch (Exception e) {
-            log.warn("RhnJaxbTransport readResponse exception", e);
+            log.warn("RhnJaxbTransport readResponse exception: ", e);
             throw new XmlRpcException(e.getMessage());
         } finally {
             try {
@@ -138,7 +121,8 @@ public class CustomReqPropTransport extends RhnSSLTransport {
                 dataStream = new FileInputStream(tempFile);
                 return super.readResponse(pConfig, dataStream);
             } catch (FileNotFoundException e) {
-
+                log.info(e);
+                throw new XmlRpcException(e.getMessage());
             } finally {
                 if (dataStream != null) {
                     try {
