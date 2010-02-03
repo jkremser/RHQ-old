@@ -170,6 +170,13 @@ public interface ContentManagerRemote {
         @WebParam(name = "version") String version, //
         @WebParam(name = "architectureId") Integer architectureId, //
         @WebParam(name = "fileName") String fileName, //
+        @WebParam(name = "MD5sum") String MD5sum, //
         @WebParam(name = "packageBytes") byte[] packageBytes, //
         @WebParam(name = "dbmode") boolean dbmode);
+
+    @WebMethod
+    void updatePackageVersionMetadata(@WebParam(name = "subject") Subject user, //
+        @WebParam(name = "pvId") int pvId, //
+        @WebParam(name = "metadata") byte[] metadata, //
+        @WebParam(name = "fileSize") long fileSize);
 }

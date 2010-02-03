@@ -1078,8 +1078,13 @@ public class WebservicesManagerBean implements WebservicesRemote {
     }
 
     public PackageVersion uploadPlatformPackageVersion(Subject user, String packageName, int packageTypeId,
-        String version, Integer architectureId, String fileName, byte[] packageBytes, boolean dbmode) {
+        String version, Integer architectureId, String fileName, String MD5sum, byte[] packageBytes, boolean dbmode) {
         return contentManager.uploadPlatformPackageVersion(user, packageName, packageTypeId, version, architectureId,
-            fileName, packageBytes, dbmode);
+            fileName, MD5sum, packageBytes, dbmode);
     }
+
+    public void updatePackageVersionMetadata(Subject user, int pvId, byte[] metadata, long fileSize) {
+        contentManager.updatePackageVersionMetadata(user, pvId, metadata, fileSize);
+    }
+
 }

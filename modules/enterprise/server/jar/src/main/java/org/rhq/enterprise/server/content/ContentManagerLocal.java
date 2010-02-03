@@ -342,6 +342,8 @@ public interface ContentManagerLocal {
     byte[] getPackageBytes(Subject user, int resourceId, int installedPackageId);
 
     PackageVersion uploadPlatformPackageVersion(Subject subject, String packageName, int packageTypeId, String version,
-        Integer architectureId, String fileName, byte[] packageBytes, boolean dbmode);
+        Integer architectureId, String fileName, String MD5sum, byte[] packageBytes, boolean dbmode);
+
+    void updatePackageVersionMetadata(Subject subject, int pvId, byte[] metadata, long fileSize);
 
 }

@@ -1240,7 +1240,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
     }
 
     public PackageVersion uploadPlatformPackageVersion(Subject subject, String packageName, int packageTypeId,
-        String version, Integer architectureId, String fileName, byte[] packageBytes, boolean dbmode) {
+        String version, Integer architectureId, String fileName, String MD5sum, byte[] packageBytes, boolean dbmode) {
 
         // Check permissions first
         if (!authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_CONTENT)) {
@@ -1249,12 +1249,12 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         }
 
         return uploadPlatformPackageVersion(packageName, packageTypeId, version,
-            (null == architectureId) ? getNoArchitecture().getId() : architectureId, fileName,
+            (null == architectureId) ? getNoArchitecture().getId() : architectureId, fileName, MD5sum,
             new ByteArrayInputStream(packageBytes), dbmode);
     }
 
     public PackageVersion uploadPlatformPackageVersion(String packageName, int packageTypeId, String version,
-        int architectureId, String fileName, InputStream packageBitStream, boolean dbmode) {
+        int architectureId, String fileName, String MD5sum, InputStream packageBitStream, boolean dbmode) {
         // See if the package version already exists and return that if it does
         Query packageVersionQuery = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_VER_ARCH);
         packageVersionQuery.setParameter("name", packageName);
@@ -1290,12 +1290,10 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
         PackageVersion newPackageVersion = new PackageVersion(existingPackage, version, architecture);
         newPackageVersion.setDisplayName(existingPackage.getName());
-        // TODO: Add metadata info for each package
-        //newPackageVersion.setMetadata(metadata);
+        newPackageVersion.setMD5(MD5sum);
         newPackageVersion.setFileName(fileName);
         if (dbmode) {
-            // Write the content into the newly created package version. This may eventually move, but for now we'll just
-            // use the byte array in the package version to store the bits.
+            // Write the content into the newly created package version.
             byte[] packageBits;
             try {
                 packageBits = StreamUtil.slurp(packageBitStream);
@@ -1356,6 +1354,25 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         }
 
         return newPackageVersion;
+    }
+
+    public void updatePackageVersionMetadata(Subject subject, int pvId, byte[] metadata, long fileSize) {
+        // Check permissions first
+        if (!authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_CONTENT)) {
+            throw new PermissionException("User [" + subject.getName()
+                + "] does not have permission to Manage Packages");
+        }
+        PackageVersion pkgVersion = entityManager.find(PackageVersion.class, pvId);
+        InputStream metastream = new ByteArrayInputStream(metadata);
+        byte[] pkgmetadata;
+        try {
+            pkgmetadata = StreamUtil.slurp(metastream);
+        } catch (RuntimeException re) {
+            throw new RuntimeException("Error reading in the package file", re);
+        }
+        pkgVersion.setFileSize(fileSize);
+        pkgVersion.setMetadata(pkgmetadata);
+        persistPackageVersion(pkgVersion);
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
