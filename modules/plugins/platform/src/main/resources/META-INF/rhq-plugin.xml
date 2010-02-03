@@ -321,6 +321,12 @@
             <c:simple-property name="url" displayName="URL"/>   
          </configuration>
       </content>
+      <content name="cfg" displayName="Config File" category="configuration" description="Configuration File ">
+         <configuration>
+            <c:simple-property name="version" displayName="Version"/>
+            <c:simple-property name="filename" displayName="Filename"/>  
+         </configuration>
+      </content>
 <!-- temporarily disable deb content
       <content name="deb" displayName="DEB File" category="deployable" description="Debian installable package">
          <configuration>

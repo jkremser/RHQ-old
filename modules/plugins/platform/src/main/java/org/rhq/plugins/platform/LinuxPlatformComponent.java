@@ -255,6 +255,9 @@ public class LinuxPlatformComponent extends PlatformComponent implements Content
             DeployPackagesResponse result = new DeployPackagesResponse(ContentResponseResult.SUCCESS);
             List<String> pkgs = new ArrayList<String>();
             for (ResourcePackageDetails p : packages) {
+                if (!p.getPackageTypeName().equals("rpm")) {
+                    continue;
+                }
                 String pkgInfo = p.getName();
                 if ((p.getVersion() != null) && (!p.getVersion().isEmpty())) {
                     pkgInfo = pkgInfo + "-" + p.getVersion();
