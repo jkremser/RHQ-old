@@ -1,3 +1,15 @@
+Background info on JVM tools:
+ http://java.sun.com/developer/technicalArticles/J2SE/monitoring/
+ http://olex.openlogic.com/wazi/2009/how-to-fix-memory-leaks-in-java/
+ https://visualvm.dev.java.net/
+
+Tools:
+    visualgc from Sun
+      Download Page: http://java.sun.com/performance/jvmstat/
+
+    jvisualvm (included with openjdk on fedora 12)
+      ** This is the tool I'm using the most for these tests.
+
 Steps for running a test of the download/parse of package metadata from RHN Hosted.
 
 1. Build this project. 

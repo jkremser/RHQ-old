@@ -1,7 +1,7 @@
 #!/bin/sh
 
 if [ -z $1 ]; then
-    echo "Usage: $0 channel-name [start-index] [end-index] [save-file-name]"
+    echo "Usage: $0 channel-name [start-index] [end-index] [save-file-name] "
     echo "example: $0 rhel-i386-server-5  - fetch all of rhel5 i386 package metadata...warning this is REALLY SLOW from network I/O"
     echo "         $0 rhel-i386-server-5 2100 2400  - to fetch the 300 packages from 2100-2400 of rhel5 i386"
     echo "         $0 rhel-i386-server-5 2100 2400 /tmp/data.xml - to fetch the 300 packages from 2100-2400 of rhel5 i386 and save to /tmp/data.xml"

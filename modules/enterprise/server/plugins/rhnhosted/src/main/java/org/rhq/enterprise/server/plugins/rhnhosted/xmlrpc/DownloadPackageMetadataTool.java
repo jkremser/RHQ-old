@@ -53,6 +53,8 @@ public class DownloadPackageMetadataTool {
     public static final String START_INDEX_PROP = "rhn.index.start";
     public static final String END_INDEX_PROP = "rhn.index.end";
     public static final String SAVE_FILE_PATH_PROP = "rhn.save.file.path";
+    public static final String CHUNK_SIZE_PROP = "rhn.chunk.size";
+
     //String rhnURL = "http://satellite.rhn.stage.redhat.com";
     String rhnURL = "http://satellite.rhn.redhat.com";
     String certLoc = "./entitlement-cert.xml";
@@ -140,8 +142,50 @@ public class DownloadPackageMetadataTool {
      * 
      * @param channelName channel name to sync
      * @param saveFilePath where to save the raw xml data
+     * @param chunkSize how many packages to fetch per output file
+     * @throws Exception
+     */
+    public void saveMetadata(String channelName, String saveFilePath, int chunkSize) throws Exception {
+
+        // Get list of packages in channel
+        String[] pkgIds = getPackagesInChannel(channelName);
+        // Construct list of package id's to fetch
+        List<String> reqPackages = new ArrayList<String>();
+        for (String p : pkgIds) {
+            reqPackages.add(p);
+        }
+        int counter = 0;
+        // Below will chunk the metadata fetches
+        for (int start = 0; start < reqPackages.size(); start += chunkSize) {
+            int endSize = start + chunkSize;
+            if (endSize > reqPackages.size()) {
+                endSize = reqPackages.size();
+            }
+            List<String> pkgs = reqPackages.subList(start, endSize);
+            // Setting up a XmlRpcClient to only use for fetching of package metadata.
+            // Filename is appended with ".counter" so filename.0, filename.1, filename.2, etc
+            XmlRpcClient client = getClient(false, saveFilePath + "." + counter);
+            Object[] params = new Object[] { getSystemId(), pkgs };
+            log.info("Calling 'dump.packages' on " + pkgs.size() + " packages [" + counter * chunkSize + "|"
+                + reqPackages.size() + "]");
+            long startTime = System.currentTimeMillis();
+            JAXBElement<RhnSatelliteType> result = (JAXBElement) client.execute("dump.packages", params);
+            long endTime = System.currentTimeMillis();
+            RhnSatelliteType sat = result.getValue();
+            List<RhnPackageType> rhnPkgs = sat.getRhnPackages().getRhnPackage();
+            log.info("Finished 'dump.packages', fetch of package metadata for " + rhnPkgs.size() + " packages took "
+                + (endTime - startTime) + "ms");
+            counter++;
+        }
+    }
+
+    /**
+     * 
+     * @param channelName channel name to sync
+     * @param saveFilePath where to save the raw xml data
      * @param start the index to start fetching package metadata from
      * @param end the index to stop fetching package metadata for, use -1 if you want all packages
+     * @param chunkSize how many packages to fetch per output file
      * @throws Exception
      */
     public List<RhnPackageType> saveMetadata(String channelName, String saveFilePath, int start, int end)
@@ -214,10 +258,19 @@ public class DownloadPackageMetadataTool {
                 + "-package-metadata.xml";
             System.out.println("Setting saveFilePath to " + saveFilePath);
         }
-        System.out.println("saveFilePath = " + saveFilePath);
 
         System.out.println("Will fetch package metadata for: " + channelName + " and save it to: " + saveFilePath);
-        pkgMetadata.saveMetadata(channelName, saveFilePath, start, end);
+
+        String chunk = System.getProperty(CHUNK_SIZE_PROP);
+        System.out.println(CHUNK_SIZE_PROP + " = " + chunk);
+        if (StringUtils.isBlank(chunk)) {
+            System.out.println("Calling saveMetadata start = " + start + ", end = " + end);
+            pkgMetadata.saveMetadata(channelName, saveFilePath, start, end);
+        } else {
+            int chunkSize = Integer.parseInt(chunk);
+            System.out.println("Calling saveMetadata chunkSize = " + chunkSize);
+            pkgMetadata.saveMetadata(channelName, saveFilePath, chunkSize);
+        }
         System.out.println("Package metadata for channel {" + channelName + "} written to " + saveFilePath);
     }
 }

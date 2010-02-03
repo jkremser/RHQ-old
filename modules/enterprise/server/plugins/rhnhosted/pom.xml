@@ -172,7 +172,7 @@
                                 be deleted after use.
                             -->
                             <name>RhnXmlrpcSaveTempFiles</name>
-                            <value>true</value>
+                            <value>false</value>
                         </property>
                         <property>
                             <!--
