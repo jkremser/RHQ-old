@@ -1564,6 +1564,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             pv.setMetadata(updatedDetails.getMetadata());
             pv.setSHA256(updatedDetails.getSHA256());
             pv.setShortDescription(updatedDetails.getShortDescription());
+            pv.setRelease(key.getRelease());
+            pv.setEpoch(key.getEpoch());
 
             // we normally would want to do this:
             //    pv = entityManager.merge(pv);
