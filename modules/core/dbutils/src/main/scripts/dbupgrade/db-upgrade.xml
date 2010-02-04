@@ -3024,6 +3024,18 @@
                 <!-- Make Filemd5 longer to avoid errors on F11 onwards -->
                 <schema-alterColumn table="RHQ_PACKAGE_VERSION" column="FILE_MD5" columnType="VARCHAR2" precision="255" />
             </schemaSpec>
+            <schemaSpec version="2.79.1">
+                <schema-directSQL>
+                    <statement desc="Deleting index RHQ_PACKAGE_VERSION_IDX">
+                        DROP INDEX RHQ_PACKAGE_VERSION_IDX
+                    </statement>
+                </schema-directSQL>
+                <schema-directSQL>
+                    <statement desc="Creating index on RHQ_PACKAGE_VERSION_IDX after including release and epoch">
+                        CREATE UNIQUE INDEX RHQ_PACKAGE_VERSION_IDX ON RHQ_PACKAGE_VERSION (PACKAGE_ID, VERSION, RELEASE, EPOCH, ARCHITECTURE_ID)
+                    </statement>
+                </schema-directSQL>
+            </schemaSpec>
         </dbupgrade>
     </target>
 </project>
