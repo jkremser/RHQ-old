@@ -38,6 +38,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails;
 import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
+import org.rhq.enterprise.server.plugin.pc.content.SyncTracker;
 import org.rhq.enterprise.server.plugins.rhnhosted.RHNProvider;
 
 public class TestPerfPackageMetadata {
@@ -111,7 +112,7 @@ public class TestPerfPackageMetadata {
         try {
             provider.initialize(config);
             List<ContentProviderPackageDetails> existingPackages = new ArrayList<ContentProviderPackageDetails>();
-            provider.synchronizePackages(channelName, report, existingPackages);
+            provider.synchronizePackages(channelName, report, existingPackages, new SyncTracker(null, null));
         } catch (Exception e) {
             e.printStackTrace();
             assert false;
