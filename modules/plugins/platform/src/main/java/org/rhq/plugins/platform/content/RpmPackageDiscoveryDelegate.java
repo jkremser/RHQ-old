@@ -56,6 +56,10 @@ public class RpmPackageDiscoveryDelegate {
 
     // Public  --------------------------------------------
 
+    public static void setSystemInfo(SystemInfo systemInfo) {
+        RpmPackageDiscoveryDelegate.systemInfo = systemInfo;
+    }
+
     public static void checkExecutables() {
         // Make sure rpm is actually on the system
         ProcessExecution processExecution = new ProcessExecution("/usr/bin/which");
@@ -68,8 +72,8 @@ public class RpmPackageDiscoveryDelegate {
         rpmExecutable = (((capturedOutput == null) || "".equals(capturedOutput)) ? null : capturedOutput.trim());
     }
 
-    public static void setSystemInfo(SystemInfo systemInfo) {
-        RpmPackageDiscoveryDelegate.systemInfo = systemInfo;
+    public static boolean isRpmSupported() {
+        return rpmExecutable != null;
     }
 
     public static Set<ResourcePackageDetails> discoverPackages(PackageType type) throws IOException {
@@ -111,14 +115,12 @@ public class RpmPackageDiscoveryDelegate {
 
             try {
 
+                String queryFormat = "%{NAME}\\n%{VERSION}\\n%{RELEASE}\\n%{EPOCH}\\n%{ARCH}\\n%{INSTALLTIME}\\n%{FILEMD5S}\\n%{GROUP}\\n%{FILENAMES}\\n%{SIZE}\\n%{LICENSE}\\n%{DESCRIPTION}";
+
                 // Execute RPM query for each RPM
                 ProcessExecution rpmQuery = new ProcessExecution(rpmExecutable);
                 rpmQuery
-                    .setArguments(new String[] {
-                        "-q",
-                        "--qf",
-                        "%{NAME}\\n%{VERSION}\\n%{RELEASE}\\n{EPOCH}\\n%{ARCH}\\n%{INSTALLTIME}\\n%{FILEMD5S}\\n%{GROUP}\\n%{FILENAMES}\\n%{SIZE}\\n%{LICENSE}\\n%{DESCRIPTION}",
-                        rpmName });
+                    .setArguments(new String[] { "-q", "--qf", queryFormat, rpmName });
                 rpmQuery.setCaptureOutput(true);
 
                 ProcessExecutionResults rpmDataResults = systemInfo.executeProcess(rpmQuery);

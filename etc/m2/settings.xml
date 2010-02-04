@@ -51,7 +51,7 @@
             <DatabaseTest.nofail>true</DatabaseTest.nofail>
             <!-- Tests that should be skipped (e.g. because they're long running), comma-separated (with no whitespace!) -
                  some possible values: agent-comm,comm-client,native-system,postgres-plugin -->
-            <rhq.testng.excludedGroups>agent-comm,comm-client,postgres-plugin,native-system</rhq.testng.excludedGroups>
+            <rhq.testng.excludedGroups>agent-comm,comm-client,postgres-plugin,native-system,rpm</rhq.testng.excludedGroups>
             <!--<maven.test.skip>true</maven.test.skip>-->
             <!--<maven.test.failure.ignore>true</maven.test.failure.ignore>-->
             <!--<maven.test.error.ignore>true</maven.test.error.ignore>-->
@@ -66,10 +66,10 @@
             <!-- Alternatively, if you don't want to use the default location of {rhq.rootDir}/{rhq.defaultDevContainerPath}/
                  for your dev server container, then set the below prop to the desired location. -->
             <!--<rhq.containerDir>C:/opt/rhq-server</rhq.containerDir>-->
-            
-            <!-- The full path to a checkout of the JBoss Maven repo 
-                 (svn co https://svn.jboss.org/repos/repository.jboss.org/maven2/ jboss-m2-repo) - 
-                 this is where 'mvn release' will publish distribution artifacts to. --> 
+
+            <!-- The full path to a checkout of the JBoss Maven repo
+                 (svn co https://svn.jboss.org/repos/repository.jboss.org/maven2/ jboss-m2-repo) -
+                 this is where 'mvn release' will publish distribution artifacts to. -->
             <!--<jboss.repository.root>C:/Projects/jboss-m2-repo</jboss.repository.root>-->
          </properties>
 
@@ -93,7 +93,7 @@
                </snapshots>
             </repository>
 -->
-            <!-- Oracle Driver 
+            <!-- Oracle Driver
                  To package the Oracle OJDBC driver set -Drhq.m2.repo.url.oracle and this repo definition will
                  be used to pick it up at build time. -->
             <repository>
@@ -114,7 +114,7 @@
                   <enabled>false</enabled>
                </snapshots>
             </pluginRepository>
-<!--            
+<!--
             <pluginRepository>
                <id>jboss-snapshots</id>
                <name>JBoss Snapshot Repository</name>
@@ -147,7 +147,7 @@
             <rhq.test.quartz.lockHandlerClass>org.quartz.impl.jdbcjobstore.StdRowLockSemaphore</rhq.test.quartz.lockHandlerClass>
          </properties>
       </profile>
-      
+
       <profile>
          <id>h2</id>
          <properties>
@@ -168,7 +168,7 @@
             <rhq.test.quartz.lockHandlerClass>org.quartz.impl.jdbcjobstore.StdRowLockSemaphore</rhq.test.quartz.lockHandlerClass>
          </properties>
       </profile>
-      
+
       <profile>
          <id>sqlserver</id>
          <properties>
@@ -229,16 +229,16 @@
             <jbas5.configDir>SET_ME</jbas5.configDir>
          </properties>
       </profile>
-      
+
       <profile>
          <id>publish</id>
-         <properties>           
+         <properties>
             <confluenceUrl>http://docs.example.com/confluence/</confluenceUrl>
             <confluenceSpace>DOCS</confluenceSpace>
             <confluenceUserName>SET_ME</confluenceUserName>
-            <confluencePassword>SET_ME</confluencePassword>            
-         </properties>                 
-      </profile>      
+            <confluencePassword>SET_ME</confluencePassword>
+         </properties>
+      </profile>
 
    </profiles>
 
@@ -259,7 +259,7 @@
               used by the release plugin to publish via WebDAV to the JBoss Snapshots repo. -->
          <username>YOUR_USERNAME</username>
          <password>YOUR_PASSWORD</password>
-         <configuration>            
+         <configuration>
             <httpConfiguration>
               <put>
                 <params>
@@ -269,8 +269,8 @@
                   </param>
                 </params>
               </put>
-            </httpConfiguration>           
-         </configuration>                  
+            </httpConfiguration>
+         </configuration>
       </server>
    </servers>
 
