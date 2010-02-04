@@ -40,6 +40,7 @@ import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetailsKey;
 import org.rhq.enterprise.server.plugin.pc.content.DistributionDetails;
 import org.rhq.enterprise.server.plugin.pc.content.DistributionFileDetails;
+import org.rhq.enterprise.server.plugin.pc.content.SyncTracker;
 import org.rhq.enterprise.server.plugin.pc.content.ThreadUtil;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelFamilyType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelType;
@@ -85,7 +86,8 @@ public class RHNHelper {
         return this.rhndata.checkSystemId(systemId);
     }
 
-    public List<DistributionDetails> getDistributionMetaData(List<String> labels) throws IOException, XmlRpcException {
+    public List<DistributionDetails> getDistributionMetaData(List<String> labels, SyncTracker tracker)
+        throws IOException, XmlRpcException {
         log.debug("getDistributionMetaData(" + labels + " invoked");
 
         List<DistributionDetails> distros = new ArrayList<DistributionDetails>();
@@ -115,74 +117,77 @@ public class RHNHelper {
         return distros;
     }
 
-    public List<AdvisoryDetails> getAdvisoryMetadata(List<String> advisoryList, String repoName)
+    public List<AdvisoryDetails> getAdvisoryMetadata(List<String> advisoryList, String repoName, SyncTracker tracker)
         throws XmlRpcException, IOException, InterruptedException {
         List<AdvisoryDetails> erratadetails = new ArrayList<AdvisoryDetails>();
-        List<RhnErratumType> errata = rhndata.getErrataMetadata(this.systemid, advisoryList);
-        for (RhnErratumType erratum : errata) {
-            ThreadUtil.checkInterrupted();
-            log.debug("Forming AdvisoryDetails(" + erratum.getAdvisory());
-            AdvisoryDetails details = new AdvisoryDetails(erratum.getAdvisory(), erratum.getRhnErratumAdvisoryType(),
-                erratum.getRhnErratumSynopsis());
-            details.setDescription(erratum.getRhnErratumDescription());
-            details.setSolution(erratum.getRhnErratumSolution());
-            details.setTopic(erratum.getRhnErratumTopic());
-            details.setIssue_date(getLongForDate(erratum.getRhnErratumIssueDate()));
-            details.setUpdate_date(getLongForDate(erratum.getRhnErratumUpdateDate()));
-            details.setAdvisory_name(erratum.getRhnErratumAdvisoryName());
-            details.setAdvisory_rel(erratum.getRhnErratumAdvisoryRel());
-            String cvestr = erratum.getCveNames();
-            String[] cves = cvestr.split(" ");
-            log.debug("list of cves " + cvestr + cves.toString());
+        // ADD WORK
+        tracker.addWork(advisoryList.size());
+        tracker.persistResults();
+        for (int i = 0; i < advisoryList.size(); i++) {
+            String[] advisory = { advisoryList.get(i) };
+            List<RhnErratumType> errata = rhndata.getErrataMetadata(this.systemid, Arrays.asList(advisory));
+            for (RhnErratumType erratum : errata) {
+                ThreadUtil.checkInterrupted();
+                log.debug("Forming AdvisoryDetails(" + erratum.getAdvisory());
+                AdvisoryDetails details = new AdvisoryDetails(erratum.getAdvisory(), erratum
+                    .getRhnErratumAdvisoryType(), erratum.getRhnErratumSynopsis());
+                details.setDescription(erratum.getRhnErratumDescription());
+                details.setSolution(erratum.getRhnErratumSolution());
+                details.setTopic(erratum.getRhnErratumTopic());
+                details.setIssue_date(getLongForDate(erratum.getRhnErratumIssueDate()));
+                details.setUpdate_date(getLongForDate(erratum.getRhnErratumUpdateDate()));
+                details.setAdvisory_name(erratum.getRhnErratumAdvisoryName());
+                details.setAdvisory_rel(erratum.getRhnErratumAdvisoryRel());
+                String cvestr = erratum.getCveNames();
+                String[] cves = cvestr.split(" ");
+                log.debug("list of cves " + cvestr + cves.toString());
 
-            for (String cve : cves) {
-                if (log.isDebugEnabled()) {
-                    log.debug("RHNHelper::getAdvisoryMetaData<Advisory=" + erratum.getAdvisory() + "> CVEs<" + cve
-                        + ">");
-                }
-                AdvisoryCVEDetails acve = new AdvisoryCVEDetails(cve);
-                details.addCVE(acve);
-            }
-
-            List<RhnErratumBugType> ebugs = erratum.getRhnErratumBugs().getRhnErratumBug();
-
-            if (ebugs != null) {
-                for (RhnErratumBugType ebug : ebugs) {
+                for (String cve : cves) {
                     if (log.isDebugEnabled()) {
-                        log.debug("RHNHelper::getAdvisoryMetaData<Advisory=" + erratum.getAdvisory() + "> Bugs<" + ebug
+                        log.debug("RHNHelper::getAdvisoryMetaData<Advisory=" + erratum.getAdvisory() + "> CVEs<" + cve
                             + ">");
                     }
-                    AdvisoryBugDetails dbug = new AdvisoryBugDetails(ebug.getRhnErratumBugId());
-                    details.addBug(dbug);
+                    AdvisoryCVEDetails acve = new AdvisoryCVEDetails(cve);
+                    details.addCVE(acve);
                 }
-            }
 
-            String pkgs = erratum.getPackages();
-            String[] pkgIds = pkgs.split(" ");
+                List<RhnErratumBugType> ebugs = erratum.getRhnErratumBugs().getRhnErratumBug();
 
-            //try {
-            List<AdvisoryPackageDetails> apkgdetails = new ArrayList<AdvisoryPackageDetails>();
-            List<RhnPackageType> pkgdetails = rhndata.getPackageMetadata(this.systemid, Arrays.asList(pkgIds));
-            for (RhnPackageType pkgd : pkgdetails) {
-                if (log.isDebugEnabled()) {
-                    log.debug("RHNHelper::getAdvisoryMetaData<Advisory=" + erratum.getAdvisory() + "> Package<" + pkgd
-                        + ">");
+                if (ebugs != null) {
+                    for (RhnErratumBugType ebug : ebugs) {
+                        if (log.isDebugEnabled()) {
+                            log.debug("RHNHelper::getAdvisoryMetaData<Advisory=" + erratum.getAdvisory() + "> Bugs<"
+                                + ebug + ">");
+                        }
+                        AdvisoryBugDetails dbug = new AdvisoryBugDetails(ebug.getRhnErratumBugId());
+                        details.addBug(dbug);
+                    }
                 }
-                String name = pkgd.getName();
-                String version = pkgd.getVersion();
-                String arch = pkgd.getPackageArch();
-                String release = pkgd.getRelease();
-                String rpmname = constructRpmDisplayName(name, version, release, arch);
-                AdvisoryPackageDetails apkgd = new AdvisoryPackageDetails(name, version, arch, rpmname);
-                apkgdetails.add(apkgd);
+
+                String pkgs = erratum.getPackages();
+                String[] pkgIds = pkgs.split(" ");
+
+                List<AdvisoryPackageDetails> apkgdetails = new ArrayList<AdvisoryPackageDetails>();
+                List<RhnPackageType> pkgdetails = rhndata.getPackageMetadata(this.systemid, Arrays.asList(pkgIds));
+                for (RhnPackageType pkgd : pkgdetails) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("RHNHelper::getAdvisoryMetaData<Advisory=" + erratum.getAdvisory() + "> Package<"
+                            + pkgd + ">");
+                    }
+                    String name = pkgd.getName();
+                    String version = pkgd.getVersion();
+                    String arch = pkgd.getPackageArch();
+                    String release = pkgd.getRelease();
+                    String rpmname = constructRpmDisplayName(name, version, release, arch);
+                    AdvisoryPackageDetails apkgd = new AdvisoryPackageDetails(name, version, arch, rpmname);
+                    apkgdetails.add(apkgd);
+                }
+                details.addPkgs(apkgdetails);
+
+                erratadetails.add(details);
             }
-            details.addPkgs(apkgdetails);
-
-            //} catch (Exception e) {
-            //    e.printStackTrace();
-            // }
-
-            erratadetails.add(details);
+            tracker.finishWork(1);
+            tracker.persistResults();
         }
         return erratadetails;
     }
@@ -493,4 +498,5 @@ public class RHNHelper {
     public String toString() {
         return baseurl;
     }
+
 }

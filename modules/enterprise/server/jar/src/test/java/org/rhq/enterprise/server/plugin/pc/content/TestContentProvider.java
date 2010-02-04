@@ -15,7 +15,7 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
 
     /**
      * Packages returned in a call to
-     * {@link #synchronizePackages(String, PackageSyncReport, Collection)} will
+     * {@link #synchronizePackages(String, PackageSyncReport, Collection, SyncTracker)} will
      * indicate they are of this type. Any test attempting to call this
      * synchronize method should be sure to create a package type of this name
      * in the database prior to calling it.
@@ -53,7 +53,7 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
 
     /**
      * Collection of packages that will be returned from calling
-     * {@link #synchronizePackages(String, PackageSyncReport, Collection)}
+     * {@link #synchronizePackages(String, PackageSyncReport, Collection, SyncTracker)}
      * passing in a repo with the name {@link #REPO_WITH_PACKAGES}.
      */
     public static final Map<ContentProviderPackageDetailsKey, ContentProviderPackageDetails> PACKAGES = new HashMap<ContentProviderPackageDetailsKey, ContentProviderPackageDetails>(
@@ -135,7 +135,7 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
 
     /**
      * Holds a list of all repo names that were passed into calls to
-     * {@link #synchronizePackages(String, PackageSyncReport, Collection)} to
+     * {@link #synchronizePackages(String, PackageSyncReport, Collection, SyncTracker)} to
      * track when and with what data these calls are made.
      */
     private List<String> logSynchronizePackagesRepos = new ArrayList<String>();
@@ -148,7 +148,7 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
 
     /**
      * Holds a list of all repo names that were passed into calls to
-     * {@link #synchronizeDistribution(String, DistributionSyncReport, Collection)}
+     * {@link #synchronizeDistributions(String, DistributionSyncReport, Collection, SyncTracker)}
      * .
      */
     private List<String> logSynchronizeDistroRepos = new ArrayList<String>();
@@ -209,7 +209,7 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
     }
 
     public void synchronizePackages(String repoName, PackageSyncReport report,
-        Collection<ContentProviderPackageDetails> existingPackages) throws SyncException, InterruptedException {
+        Collection<ContentProviderPackageDetails> existingPackages, SyncTracker tracker) throws SyncException, InterruptedException {
 
         logSynchronizePackagesRepos.add(repoName);
 
@@ -249,8 +249,8 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
         return bis;
     }
 
-    public void synchronizeDistribution(String repoName, DistributionSyncReport report,
-        Collection<DistributionDetails> existingDistros) throws SyncException, InterruptedException {
+    public void synchronizeDistributions(String repoName, DistributionSyncReport report,
+        Collection<DistributionDetails> existingDistros, SyncTracker tracker) throws SyncException, InterruptedException {
 
         logSynchronizeDistroRepos.add(repoName);
 
@@ -284,7 +284,7 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
 
     /**
      * Returns a list of repo names that were used to all calls to
-     * {@link #synchronizePackages(String, PackageSyncReport, Collection)}
+     * {@link #synchronizePackages(String, PackageSyncReport, Collection, SyncTracker)}
      * either since the creation of this instance or the last call to
      * {@link #reset()}.
      * 

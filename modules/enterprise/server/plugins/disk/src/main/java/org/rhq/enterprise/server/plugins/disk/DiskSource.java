@@ -45,6 +45,7 @@ import org.rhq.enterprise.server.plugin.pc.content.RepoImportReport;
 import org.rhq.enterprise.server.plugin.pc.content.RepoSource;
 import org.rhq.enterprise.server.plugin.pc.content.SyncException;
 import org.rhq.enterprise.server.plugin.pc.content.SyncProgressWeight;
+import org.rhq.enterprise.server.plugin.pc.content.SyncTracker;
 
 /**
  * This is the most basic <i>reference</i> implementation of a content source. It provides primative package
@@ -119,7 +120,7 @@ public class DiskSource implements ContentProvider, PackageSource, RepoSource {
     }
 
     public void synchronizePackages(String repoName, PackageSyncReport report,
-        Collection<ContentProviderPackageDetails> existingPackages) throws SyncException, InterruptedException {
+        Collection<ContentProviderPackageDetails> existingPackages, SyncTracker tracker) throws SyncException, InterruptedException {
 
         if (!isPackageSource) {
             return;

@@ -18,6 +18,9 @@
  */
 package org.rhq.enterprise.gui.content;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import javax.faces.application.FacesMessage;
 
 import org.apache.commons.logging.Log;
@@ -35,6 +38,21 @@ import org.rhq.enterprise.server.util.LookupUtil;
 
 public class RepoDetailsUIBean {
 
+    private static final Map<Enum<ContentSyncStatus>, String> statusMap = new HashMap<Enum<ContentSyncStatus>, String>();
+    static {
+        statusMap.put(ContentSyncStatus.ADVISORYMETADATA, "Advisories (Step 5 of 5)");
+        statusMap.put(ContentSyncStatus.CANCELLED, "Cancelled");
+        statusMap.put(ContentSyncStatus.CANCELLING, "Cancelling");
+        statusMap.put(ContentSyncStatus.DISTROBITS, "Distro Bits (Step 4 of 5)");
+        statusMap.put(ContentSyncStatus.DISTROMETADATA, "Distro Metadata (Step 3 of 5)");
+        statusMap.put(ContentSyncStatus.FAILURE, "Failure");
+        statusMap.put(ContentSyncStatus.INPROGRESS, "In Progress");
+        statusMap.put(ContentSyncStatus.NONE, "None");
+        statusMap.put(ContentSyncStatus.PACKAGEBITS, "Package Bits (Step 2 of 5)");
+        statusMap.put(ContentSyncStatus.PACKAGEMETADATA, "Package Metadata (Step 1 of 5)");
+        statusMap.put(ContentSyncStatus.SUCCESS, "Success");
+    }
+
     private final Log log = LogFactory.getLog(this.getClass());
 
     private Repo repo;
@@ -48,8 +66,15 @@ public class RepoDetailsUIBean {
         return "edit";
     }
 
+    private ContentSyncStatus getSyncStatusInternal() {
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
+        Integer id = FacesContextUtility.getRequiredRequestParameter("id", Integer.class);
+        ContentSyncStatus status = LookupUtil.getRepoManagerLocal().calculateSyncStatus(subject, id);
+        return status;
+    }
+
     public boolean getCurrentlySyncing() {
-        String syncStatus = getSyncStatus();
+        String syncStatus = getSyncStatusInternal().toString();
         if (!syncStatus.equals(ContentSyncStatus.SUCCESS.toString())
             && !syncStatus.equals(ContentSyncStatus.FAILURE.toString())
             && !syncStatus.equals(ContentSyncStatus.NONE.toString())
@@ -62,10 +87,7 @@ public class RepoDetailsUIBean {
     }
 
     public String getSyncStatus() {
-        Subject subject = EnterpriseFacesContextUtility.getSubject();
-        Integer id = FacesContextUtility.getRequiredRequestParameter("id", Integer.class);
-        String retval = LookupUtil.getRepoManagerLocal().calculateSyncStatus(subject, id);
-        return retval;
+        return statusMap.get(getSyncStatusInternal());
     }
 
     public RepoSyncResults getSyncResults() {
@@ -146,7 +168,7 @@ public class RepoDetailsUIBean {
             Integer id = FacesContextUtility.getRequiredRequestParameter("id", Integer.class);
             RepoManagerLocal manager = LookupUtil.getRepoManagerLocal();
             this.repo = manager.getRepo(subject, id);
-            this.repo.setSyncStatus(manager.calculateSyncStatus(subject, id));
+            this.repo.setSyncStatus(manager.calculateSyncStatus(subject, id).toString());
         }
     }
 }

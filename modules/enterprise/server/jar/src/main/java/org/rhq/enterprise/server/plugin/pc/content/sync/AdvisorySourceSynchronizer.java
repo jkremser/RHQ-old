@@ -113,7 +113,7 @@ public class AdvisorySourceSynchronizer {
         // --------------------------------------------
         start = System.currentTimeMillis();
 
-        advisorySource.synchronizeAdvisory(repo.getName(), advReport, advDetails);
+        advisorySource.synchronizeAdvisories(repo.getName(), advReport, advDetails, tracker);
         ThreadUtil.checkInterrupted();
 
         log.error("Synchronize Advisory: [" + source.getName() + "]: got sync report from adapter=[" + advReport
@@ -127,7 +127,6 @@ public class AdvisorySourceSynchronizer {
             + (System.currentTimeMillis() - start) + ")ms");
 
         tracker.setRepoSyncResults(syncResults);
-        tracker.finishAdvisoryMetadataWork(provider);
         return tracker;
     }
 

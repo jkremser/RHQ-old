@@ -94,6 +94,9 @@ public class DistributionSourceSynchronizer {
         PageControl pc = PageControl.getUnlimitedInstance();
         Subject overlord = subjectManager.getOverlord();
         List<Distribution> dists = repoManager.findAssociatedDistributions(overlord, repo.getId(), pc);
+        // ADD WORK
+        tracker.addDistroMetadataWork(dists.size(), provider);
+
         log.debug("Found " + dists.size() + " distributions for repo " + repo.getId());
 
         DistributionSyncReport distReport = new DistributionSyncReport(repo.getId());
@@ -107,7 +110,7 @@ public class DistributionSourceSynchronizer {
         // --------------------------------------------
         start = System.currentTimeMillis();
 
-        distributionSource.synchronizeDistribution(repo.getName(), distReport, distDetails);
+        distributionSource.synchronizeDistributions(repo.getName(), distReport, distDetails, tracker);
 
         log.info("Synchronize Distributions: [" + repo.getName() + "]: got sync report from adapter=[" + distReport
             + "] (" + (System.currentTimeMillis() - start) + ")ms");
@@ -115,7 +118,8 @@ public class DistributionSourceSynchronizer {
         RepoSyncResults syncResults = contentSourceManager.mergeDistributionSyncReport(source, distReport, tracker
             .getRepoSyncResults());
         tracker.setRepoSyncResults(syncResults);
-        tracker.getProgressWatcher().finishWork(provider.getSyncProgressWeight().getDistribtutionBitsWeight());
+        // FINISH WORK
+        tracker.finishDistroMetadataWork(dists.size(), provider);
         return tracker;
     }
 
@@ -128,10 +132,10 @@ public class DistributionSourceSynchronizer {
         tracker.getRepoSyncResults().appendResults(
             "Synchronize Distributions: [" + repo.getName() + " Starting Distribution bits download.");
         tracker.setRepoSyncResults(repoManager.mergeRepoSyncResults(tracker.getRepoSyncResults()));
-        contentSourceManager.downloadDistributionBits(overlord, source);
+        contentSourceManager.downloadDistributionBits(overlord, repo, source, tracker);
         tracker.getRepoSyncResults().appendResults(
             "Synchronize Distributions: [" + repo.getName() + " finished bits download.");
-        tracker.getProgressWatcher().finishWork(provider.getSyncProgressWeight().getDistribtutionBitsWeight());
+        tracker.finishWork(provider.getSyncProgressWeight().getDistribtutionBitsWeight());
 
         return tracker;
     }

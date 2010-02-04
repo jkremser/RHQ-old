@@ -52,6 +52,7 @@ import org.rhq.enterprise.server.plugin.pc.content.RepoImportReport;
 import org.rhq.enterprise.server.plugin.pc.content.RepoSource;
 import org.rhq.enterprise.server.plugin.pc.content.SyncException;
 import org.rhq.enterprise.server.plugin.pc.content.SyncProgressWeight;
+import org.rhq.enterprise.server.plugin.pc.content.SyncTracker;
 import org.rhq.enterprise.server.plugin.pc.content.ThreadUtil;
 import org.rhq.enterprise.server.plugins.rhnhosted.certificate.Certificate;
 import org.rhq.enterprise.server.plugins.rhnhosted.certificate.CertificateFactory;
@@ -155,7 +156,8 @@ public class RHNProvider implements ContentProvider, PackageSource, RepoSource, 
      * @inheritDoc
      */
     public void synchronizePackages(String repoName, PackageSyncReport report,
-        Collection<ContentProviderPackageDetails> existingPackages) throws SyncException, InterruptedException {
+        Collection<ContentProviderPackageDetails> existingPackages, SyncTracker tracker) throws SyncException,
+        InterruptedException {
         log.info("synchronizePackages(repoName = " + repoName + ", report = " + report + ", existingPackages.size() = "
             + existingPackages.size());
         RHNSummary summary = new RHNSummary(helper);
@@ -168,6 +170,8 @@ public class RHNProvider implements ContentProvider, PackageSource, RepoSource, 
             List<String> pkgIds = helper.getChannelPackages(repoName);
             log.info("RHNProvider::  helper.getChannelPackages returned  " + pkgIds.size() + " packages");
             List<ContentProviderPackageDetails> pkgDetails = new ArrayList<ContentProviderPackageDetails>();
+            tracker.addWork(pkgIds.size());
+            tracker.persistResults();
 
             //
             // We ran into problems when syncing large package lists, example 6000 packages.
@@ -193,6 +197,8 @@ public class RHNProvider implements ContentProvider, PackageSource, RepoSource, 
                 long endTimeSlice = System.currentTimeMillis();
                 log.debug("Slice processed in " + (endTimeSlice - startTimeSlice) + "ms current size of pkgDetails is "
                     + pkgDetails.size());
+                tracker.finishWork(pkgSliceList.size());
+                tracker.persistResults();
                 ThreadUtil.checkInterrupted();
             }
             long endTime = System.currentTimeMillis();
@@ -217,6 +223,7 @@ public class RHNProvider implements ContentProvider, PackageSource, RepoSource, 
                 summary.deleted++;
             }
         } catch (Exception e) {
+            log.error("Error synching packages", e);
             summary.errors.add(e.toString());
             throw new SyncException("error synching packages.", e);
         } finally {
@@ -230,8 +237,8 @@ public class RHNProvider implements ContentProvider, PackageSource, RepoSource, 
     /**
      * @inheritDoc
      */
-    public void synchronizeAdvisory(String repoName, AdvisorySyncReport report,
-        Collection<AdvisoryDetails> existingAdvisory) throws SyncException, InterruptedException {
+    public void synchronizeAdvisories(String repoName, AdvisorySyncReport report,
+        Collection<AdvisoryDetails> existingAdvisory, SyncTracker tracker) throws SyncException, InterruptedException {
 
         List<String> existingLabels = new ArrayList<String>();
         for (AdvisoryDetails ad : existingAdvisory) {
@@ -243,7 +250,7 @@ public class RHNProvider implements ContentProvider, PackageSource, RepoSource, 
 
         try {
             List<String> errataIds = helper.getChannelAdvisory(repoName);
-            List<AdvisoryDetails> advList = helper.getAdvisoryMetadata(errataIds, repoName);
+            List<AdvisoryDetails> advList = helper.getAdvisoryMetadata(errataIds, repoName, tracker);
             log.debug("Found " + advList.size() + " available errata");
             for (AdvisoryDetails adv : advList) {
                 log.debug("Processing Advisory ::" + adv.getAdvisory());
@@ -273,8 +280,8 @@ public class RHNProvider implements ContentProvider, PackageSource, RepoSource, 
     /**
      * @inheritDoc
      */
-    public void synchronizeDistribution(String repoName, DistributionSyncReport report,
-        Collection<DistributionDetails> existingDistros) throws SyncException {
+    public void synchronizeDistributions(String repoName, DistributionSyncReport report,
+        Collection<DistributionDetails> existingDistros, SyncTracker tracker) throws SyncException {
 
         // Goal:
         //   This method will create the metadata representing what kickstart tree files need to be downloaded.
@@ -316,7 +323,7 @@ public class RHNProvider implements ContentProvider, PackageSource, RepoSource, 
 
         List<DistributionDetails> ddList;
         try {
-            ddList = helper.getDistributionMetaData(toSyncDistros);
+            ddList = helper.getDistributionMetaData(toSyncDistros, tracker);
         } catch (Exception e) {
             throw new SyncException("Error synching distro metadata", e);
         }

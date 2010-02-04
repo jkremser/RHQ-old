@@ -33,6 +33,7 @@ import org.rhq.enterprise.server.plugin.pc.content.PackageSource;
 import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
 import org.rhq.enterprise.server.plugin.pc.content.SyncException;
 import org.rhq.enterprise.server.plugin.pc.content.SyncProgressWeight;
+import org.rhq.enterprise.server.plugin.pc.content.SyncTracker;
 
 /**
  * The RepoSource provides a content source for synchronizing content contained with a yum repo.
@@ -127,12 +128,12 @@ public class RepoProvider implements ContentProvider, PackageSource {
      * rpm works since an update generates a new package version.
      *
      * @param repoName
-     *@param  report           A report to fill in.
+     * @param  report           A report to fill in.
      * @param  existingPackages A collection of package specifications already in inventory.
-    *   @throws Exception On all errors.
+     *@throws Exception On all errors.
      */
     public void synchronizePackages(String repoName, PackageSyncReport report,
-        Collection<ContentProviderPackageDetails> existingPackages) throws SyncException, InterruptedException {
+        Collection<ContentProviderPackageDetails> existingPackages, SyncTracker tracker) throws SyncException, InterruptedException {
         Summary summary = new Summary(reader);
         log.info("synchronizing with repo: " + reader + " started");
         try {

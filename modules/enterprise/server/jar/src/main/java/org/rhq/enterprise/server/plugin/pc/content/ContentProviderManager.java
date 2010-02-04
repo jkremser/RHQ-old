@@ -44,7 +44,6 @@ import org.rhq.core.domain.content.ContentSyncStatus;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.RepoSyncResults;
 import org.rhq.core.domain.util.PageControl;
-import org.rhq.core.util.progresswatch.ProgressWatcher;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
@@ -322,11 +321,12 @@ public class ContentProviderManager {
         progress.append('\n');
         progress.append(new Date()).append(": ");
         progress.append("Getting currently known list of content source packages...");
-        SyncTracker tracker = new SyncTracker(new RepoSyncResults(repo), new ProgressWatcher());
+        SyncTracker tracker = new SyncTracker(repoManager, new RepoSyncResults(repo));
+        tracker.start();
         tracker.setResults(progress.toString());
-        tracker.setRepoSyncResults(repoManager.persistRepoSyncResults(tracker.getRepoSyncResults()));
+        tracker.persistResults();
         log.debug("synchronizeRepo :: inProgress");
-        tracker = updatePercentComplete(tracker, repoManager);
+        tracker.persistResults();
 
         if (tracker.getRepoSyncResults() == null) {
             log.info("Repository [" + repo.getName()
@@ -338,6 +338,7 @@ public class ContentProviderManager {
         try {
             ThreadUtil.checkInterrupted();
             // METADATA Loop
+            log.debug("Starting with Package Metadata: " + tracker.getPercentComplete());
             for (ContentSource source : repo.getContentSources()) {
                 try {
                     ContentProvider provider = getIsolatedContentProvider(source.getId());
@@ -352,20 +353,10 @@ public class ContentProviderManager {
                     processSyncException(e, tracker, repo, source, repoManager);
                 }
             }
+            log.debug("Done with Package Metadata: " + tracker.getPercentComplete());
+            tracker.resetToZero();
+            tracker.persistResults();
             ThreadUtil.checkInterrupted();
-
-            // Setup ProgressWatcher
-            for (ContentSource source : repo.getContentSources()) {
-                ContentProvider provider = getIsolatedContentProvider(source.getId());
-                SyncProgressWeight sw = provider.getSyncProgressWeight();
-                tracker.getProgressWatcher().addWork(sw.getPackageMetadataWeight());
-                tracker.addAdvisoryMetadataWork(provider);
-                tracker.getProgressWatcher().addWork(sw.getDistribtutionBitsWeight());
-                tracker.getProgressWatcher().addWork(sw.getDistribtutionMetadataWeight());
-                tracker.addPackageBitsWork(provider);
-                tracker.getProgressWatcher().finishWork(sw.getPackageMetadataWeight());
-            }
-            tracker = updatePercentComplete(tracker, repoManager);
 
             // PACKAGEBITS Loop
             // Synchronize every content provider associated with the repo
@@ -380,7 +371,7 @@ public class ContentProviderManager {
                     log.debug("synchronizeRepo :: synchronizePackageBits");
                     tracker = updateSyncStatus(tracker, ContentSyncStatus.PACKAGEBITS);
                     tracker = packageSourceSynchronizer.synchronizePackageBits(tracker, provider);
-                    tracker = updatePercentComplete(tracker, repoManager);
+                    tracker.persistResults();
                     // Check to cancel after each contentsource
                     ThreadUtil.checkInterrupted();
 
@@ -388,6 +379,11 @@ public class ContentProviderManager {
                     processSyncException(e, tracker, repo, source, repoManager);
                 }
             }
+            tracker.resetToZero();
+            tracker.persistResults();
+
+            // Treat the Distro Meta and Distro Bits as one step
+            // since the metadata isn't that long but bits are.
             // Distro meta
             for (ContentSource source : repo.getContentSources()) {
                 try {
@@ -398,7 +394,7 @@ public class ContentProviderManager {
                     log.debug("synchronizeRepo :: synchronizeDistributionMetadata");
                     tracker = updateSyncStatus(tracker, ContentSyncStatus.DISTROMETADATA);
                     tracker = distributionSourceSynchronizer.synchronizeDistributionMetadata(tracker);
-                    tracker = updatePercentComplete(tracker, repoManager);
+                    tracker.persistResults();
                     ThreadUtil.checkInterrupted();
                 } catch (SyncException e) {
                     processSyncException(e, tracker, repo, source, repoManager);
@@ -415,13 +411,16 @@ public class ContentProviderManager {
                     log.debug("synchronizeRepo :: synchronizeDistributionBits");
                     tracker = updateSyncStatus(tracker, ContentSyncStatus.DISTROBITS);
                     tracker = distributionSourceSynchronizer.synchronizeDistributionBits(tracker);
-                    tracker = updatePercentComplete(tracker, repoManager);
+                    tracker.persistResults();
                     ThreadUtil.checkInterrupted();
                 } catch (SyncException e) {
                     processSyncException(e, tracker, repo, source, repoManager);
                 }
             }
+            tracker.resetToZero();
+            tracker.persistResults();
 
+            log.debug("Progressing to ERRATA: " + tracker.getPercentComplete());
             // advisory meta
             for (ContentSource source : repo.getContentSources()) {
                 try {
@@ -431,13 +430,13 @@ public class ContentProviderManager {
                     AdvisorySourceSynchronizer advisorySourcesync = new AdvisorySourceSynchronizer(repo, source,
                         provider);
                     tracker = advisorySourcesync.synchronizeAdvisoryMetadata(tracker);
-                    tracker = updatePercentComplete(tracker, repoManager);
+                    tracker.persistResults();
                     ThreadUtil.checkInterrupted();
                 } catch (SyncException e) {
                     processSyncException(e, tracker, repo, source, repoManager);
                 }
             }
-
+            log.debug("Done with ERRATA: " + tracker.getPercentComplete());
             // Update status to finished.
             progress = new StringBuilder();
             progress.append("\n");
@@ -456,8 +455,8 @@ public class ContentProviderManager {
             log.debug("Caught Exception: ", e);
             progress.append("\n ** Cancelled syncing **");
             tracker.setResults(progress.toString());
-            tracker.getProgressWatcher().resetToZero();
-            tracker = updatePercentComplete(tracker, repoManager);
+            tracker.resetToZero();
+            tracker.persistResults();
             try {
                 tracker = updateSyncStatus(tracker, ContentSyncStatus.CANCELLED, false);
             } catch (InterruptedException e1) {
@@ -482,14 +481,10 @@ public class ContentProviderManager {
 
     }
 
-    private SyncTracker updatePercentComplete(SyncTracker tracker, RepoManagerLocal repoManager) {
-        tracker.getRepoSyncResults().setPercentComplete(new Long(tracker.getProgressWatcher().getPercentComplete()));
-        tracker.setRepoSyncResults(repoManager.mergeRepoSyncResults(tracker.getRepoSyncResults()));
-        return tracker;
-    }
-
     private SyncTracker processSyncException(Exception e, SyncTracker tracker, Repo repo, ContentSource source,
         RepoManagerLocal repoManager) {
+
+        log.error("processSyncException", e);
 
         StringBuilder progress = new StringBuilder();
         log.error("Error while synchronizing repo [" + repo + "] with content provider [" + source

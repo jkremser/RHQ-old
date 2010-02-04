@@ -48,6 +48,7 @@ import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails
 import org.rhq.enterprise.server.plugin.pc.content.DistributionSyncReport;
 import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
 import org.rhq.enterprise.server.plugin.pc.content.RepoDetails;
+import org.rhq.enterprise.server.plugin.pc.content.SyncTracker;
 
 /**
  * Interface that provides access to the {@link ContentSource} objects deployed in the server, allowing the callers to
@@ -308,9 +309,11 @@ public interface ContentSourceManagerLocal {
      * This will download all the distribution bits associated with a specific content source.
      *
      * @param subject
+     * @param repo TODO
      * @param contentSource
+     * @param tracker TODO
      */
-    void downloadDistributionBits(Subject subject, ContentSource contentSource);
+    void downloadDistributionBits(Subject subject, Repo repo, ContentSource contentSource, SyncTracker tracker);
 
     /**
      * Given a {@link PackageVersionContentSource} which contains the ID of a content source, an ID of a package

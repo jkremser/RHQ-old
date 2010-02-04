@@ -44,11 +44,13 @@ public interface PackageSource {
      *                         with the current state of the external package source.
      * @param existingPackages collection of packages the server currently has in its inventory for this package
      *                         source; used when determining package diff information for the report.
+     * @param tracker          Responsible for tracking the progress of the sync
      * @throws Exception if the package source is unable to perform the synchronization, for instance if the external
      *                   source cannot be connected to.
      */
     void synchronizePackages(String repoName, PackageSyncReport report,
-        Collection<ContentProviderPackageDetails> existingPackages) throws SyncException, InterruptedException;
+        Collection<ContentProviderPackageDetails> existingPackages, SyncTracker tracker) throws SyncException,
+        InterruptedException;
 
     /**
      * Get an input stream for the specified package.

@@ -46,6 +46,7 @@ import org.rhq.enterprise.server.plugin.pc.content.PackageSource;
 import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
 import org.rhq.enterprise.server.plugin.pc.content.SyncException;
 import org.rhq.enterprise.server.plugin.pc.content.SyncProgressWeight;
+import org.rhq.enterprise.server.plugin.pc.content.SyncTracker;
 
 /**
  * Hook into the server to field requests on JBoss software related packages.
@@ -65,7 +66,7 @@ public class JBossSoftwareContentSourceAdapter implements ContentProvider, Packa
 
     /**
      * Indicates if the feed parsing should be performed. This check is only done at the call to
-     * {@link #synchronizePackages(String, PackageSyncReport, Collection)}. This flag is not used in the
+     * {@link #synchronizePackages(String, PackageSyncReport, Collection, SyncTracker)}. This flag is not used in the
      * call to {@link #getInputStream(String)}; it only refers to the feed retrieval and parsing. If you managed to
      * get the patches into the system prior to deactivating this content source, you will still be able to
      * retrieve the bits for them.
@@ -115,7 +116,7 @@ public class JBossSoftwareContentSourceAdapter implements ContentProvider, Packa
     }
 
     public void synchronizePackages(String repoName, PackageSyncReport report,
-        Collection<ContentProviderPackageDetails> existingPackages) throws SyncException, InterruptedException {
+        Collection<ContentProviderPackageDetails> existingPackages, SyncTracker tracker) throws SyncException, InterruptedException {
         if (!active)
             return;
 

@@ -19,9 +19,12 @@
 
 package org.rhq.enterprise.server.plugin.pc.content;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.content.ContentSyncStatus;
 import org.rhq.core.domain.content.RepoSyncResults;
-import org.rhq.core.util.progresswatch.ProgressWatcher;
+import org.rhq.enterprise.server.content.RepoManagerLocal;
 
 /**
  * Container class to hold the classes required to track the progress of a ContentProvider Sync.
@@ -30,45 +33,47 @@ import org.rhq.core.util.progresswatch.ProgressWatcher;
  */
 public class SyncTracker {
 
+    private final Log log = LogFactory.getLog(SyncTracker.class);
+
+    RepoManagerLocal repoManager;
     private int repoId;
     private RepoSyncResults repoSyncResults;
-    private ProgressWatcher progressWatcher;
     private int packageSyncCount;
+
+    private boolean started = false;
+    private int totalWork = -1;
+    private int finishedWork = -1;
 
     /**
      * @param repoSyncResults
      * @param progressWatcher
      */
-    public SyncTracker(RepoSyncResults repoSyncResultsIn, ProgressWatcher progressWatcherIn) {
+    public SyncTracker(RepoManagerLocal repoManagerIn, RepoSyncResults repoSyncResultsIn) {
         super();
         this.repoId = repoSyncResultsIn.getRepo().getId();
         this.repoSyncResults = repoSyncResultsIn;
-        this.progressWatcher = progressWatcherIn;
-        this.progressWatcher.start();
-    }
-
-    public void addAdvisoryMetadataWork(ContentProvider provider) {
-        SyncProgressWeight sw = provider.getSyncProgressWeight();
-        if (this.getPackageSyncCount() == 0) {
-            this.getProgressWatcher().addWork(sw.getAdvisoryWeight() * 10);
-        } else {
-            this.getProgressWatcher().addWork(sw.getAdvisoryWeight() * this.getPackageSyncCount());
-        }
-
-    }
-
-    public void finishAdvisoryMetadataWork(ContentProvider provider) {
-        if (this.getPackageSyncCount() == 0) {
-            this.getProgressWatcher().finishWork(provider.getSyncProgressWeight().getAdvisoryWeight() * 10);
-        } else {
-            this.getProgressWatcher().finishWork(
-                provider.getSyncProgressWeight().getAdvisoryWeight() * this.getPackageSyncCount());
-        }
+        this.repoManager = repoManagerIn;
     }
 
     public void addPackageBitsWork(ContentProvider provider) {
         SyncProgressWeight sw = provider.getSyncProgressWeight();
-        this.getProgressWatcher().addWork(sw.getPackageBitsWeight() * this.getPackageSyncCount());
+        this.addWork(sw.getPackageBitsWeight() * this.getPackageSyncCount());
+    }
+
+    public void finishPackageBitsWork(ContentProvider provider) {
+        SyncProgressWeight sw = provider.getSyncProgressWeight();
+        this.finishWork(sw.getPackageBitsWeight() * this.getPackageSyncCount());
+    }
+
+    public void addDistroMetadataWork(int distCount, ContentProvider provider) {
+        SyncProgressWeight sw = provider.getSyncProgressWeight();
+        this.addWork(sw.getDistribtutionMetadataWeight() * distCount);
+    }
+
+    public void finishDistroMetadataWork(int distCount, ContentProvider provider) {
+        SyncProgressWeight sw = provider.getSyncProgressWeight();
+        this.finishWork(sw.getDistribtutionMetadataWeight() * distCount);
+
     }
 
     /**
@@ -76,13 +81,6 @@ public class SyncTracker {
      */
     public RepoSyncResults getRepoSyncResults() {
         return repoSyncResults;
-    }
-
-    /**
-     * @return the progressWatcher
-     */
-    public ProgressWatcher getProgressWatcher() {
-        return progressWatcher;
     }
 
     /**
@@ -132,7 +130,94 @@ public class SyncTracker {
      * @return int repoId
      */
     public int getRepoId() {
-
         return this.repoId;
     }
+
+    /**
+     * Store the percentage complete to the database
+     * 
+     */
+    public void persistResults() {
+        repoSyncResults.setPercentComplete(new Long(this.getPercentComplete()));
+        this.setRepoSyncResults(repoManager.mergeRepoSyncResults(repoSyncResults));
+    }
+
+    /**
+     * Start watching the progress of a given amount of work.
+     */
+    public void start() {
+        totalWork = 0;
+        finishedWork = 0;
+        started = true;
+    }
+
+    /**
+     * Get the percentage complete of the total work specified.
+     * @return float 0-100% of the amount of work copleted.  integer so no decimal points.
+     * @throws IllegalStateException if this ProgressWatcher has not been started yet.
+     */
+    public int getPercentComplete() throws IllegalStateException {
+        if (!started) {
+            throw new IllegalStateException(this.getClass().getSimpleName()
+                + " not started yet. call start() to set progress to 0 and start watching.");
+        }
+        if (totalWork == 0) {
+            return 0;
+        } else {
+            float percentComp = (((float) finishedWork / (float) totalWork) * 100);
+            return (int) percentComp;
+        }
+
+    }
+
+    /**
+     * Set the total amount of work to be completed.
+     * 
+     * @param totalWorkIn to set.
+     */
+    public void setTotalWork(int totalWorkIn) {
+        this.totalWork = totalWorkIn;
+    }
+
+    /**
+     * Add a unit of work to be completed.
+     * 
+     * @param workToAdd 
+     */
+    public void addWork(int workToAdd) {
+        totalWork = totalWork + workToAdd;
+        log.debug("    addWork() - ADD   : " + workToAdd + " Total work: [" + totalWork + "] Finished work: "
+            + finishedWork);
+    }
+
+    /**
+     * Indicate that a # of work units has been completed.
+     * 
+     * @param workToRemove
+     */
+    public void finishWork(int workToRemove) {
+        if (!started) {
+            throw new IllegalStateException(this.getClass().getSimpleName()
+                + " not started yet. call start() to set progress to 0 and start watching.");
+        }
+        finishedWork += workToRemove;
+        log.debug("    finishWork() - REM: " + workToRemove + " Total work: [" + totalWork + "] Finished work: "
+            + finishedWork);
+    }
+
+    /**
+     * Indicate this ProgressWatcher is finished watching.
+     */
+    public void stop() {
+        this.started = false;
+    }
+
+    /**
+     * Reset the ProgressWatcher to zero.
+     */
+    public void resetToZero() {
+        stop();
+        start();
+    }
+
 }

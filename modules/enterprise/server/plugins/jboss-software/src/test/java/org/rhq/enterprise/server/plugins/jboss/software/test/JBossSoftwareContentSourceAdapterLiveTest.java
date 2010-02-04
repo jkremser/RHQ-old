@@ -85,7 +85,7 @@ public class JBossSoftwareContentSourceAdapterLiveTest {
         // Test
         PackageSyncReport report = new PackageSyncReport();
 
-        adapter.synchronizePackages(null, report, null);
+        adapter.synchronizePackages(null, report, null, null);
 
         // Verify
         assert report.getNewPackages().size() > 0 : "No packages were parsed from the live feed";
@@ -128,7 +128,7 @@ public class JBossSoftwareContentSourceAdapterLiveTest {
         // Test
         PackageSyncReport report = new PackageSyncReport();
 
-        adapter.synchronizePackages(null, report, null);
+        adapter.synchronizePackages(null, report, null, null);
 
         // Verify
         assert report.getNewPackages().size() > 0 : "No packages were parsed from the live feed";
@@ -145,7 +145,7 @@ public class JBossSoftwareContentSourceAdapterLiveTest {
         // Test
         PackageSyncReport report = new PackageSyncReport();
 
-        adapter.synchronizePackages(null, report, null);
+        adapter.synchronizePackages(null, report, null, null);
 
         // Verify
         assert report.getNewPackages().size() > 0 : "No packages were parsed from the live feed";
@@ -166,7 +166,7 @@ public class JBossSoftwareContentSourceAdapterLiveTest {
         PackageSyncReport report = new PackageSyncReport();
 
         try {
-            adapter.synchronizePackages(null, report, null);
+            adapter.synchronizePackages(null, report, null, null);
         }
         catch (Exception e) {
             assert e.getMessage().toLowerCase().contains("invalid login") :
@@ -188,7 +188,7 @@ public class JBossSoftwareContentSourceAdapterLiveTest {
         PackageSyncReport report = new PackageSyncReport();
 
         try {
-            adapter.synchronizePackages(null, report, null);
+            adapter.synchronizePackages(null, report, null, null);
         }
         catch (Exception e) {
             assert e.getMessage().toLowerCase().contains("not find the feed") :

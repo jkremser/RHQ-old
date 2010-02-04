@@ -38,10 +38,11 @@ public interface AdvisorySource {
      *
      * @param repoName          repo name used to look up advisory
      * @param report           used to accumulate the collection of advisory
+     * @param tracker          used to assist with tracking the sync's progress
      * @throws Exception if the source is unable to perform the synchronization, for instance if the external
      *                   source cannot be connected to.
      */
-    void synchronizeAdvisory(String repoName, AdvisorySyncReport report, Collection<AdvisoryDetails> existingAdvisory)
-        throws SyncException, InterruptedException;
+    void synchronizeAdvisories(String repoName, AdvisorySyncReport report, Collection<AdvisoryDetails> existingAdvisory,
+        SyncTracker tracker) throws SyncException, InterruptedException;
 
 }

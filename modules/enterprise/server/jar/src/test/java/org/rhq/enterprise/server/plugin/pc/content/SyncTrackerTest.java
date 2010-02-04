@@ -16,14 +16,29 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.core.util.progresswatch;
+package org.rhq.enterprise.server.plugin.pc.content;
 
 import junit.framework.TestCase;
 
-public class ProgressWatcherTest extends TestCase {
+import org.rhq.core.domain.content.Repo;
+import org.rhq.core.domain.content.RepoSyncResults;
+
+public class SyncTrackerTest extends TestCase {
+
+    Repo repo;
+    RepoSyncResults results;
+
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+        repo = new Repo();
+        repo.setId(1);
+        results = new RepoSyncResults(repo);
+    }
 
     public void testProgressWatcher() {
-        ProgressWatcher pw = new ProgressWatcher();
+
+        SyncTracker pw = new SyncTracker(null, results);
         boolean failed = false;
         try {
             pw.getPercentComplete();
@@ -44,7 +59,7 @@ public class ProgressWatcherTest extends TestCase {
 
     // Check to make sure we don't lose precision as we divide by close numbers
     public void test98Percent() {
-        ProgressWatcher pw = new ProgressWatcher();
+        SyncTracker pw = new SyncTracker(null, results);
         pw.start();
         pw.setTotalWork(102);
         pw.finishWork(100);
@@ -52,7 +67,7 @@ public class ProgressWatcherTest extends TestCase {
     }
 
     public void testResetToZero() {
-        ProgressWatcher pw = new ProgressWatcher();
+        SyncTracker pw = new SyncTracker(null, results);
         pw.start();
         pw.setTotalWork(102);
         pw.finishWork(100);

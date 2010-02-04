@@ -116,7 +116,7 @@ public class PackageSourceSynchronizer {
         start = System.currentTimeMillis();
 
         PackageSyncReport report = new PackageSyncReport();
-        packageSource.synchronizePackages(repo.getName(), report, allDetails);
+        packageSource.synchronizePackages(repo.getName(), report, allDetails, tracker);
         tracker.setPackageSyncCount(report.getNewPackages().size() + report.getUpdatedPackages().size());
 
         log.info("Synchronize Packages: [" + source.getName() + "]: got sync report from adapter=[" + report + "] ("
@@ -137,6 +137,7 @@ public class PackageSourceSynchronizer {
     public SyncTracker synchronizePackageBits(SyncTracker tracker, ContentProvider provider)
         throws InterruptedException, SyncException {
         SyncProgressWeight sw = provider.getSyncProgressWeight();
+        tracker.addPackageBitsWork(provider);
 
         // Determine if the sync even needs to take place
         if (!(provider instanceof PackageSource)) {
@@ -149,7 +150,7 @@ public class PackageSourceSynchronizer {
             log.info(msg);
             tracker.getRepoSyncResults().appendResults(msg);
             tracker.setRepoSyncResults(repoManager.mergeRepoSyncResults(tracker.getRepoSyncResults()));
-            tracker.getProgressWatcher().finishWork(sw.getPackageBitsWeight() * tracker.getPackageSyncCount());
+            tracker.finishPackageBitsWork(provider);
             return tracker;
         }
 
@@ -159,7 +160,7 @@ public class PackageSourceSynchronizer {
             log.info(msg);
             tracker.getRepoSyncResults().appendResults(msg);
             tracker.setRepoSyncResults(repoManager.mergeRepoSyncResults(tracker.getRepoSyncResults()));
-            tracker.getProgressWatcher().finishWork(sw.getPackageBitsWeight() * tracker.getPackageSyncCount());
+            tracker.finishPackageBitsWork(provider);
             return tracker;
         }
 
@@ -201,10 +202,8 @@ public class PackageSourceSynchronizer {
                 contentSourceManager.downloadPackageBits(overlord, item);
 
                 // Tick off each package as completed work 
-                tracker.getProgressWatcher().finishWork(sw.getPackageBitsWeight() * 1);
-                tracker.getRepoSyncResults().setPercentComplete(
-                    new Long(tracker.getProgressWatcher().getPercentComplete()));
-                tracker.setRepoSyncResults(repoManager.mergeRepoSyncResults(tracker.getRepoSyncResults()));
+                tracker.finishWork(sw.getPackageBitsWeight() * 1);
+                tracker.persistResults();
             } catch (Exception e) {
                 String errorMsg = "Failed to load package bits for package version [" + pk.getPackageVersion()
                     + "] from content source [" + pk.getContentSource() + "] at location [" + item.getLocation() + "]."

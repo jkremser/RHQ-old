@@ -38,11 +38,12 @@ public interface DistributionSource {
      *
      * @param repoName          repo name used to look up distributions
      * @param report           used to accumulate the collection of distros
+     * @param tracker TODO
      * @throws Exception if the source is unable to perform the synchronization, for instance if the external
      *                   source cannot be connected to.
      */
-    void synchronizeDistribution(String repoName, DistributionSyncReport report,
-        Collection<DistributionDetails> existingDistros) throws SyncException, InterruptedException;
+    void synchronizeDistributions(String repoName, DistributionSyncReport report,
+        Collection<DistributionDetails> existingDistros, SyncTracker tracker) throws SyncException, InterruptedException;
 
     /**
      * Get an input stream for the specified distribution.

@@ -983,7 +983,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         return ((Long) countQuery.getSingleResult()).longValue();
     }
 
-    public String calculateSyncStatus(Subject subject, int repoId) {
+    public ContentSyncStatus calculateSyncStatus(Subject subject, int repoId) {
         Repo found = this.getRepo(subject, repoId);
         Set<ContentSyncStatus> stati = new HashSet<ContentSyncStatus>();
         List<RepoSyncResults> syncResults = found.getSyncResults();
@@ -991,9 +991,9 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         int latestIndex = syncResults.size() - 1;
         if (syncResults != null && (!syncResults.isEmpty()) && syncResults.get(latestIndex) != null) {
             RepoSyncResults results = syncResults.get(latestIndex);
-            return results.getStatus().toString();
+            return results.getStatus();
         } else {
-            return ContentSyncStatus.NONE.toString();
+            return ContentSyncStatus.NONE;
         }
     }
 

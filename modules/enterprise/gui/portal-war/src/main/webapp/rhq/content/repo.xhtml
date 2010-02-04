@@ -95,7 +95,7 @@
           <a4j:poll id="statusPoll" interval="1005"
             reRender="syncPercent,syncStatus" />
           <tr>
-            <td align="right"><b>Synchronization Status:</b></td>
+            <td align="right"><b>Synchronization Step:</b></td>
             <td align="left"><c:choose>
               <c:when
                 test="#{RepoDetailsUIBean.percentComplete != '100'}">
@@ -116,7 +116,7 @@
 			</td>
           </tr>
           <tr>
-            <td align="right"><b>Synchronization Progress :</b></td>
+            <td align="right"><b>Step Progress:</b></td>
             <td align="left">
               <c:choose>
                 <c:when

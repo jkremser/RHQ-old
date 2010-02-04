@@ -66,8 +66,7 @@ public class ListReposUIBean extends PagedDataTableUIBean {
             int syncCount = 0;
             try {
                 syncCount = repoManager.synchronizeRepos(subject, repoIds);
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to delete repositories.", e);
             }
             if (syncCount > 0) {
@@ -124,7 +123,7 @@ public class ListReposUIBean extends PagedDataTableUIBean {
 
             PageList<Repo> results = manager.findRepos(subject, pc);
             for (Repo repo : results) {
-                repo.setSyncStatus(manager.calculateSyncStatus(subject, repo.getId()));
+                repo.setSyncStatus(manager.calculateSyncStatus(subject, repo.getId()).toString());
             }
             return results;
         }

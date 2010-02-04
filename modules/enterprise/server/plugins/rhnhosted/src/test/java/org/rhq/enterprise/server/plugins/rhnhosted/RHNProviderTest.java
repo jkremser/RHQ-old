@@ -150,7 +150,7 @@ public class RHNProviderTest {
         List<ContentProviderPackageDetails> existingPackages = new ArrayList<ContentProviderPackageDetails>();
         try {
             provider.initialize(config);
-            provider.synchronizePackages(channelName, report, existingPackages);
+            provider.synchronizePackages(channelName, report, existingPackages, null);
             Set<ContentProviderPackageDetails> newPkgs = report.getNewPackages();
             log.info(newPkgs.size() + " packages are noted as 'NEW'");
             assert (newPkgs.size() > 0);
@@ -195,7 +195,7 @@ public class RHNProviderTest {
         Configuration config = getConfiguration();
         try {
             provider.initialize(config);
-            provider.synchronizeDistribution(channelName, report, existingDistro);
+            provider.synchronizeDistributions(channelName, report, existingDistro, null);
         } catch (Exception e) {
             e.printStackTrace();
             assert false;

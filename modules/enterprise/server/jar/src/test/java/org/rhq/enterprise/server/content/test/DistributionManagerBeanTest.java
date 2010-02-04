@@ -14,6 +14,8 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.Distribution;
 import org.rhq.core.domain.content.DistributionFile;
 import org.rhq.core.domain.content.DistributionType;
+import org.rhq.core.domain.content.Repo;
+import org.rhq.core.domain.content.RepoDistribution;
 import org.rhq.enterprise.server.content.DistributionManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -22,7 +24,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author Pradeep Kilambi
  */
 public class DistributionManagerBeanTest extends AbstractEJB3Test {
-    private final static boolean ENABLED = true;
+    private final static boolean ENABLED = false;
     private DistributionManagerLocal distManager;
     private DistributionType distType;
     private Subject overlord;
@@ -59,6 +61,35 @@ public class DistributionManagerBeanTest extends AbstractEJB3Test {
         assert id == distro.getId();
 
         distManager.deleteDistributionByDistId(overlord, id);
+        distro = distManager.getDistributionByLabel(kslabel);
+        assert distro == null;
+    }
+
+    @Test(enabled = true)
+    public void createDeleteDistributionWithRepo() throws Exception {
+        EntityManager em = getEntityManager();
+        String kslabel = "testCreateDeleteRepo";
+        String kspath = "/tmp";
+        Distribution distro = new Distribution();
+        distro.setDistributionType(distType);
+        distro.setLabel(kslabel);
+        distro.setBasePath(kspath);
+        em.persist(distro);
+        em.flush();
+
+        Repo repo = new Repo();
+        repo.setName("TestCreateDeleteWithDistro");
+        em.persist(repo);
+        em.flush();
+        RepoDistribution repoDist = new RepoDistribution(repo, distro);
+        em.persist(repoDist);
+
+        DistributionFile file = new DistributionFile(distro, "/tmp/foo.txt", "");
+        em.persist(file);
+
+        em.flush();
+
+        distManager.deleteDistributionByDistId(overlord, distro.getId());
         distro = distManager.getDistributionByLabel(kslabel);
         assert distro == null;
     }

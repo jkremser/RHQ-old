@@ -25,6 +25,7 @@ import javax.ejb.Local;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.Advisory;
 import org.rhq.core.domain.content.ContentSource;
+import org.rhq.core.domain.content.ContentSyncStatus;
 import org.rhq.core.domain.content.Distribution;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.Repo;
@@ -122,7 +123,7 @@ public interface RepoManagerLocal {
      * @param repoId to calc status for
      * @return String summary of the status of this Repository
      */
-    String calculateSyncStatus(Subject subject, int repoId);
+    ContentSyncStatus calculateSyncStatus(Subject subject, int repoId);
 
     /**
      */

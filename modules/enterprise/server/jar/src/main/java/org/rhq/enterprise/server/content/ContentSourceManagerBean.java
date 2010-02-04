@@ -116,6 +116,8 @@ import org.rhq.enterprise.server.plugin.pc.content.DistributionSyncReport;
 import org.rhq.enterprise.server.plugin.pc.content.InitializationException;
 import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
 import org.rhq.enterprise.server.plugin.pc.content.RepoDetails;
+import org.rhq.enterprise.server.plugin.pc.content.SyncTracker;
+import org.rhq.enterprise.server.plugin.pc.content.ThreadUtil;
 import org.rhq.enterprise.server.resource.ProductVersionManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -710,7 +712,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     @TransactionTimeout(45 * 60)
-    public void downloadDistributionBits(Subject subject, ContentSource contentSource) {
+    public void downloadDistributionBits(Subject subject, Repo repo, ContentSource contentSource, SyncTracker tracker) {
         try {
             log.debug("downloadDistributionBits invoked");
             DistributionManagerLocal distManager = LookupUtil.getDistributionManagerLocal();
@@ -735,48 +737,52 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             List<Repo> repos = repoManager.findReposByCriteria(overlord, reposForContentSource);
             log.debug("downloadDistributionBits found " + repos.size() + " repos associated with this contentSourceId "
                 + contentSourceId);
-            for (Repo repo : repos) {
-                log.debug("downloadDistributionBits operating on repo: " + repo.getName() + " id = " + repo.getId());
-                // Look up Distributions associated with this ContentSource.
-                PageControl pageControl = PageControl.getUnlimitedInstance();
-                log.debug("Looking up existing distributions for repoId: " + repo.getId());
-                List<Distribution> dists = repoManager.findAssociatedDistributions(overlord, repo.getId(), pageControl);
-                log.debug("Found " + dists.size() + " Distributions for repoId " + repo.getId());
-
-                for (Distribution dist : dists) {
-                    log.debug("Looking up DistributionFiles for dist: " + dist);
-                    List<DistributionFile> distFiles = distManager.getDistributionFilesByDistId(dist.getId());
-                    log.debug("Found " + distFiles.size() + " DistributionFiles");
-                    for (DistributionFile dFile : distFiles) {
-                        String relPath = dist.getBasePath() + "/" + dFile.getRelativeFilename();
-                        File outputFile = getDistLocalFileAndCreateParentDir(dist.getLabel(), relPath);
-                        log.debug("Checking if file exists at: " + outputFile.getAbsolutePath());
-                        if (outputFile.exists()) {
-                            log.debug("File " + outputFile.getAbsolutePath() + " exists, checking md5sum");
-                            String expectedMD5 = (dFile.getMd5sum() != null) ? dFile.getMd5sum() : "<unspecified MD5>";
-                            String actualMD5 = MessageDigestGenerator.getDigestString(outputFile);
-                            if (!expectedMD5.trim().toLowerCase().equals(actualMD5.toLowerCase())) {
-                                log.error("Expected [" + expectedMD5 + "] versus actual [" + actualMD5
-                                    + "] md5sums for file " + outputFile.getAbsolutePath() + " do not match.");
-                                log.error("Need to re-fetch file.  Will download from DistributionSource"
-                                    + " and overwrite local file.");
-                            } else {
-                                log.info(outputFile + " exists and md5sum matches [" + actualMD5
-                                    + "] no need to re-download");
-                                continue; // skip the download from bitsStream
-                            }
+            log.debug("downloadDistributionBits operating on repo: " + repo.getName() + " id = " + repo.getId());
+            // Look up Distributions associated with this ContentSource.
+            PageControl pageControl = PageControl.getUnlimitedInstance();
+            log.debug("Looking up existing distributions for repoId: " + repo.getId());
+            List<Distribution> dists = repoManager.findAssociatedDistributions(overlord, repo.getId(), pageControl);
+            log.debug("Found " + dists.size() + " Distributions for repoId " + repo.getId());
+            // ADD WORK
+            tracker.addWork(dists.size());
+            for (Distribution dist : dists) {
+                log.debug("Looking up DistributionFiles for dist: " + dist);
+                List<DistributionFile> distFiles = distManager.getDistributionFilesByDistId(dist.getId());
+                log.debug("Found " + distFiles.size() + " DistributionFiles");
+                for (DistributionFile dFile : distFiles) {
+                    String relPath = dist.getBasePath() + "/" + dFile.getRelativeFilename();
+                    File outputFile = getDistLocalFileAndCreateParentDir(dist.getLabel(), relPath);
+                    log.debug("Checking if file exists at: " + outputFile.getAbsolutePath());
+                    if (outputFile.exists()) {
+                        log.debug("File " + outputFile.getAbsolutePath() + " exists, checking md5sum");
+                        String expectedMD5 = (dFile.getMd5sum() != null) ? dFile.getMd5sum() : "<unspecified MD5>";
+                        String actualMD5 = MessageDigestGenerator.getDigestString(outputFile);
+                        if (!expectedMD5.trim().toLowerCase().equals(actualMD5.toLowerCase())) {
+                            log.error("Expected [" + expectedMD5 + "] versus actual [" + actualMD5
+                                + "] md5sums for file " + outputFile.getAbsolutePath() + " do not match.");
+                            log.error("Need to re-fetch file.  Will download from DistributionSource"
+                                + " and overwrite local file.");
+                        } else {
+                            log.info(outputFile + " exists and md5sum matches [" + actualMD5
+                                + "] no need to re-download");
+                            continue; // skip the download from bitsStream
                         }
-                        log.debug("Attempting download of " + dFile.getRelativeFilename() + " from contentSourceId "
-                            + contentSourceId);
-                        String remoteFetchLoc = distSource.getDistFileRemoteLocation(repo.getName(), dist.getLabel(),
-                            dFile.getRelativeFilename());
-                        InputStream bitsStream = pc.getAdapterManager().loadDistributionFileBits(contentSourceId,
-                            remoteFetchLoc);
-                        StreamUtil.copy(bitsStream, new FileOutputStream(outputFile), true);
-                        bitsStream = null;
-                        log.debug("DistributionFile has been downloaded to: " + outputFile.getAbsolutePath());
                     }
+                    log.debug("Attempting download of " + dFile.getRelativeFilename() + " from contentSourceId "
+                        + contentSourceId);
+                    String remoteFetchLoc = distSource.getDistFileRemoteLocation(repo.getName(), dist.getLabel(), dFile
+                        .getRelativeFilename());
+                    InputStream bitsStream = pc.getAdapterManager().loadDistributionFileBits(contentSourceId,
+                        remoteFetchLoc);
+                    StreamUtil.copy(bitsStream, new FileOutputStream(outputFile), true);
+                    bitsStream = null;
+                    log.debug("DistributionFile has been downloaded to: " + outputFile.getAbsolutePath());
+                    // FINISH WORK
+                    ThreadUtil.checkInterrupted();
                 }
+                tracker.finishWork(1);
+                tracker.persistResults();
+                ThreadUtil.checkInterrupted();
             }
         } catch (Throwable t) {
             log.error(t);
@@ -1603,7 +1609,6 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         for (DistributionDetails doomedDetails : report.getDeletedDistributions()) {
             Distribution doomedDist = distManager.getDistributionByLabel(doomedDetails.getLabel());
             distManager.deleteDistributionByDistId(overlord, doomedDist.getId());
-            distManager.deleteDistributionFilesByDistId(overlord, doomedDist.getId());
             progress.append("Removed distribution & distribution files for: " + doomedDetails.getLabel());
             syncResults.setResults(progress.toString());
             syncResults = repoManager.mergeRepoSyncResults(syncResults);
@@ -1627,25 +1632,30 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         List<DistributionDetails> newDetails = report.getDistributions();
         for (DistributionDetails detail : newDetails) {
             try {
-
                 log.debug("Attempting to create new distribution based off of: " + detail);
                 DistributionType distType = distManager.getDistributionTypeByName(detail.getDistributionType());
-                Distribution newDist = distManager.createDistribution(overlord, detail.getLabel(), detail
-                    .getDistributionPath(), distType);
-                log.debug("Created new distribution: " + newDist);
-                Repo repo = repoManager.getRepo(overlord, report.getRepoId());
-                RepoDistribution repoDist = new RepoDistribution(repo, newDist);
-                log.debug("Created new mapping of RepoDistribution repoId = " + repo.getId() + ", distId = "
-                    + newDist.getId());
-                entityManager.persist(repoDist);
-                List<DistributionFileDetails> files = detail.getFiles();
-                for (DistributionFileDetails f : files) {
-                    log.debug("Creating DistributionFile for: " + f);
-                    DistributionFile df = new DistributionFile(newDist, f.getRelativeFilename(), f.getMd5sum());
-                    df.setLastModified(f.getLastModified());
-                    entityManager.persist(df);
-                    entityManager.flush();
+                Distribution distro = distManager.getDistributionByLabel(detail.getLabel());
+                if (distro == null) {
+                    distro = distManager.createDistribution(overlord, detail.getLabel(), detail.getDistributionPath(),
+                        distType);
+                    log.debug("Created new distribution: " + distro);
+                    Repo repo = repoManager.getRepo(overlord, report.getRepoId());
+                    RepoDistribution repoDist = new RepoDistribution(repo, distro);
+                    log.debug("Created new mapping of RepoDistribution repoId = " + repo.getId() + ", distId = "
+                        + distro.getId());
+                    entityManager.persist(repoDist);
+                    List<DistributionFileDetails> files = detail.getFiles();
+                    for (DistributionFileDetails f : files) {
+                        log.debug("Creating DistributionFile for: " + f);
+                        DistributionFile df = new DistributionFile(distro, f.getRelativeFilename(), f.getMd5sum());
+                        df.setLastModified(f.getLastModified());
+                        entityManager.persist(df);
+                        entityManager.flush();
+                    }
+                } else {
+                    log.info("already created distro : " + detail);
                 }
+
             } catch (DistributionException e) {
                 progress.append("Caught exception when trying to add: " + detail.getLabel() + "\n");
                 progress.append("Error is: " + e.getMessage());

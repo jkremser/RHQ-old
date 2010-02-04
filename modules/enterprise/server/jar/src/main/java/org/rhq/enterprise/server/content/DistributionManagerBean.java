@@ -34,9 +34,9 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.content.Distribution;
+import org.rhq.core.domain.content.DistributionFile;
 import org.rhq.core.domain.content.DistributionType;
 import org.rhq.core.domain.content.RepoDistribution;
-import org.rhq.core.domain.content.DistributionFile;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
@@ -101,6 +101,11 @@ public class DistributionManagerBean implements DistributionManagerLocal, Distri
 
         entityManager.flush();
         entityManager.clear();
+
+        this.deleteDistributionFilesByDistId(user, distId);
+
+        entityManager.createNamedQuery(RepoDistribution.DELETE_BY_DISTRO_ID).setParameter("distId", distId)
+            .executeUpdate();
 
         entityManager.createNamedQuery(Distribution.QUERY_DELETE_BY_DIST_ID).setParameter("distid", distId)
             .executeUpdate();
@@ -170,8 +175,6 @@ public class DistributionManagerBean implements DistributionManagerLocal, Distri
 
     }
 
-
-
     /**
      * Returns a list of available distribution files for requested distribution
      * @param distId
@@ -199,22 +202,11 @@ public class DistributionManagerBean implements DistributionManagerLocal, Distri
     public void deleteDistributionFilesByDistId(Subject user, int distId) {
         log.debug("User [" + user + "] is deleting distribution file from distribution [" + distId + "]");
 
-        entityManager.flush();
-        entityManager.clear();
-
-        Query querydel = entityManager.createNamedQuery(DistributionFile.SELECT_BY_DIST_ID);
+        Query querydel = entityManager.createNamedQuery(DistributionFile.DELETE_BY_DIST_ID);
 
         querydel.setParameter("distId", distId);
 
         querydel.executeUpdate();
-
-        DistributionFile distFile = entityManager.find(DistributionFile.class, distId);
-        if (distFile != null) {
-            entityManager.remove(distFile);
-            log.debug("User [" + user + "] deleted distribution file [" + distFile + "]");
-        } else {
-            log.debug("Distribution file [" + distFile + "] doesn't exist - nothing to delete");
-        }
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)

@@ -40,6 +40,7 @@ import org.rhq.enterprise.server.plugin.pc.content.PackageSource;
 import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
 import org.rhq.enterprise.server.plugin.pc.content.SyncException;
 import org.rhq.enterprise.server.plugin.pc.content.SyncProgressWeight;
+import org.rhq.enterprise.server.plugin.pc.content.SyncTracker;
 import org.rhq.enterprise.server.plugins.url.RemotePackageInfo.SupportedPackageType;
 
 /**
@@ -177,7 +178,7 @@ public class UrlProvider implements ContentProvider, PackageSource {
     }
 
     public void synchronizePackages(String repoName, PackageSyncReport report,
-        Collection<ContentProviderPackageDetails> existingPackages) throws SyncException {
+        Collection<ContentProviderPackageDetails> existingPackages, SyncTracker tracker) throws SyncException {
 
         // put all existing packages in a "to be deleted" list. As we sync, we will remove
         // packages from this list that still exist on the remote system. Any leftover in the list
