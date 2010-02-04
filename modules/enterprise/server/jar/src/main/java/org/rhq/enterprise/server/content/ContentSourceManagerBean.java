@@ -1411,6 +1411,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             // note that other content sources might already be previously defined this, so only
             // persist it if it does not yet exist
             PackageVersion pv = new PackageVersion(pkg, newDetails.getVersion(), arch);
+            pv.setRelease(newDetails.getKey().getRelease());
+            pv.setEpoch(newDetails.getKey().getEpoch());
             pv.setDisplayName(newDetails.getDisplayName());
             pv.setDisplayVersion(newDetails.getDisplayVersion());
             pv.setExtraProperties(newDetails.getExtraProperties());
@@ -1431,6 +1433,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             q.setParameter("resourceTypeId", rt.getId());
             q.setParameter("architectureName", arch.getName());
             q.setParameter("version", newDetails.getVersion());
+            q.setParameter("release", newDetails.getKey().getRelease());
+            q.setParameter("epoch", newDetails.getKey().getEpoch());
 
             try {
                 PackageVersion pvExisting = (PackageVersion) q.getSingleResult();
@@ -1715,6 +1719,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         query.setParameter("architectureName", packageDetailsKey.getArchitectureName());
         query.setParameter("version", packageDetailsKey.getVersion());
         query.setParameter("resourceTypeId", childResourceType.getId());
+        query.setParameter("release", packageDetailsKey.getRelease());
+        query.setParameter("epoch", packageDetailsKey.getEpoch());
         PackageVersion packageVersion = (PackageVersion) query.getSingleResult();
 
         return outputPackageVersionBitsRangeHelper(parentResourceId, packageDetailsKey, outputStream, 0, -1,

@@ -244,8 +244,8 @@ public class RHNHelper {
         String release = p.getRelease();
         String epoch = p.getEpoch();
         String arch = p.getPackageArch();
-        String downloadName = constructRpmDownloadName(name, version, p.getRelease(), p.getEpoch(), arch);
-        String displayName = constructRpmDisplayName(name, version, p.getRelease(), arch);
+        String downloadName = constructRpmDownloadName(name, version, release, epoch, arch);
+        String displayName = constructRpmDisplayName(name, version, release, arch);
         //
         // Release and epoch definition is added to Package domain model, so we do not need to append release and epoch
         // information to version string anymore. 

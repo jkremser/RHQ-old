@@ -62,7 +62,8 @@ import org.rhq.core.domain.resource.ProductVersion;
         + " WHERE pv.generalPackage.name = :packageName "
         + "   AND pv.generalPackage.packageType.name = :packageTypeName "
         + "   AND pv.generalPackage.packageType.resourceType.id = :resourceTypeId "
-        + "   AND pv.architecture.name = :architectureName " + "   AND pv.version = :version "),
+        + "   AND pv.architecture.name = :architectureName " + "   AND pv.version = :version "
+        + "   AND pv.release = :release" + "   AND pv.epoch = :epoch"),
     @NamedQuery(name = PackageVersion.QUERY_FIND_ID_BY_PACKAGE_DETAILS_KEY_AND_RES_ID, query = "SELECT pv.id "
         + "  FROM PackageVersion AS pv " + "       JOIN pv.generalPackage.packageType.resourceType.resources r "
         + " WHERE pv.generalPackage.name = :packageName "

@@ -145,8 +145,8 @@ public class PackageDetailsKey implements Serializable {
 
     @Override
     public String toString() {
-        return "PackageDetailsKey[Name=" + name + ", Version=" + version + " Arch=" + architectureName + " Type="
-            + packageTypeName + "]";
+        return "PackageDetailsKey[Name=" + name + ", Version=" + version + ", Release = " + release + ", Epoch = "
+            + epoch + " Arch=" + architectureName + " Type=" + packageTypeName + "]";
     }
 
     @Override

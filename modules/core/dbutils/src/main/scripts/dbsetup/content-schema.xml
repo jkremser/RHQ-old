@@ -167,6 +167,8 @@
         <index name="RHQ_PACKAGE_VERSION_IDX" unique="true">
             <field ref="PACKAGE_ID"/>
             <field ref="VERSION"/>
+            <field ref="RELEASE"/>
+            <field ref="EPOCH"/>
             <field ref="ARCHITECTURE_ID"/>
         </index>
 

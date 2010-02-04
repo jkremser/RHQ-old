@@ -195,6 +195,8 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             packageVersionQuery.setParameter("resourceTypeId", resource.getResourceType().getId());
             packageVersionQuery.setParameter("architectureName", resourcePackage.getArchitectureName());
             packageVersionQuery.setParameter("version", resourcePackage.getVersion());
+            packageVersionQuery.setParameter("release", resourcePackage.getKey().getRelease());
+            packageVersionQuery.setParameter("epoch", resourcePackage.getKey().getEpoch());
 
             List<PackageVersion> existingPackageVersionList = packageVersionQuery.getResultList();
 
@@ -418,6 +420,8 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             packageVersionQuery.setParameter("architectureName", key.getArchitectureName());
             packageVersionQuery.setParameter("version", key.getVersion());
             packageVersionQuery.setParameter("resourceTypeId", resource.getResourceType().getId());
+            packageVersionQuery.setParameter("release", key.getRelease());
+            packageVersionQuery.setParameter("epoch", key.getEpoch());
 
             PackageVersion packageVersion = (PackageVersion) packageVersionQuery.getSingleResult();
 
@@ -483,6 +487,8 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             packageVersionQuery.setParameter("architectureName", key.getArchitectureName());
             packageVersionQuery.setParameter("version", key.getVersion());
             packageVersionQuery.setParameter("resourceTypeId", resourceTypeId);
+            packageVersionQuery.setParameter("release", key.getRelease());
+            packageVersionQuery.setParameter("epoch", key.getEpoch());
 
             PackageVersion packageVersion = (PackageVersion) packageVersionQuery.getSingleResult();
 
@@ -699,6 +705,8 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             packageVersionQuery.setParameter("architectureName", key.getArchitectureName());
             packageVersionQuery.setParameter("version", key.getVersion());
             packageVersionQuery.setParameter("resourceTypeId", resourceTypeId);
+            packageVersionQuery.setParameter("release", key.getRelease());
+            packageVersionQuery.setParameter("epoch", key.getEpoch());
 
             PackageVersion packageVersion = (PackageVersion) packageVersionQuery.getSingleResult();
 
@@ -1003,6 +1011,8 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             packageQuery.setParameter("architectureName", key.getArchitectureName());
             packageQuery.setParameter("version", key.getVersion());
             packageQuery.setParameter("resourceTypeId", resourceType.getId());
+            packageQuery.setParameter("release", key.getRelease());
+            packageQuery.setParameter("epoch", key.getEpoch());
 
             List persistedPackageList = packageQuery.getResultList();
 
@@ -1420,6 +1430,8 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             q.setParameter("architectureName", pv.getArchitecture().getName());
             q.setParameter("version", pv.getVersion());
             q.setParameter("resourceTypeId", pv.getGeneralPackage().getPackageType().getResourceType().getId());
+            q.setParameter("release", pv.getRelease());
+            q.setParameter("epoch", pv.getEpoch());
 
             List<PackageVersion> found = q.getResultList();
             if (error != null && found.size() == 0) {
