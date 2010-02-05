@@ -22,6 +22,7 @@ import javax.faces.application.FacesMessage;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.Repo;
+import org.rhq.core.domain.content.RepoVisibility;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.content.RepoException;
@@ -30,6 +31,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 
 public class CreateRepoUIBean {
     private Repo newRepo = new Repo();
+    private String visibility = "PUBLIC";
 
     public Repo getRepo() {
         return newRepo;
@@ -39,9 +41,20 @@ public class CreateRepoUIBean {
         this.newRepo = newRepo;
     }
 
+    public String getVisibility() {
+        return visibility;
+    }
+
+    public void setVisibility(String visibility) {
+        this.visibility = visibility;
+    }
+
     public String save() {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         RepoManagerLocal manager = LookupUtil.getRepoManagerLocal();
+
+        RepoVisibility repoVisibility = RepoVisibility.valueOf(visibility);
+        newRepo.setVisibility(repoVisibility);
 
         try {
             Repo created = manager.createRepo(subject, newRepo);

@@ -57,6 +57,17 @@
                      <h:inputTextarea id="description" rows="3" cols="20" value="#{CreateRepoUIBean.repo.description}"/>
 	               </td>
 	            </tr>
+                 <tr>
+                     <td align="right">Visibility:</td>
+                     <td align="left">
+                         <h:selectOneRadio id="visibility"
+                                           value="#{CreateRepoUIBean.visibility}"
+                                           layout="pageDirection">
+                             <f:selectItem itemValue="PUBLIC" itemLabel="Public" />
+                             <f:selectItem itemValue="PRIVATE" itemLabel="Private" />
+                         </h:selectOneRadio>
+                     </td>
+                 </tr>
 	         </table>
 	      </rich:panel>
 
