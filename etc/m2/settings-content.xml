@@ -33,6 +33,8 @@
       <!--  Profile to use to point test runs at a different db -->
       <id>test.content</id>
       <properties>
+        <rhq.testng.excludedGroups>agent-comm,comm-client,rpm</rhq.testng.excludedGroups>
+
         <rhq.test.ds.connection-url>jdbc:postgresql://127.0.0.1:5432/rhqcontent</rhq.test.ds.connection-url>
         <DatabaseTest.nofail>true</DatabaseTest.nofail>
 
@@ -43,8 +45,8 @@
         <agent2.cfg.file>test-agent2-cfg-mvn.xml</agent2.cfg.file>
         <agent1.server.bind-port>77777</agent1.server.bind-port>
         <agent2.server.bind-port>88888</agent2.server.bind-port>
-        <agent1.communications.connector.bind-port>34343</agent1.communications.connector.bind-port> 
-        <agent2.communications.connector.bind-port>43434</agent2.communications.connector.bind-port> 
+        <agent1.communications.connector.bind-port>34343</agent1.communications.connector.bind-port>
+        <agent2.communications.connector.bind-port>43434</agent2.communications.connector.bind-port>
       </properties>
     </profile>
   </profiles>
