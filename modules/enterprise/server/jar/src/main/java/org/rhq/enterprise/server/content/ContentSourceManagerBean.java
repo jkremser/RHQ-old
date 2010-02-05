@@ -712,9 +712,9 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         return new PageList<PackageVersionContentSource>(uniquePVs, pc);
     }
 
+    // This does *NOT* need to be in a transaction since we are not modifying anything at the DB layer.
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    @TransactionTimeout(45 * 60)
+    @TransactionAttribute(TransactionAttributeType.NEVER)
     public void downloadDistributionBits(Subject subject, Repo repo, ContentSource contentSource, SyncTracker tracker) {
         try {
             log.debug("downloadDistributionBits invoked");
