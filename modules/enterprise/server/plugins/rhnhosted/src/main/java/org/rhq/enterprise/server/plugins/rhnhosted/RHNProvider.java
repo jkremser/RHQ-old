@@ -304,12 +304,17 @@ public class RHNProvider implements ContentProvider, PackageSource, RepoSource, 
         }
         log.debug("Found " + availableLabels.size() + " available kickstart trees");
         for (String label : availableLabels) {
-            log.debug("Processing kickstart: " + label);
-            deletedDistros.remove(label);
-            if (!existingLabels.contains(label)) {
-                log.debug("New kickstart to sync: " + label);
-                toSyncDistros.add(label);
-            }
+            //
+            // We want to always get metadata for all available kickstart trees, this way we may pick up changes to 
+            // the DistributionFiles which make up a Distribution.  Note:  This logic is a little different than
+            // PackageSynch.  For Packages, we pass in a list of current packages, and use that to determine what is
+            // new or changed.  For Distributions, the equivalent would be "DistributionFiles"...not "Distributions".
+            // this led to confusion earlier, and resulted in us only syncing a Distribution once, then never checking
+            // the metadata to see if it changed...
+            //
+            log.debug("Adding " + label + " as a current kickstart label to sync for repo: " + repoName);
+            toSyncDistros.add(label);
+            deletedDistros.remove(label); // this distro exists, so remove it from the deleted list
         }
 
         // Determine what distros are to be removed, i.e. they are synced by RHQ but no longer exist from RHN
