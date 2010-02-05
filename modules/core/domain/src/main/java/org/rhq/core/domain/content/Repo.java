@@ -33,6 +33,8 @@ import java.util.Set;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -143,6 +145,10 @@ public class Repo implements Serializable, Taggable {
 
     @Column(name = "IS_CANDIDATE", nullable = false)
     private boolean candidate;
+
+    @Column(name = "VISIBILITY", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private RepoVisibility visibility = RepoVisibility.PUBLIC; 
 
     @Column(name = "SYNC_SCHEDULE", nullable = true)
     private String syncSchedule = "0 0 3 * * ?";
@@ -263,6 +269,17 @@ public class Repo implements Serializable, Taggable {
 
     public void setCandidate(boolean candidate) {
         this.candidate = candidate;
+    }
+
+    /**
+     * Indicates the visibility.
+     */
+    public RepoVisibility getVisibility() {
+        return visibility;
+    }
+
+    public void setVisibility(RepoVisibility visibility) {
+        this.visibility = visibility;
     }
 
     /**

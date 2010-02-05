@@ -3036,6 +3036,15 @@
                     </statement>
                 </schema-directSQL>
             </schemaSpec>
+            <schemaSpec version="2.80">
+                <schema-addColumn table="RHQ_REPO" column="VISIBILITY" columnType="VARCHAR2" precision="12"/>
+                <schema-directSQL>
+                    <statement desc="Updating existing repos to public visibility">
+                        UPDATE RHQ_REPO SET VISIBILITY = 'PUBLIC'
+                    </statement>
+                </schema-directSQL>
+                <schema-alterColumn table="RHQ_REPO" column="VISIBILITY" nullable="FALSE" />
+            </schemaSpec>
         </dbupgrade>
     </target>
 </project>
