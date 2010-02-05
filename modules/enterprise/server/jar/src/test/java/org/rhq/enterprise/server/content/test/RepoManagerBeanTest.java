@@ -39,6 +39,7 @@ import org.rhq.core.domain.content.RepoGroup;
 import org.rhq.core.domain.content.RepoGroupType;
 import org.rhq.core.domain.content.RepoRelationshipType;
 import org.rhq.core.domain.content.RepoRepoRelationship;
+import org.rhq.core.domain.content.RepoVisibility;
 import org.rhq.core.domain.criteria.RepoCriteria;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -486,4 +487,31 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
         assert !failed;
     }
 
+    @Test(enabled = ENABLED)
+    public void findByVisibility() throws Exception {
+        // Setup
+        Repo repo1 = new Repo("findByVisibility1");
+        repo1.setVisibility(RepoVisibility.PUBLIC);
+
+        Repo repo2 = new Repo("findByVisibility2");
+        repo2.setVisibility(RepoVisibility.PRIVATE);
+
+        repoManager.createRepo(overlord, repo1);
+        repoManager.createRepo(overlord, repo2);
+
+        // Test
+        RepoCriteria publicCriteria = new RepoCriteria();
+        publicCriteria.addFilterVisibility(RepoVisibility.PUBLIC);
+
+        PageList<Repo> publicRepos = repoManager.findReposByCriteria(overlord, publicCriteria);
+        assert publicRepos.size() == 1 : "Found: " + publicRepos.size();
+        assert publicRepos.get(0).getName().equals(repo1.getName());
+
+        RepoCriteria privateCriteria = new RepoCriteria();
+        privateCriteria.addFilterVisibility(RepoVisibility.PRIVATE);
+
+        PageList<Repo> privateRepos = repoManager.findReposByCriteria(overlord, privateCriteria);
+        assert privateRepos.size() == 1 : "Found: " + privateRepos.size();
+        assert privateRepos.get(0).getName().equals(repo2.getName());
+    }
 }

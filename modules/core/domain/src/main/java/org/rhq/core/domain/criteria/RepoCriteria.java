@@ -29,6 +29,7 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
 import org.rhq.core.domain.content.Repo;
+import org.rhq.core.domain.content.RepoVisibility;
 import org.rhq.core.domain.util.PageOrdering;
 
 /**
@@ -45,6 +46,7 @@ public class RepoCriteria extends Criteria {
     private List<Integer> filterResourceIds; // needs overrides
     private Boolean filterCandidate;
     private List<Integer> filterContentSourceIds; // needs overrides
+    private RepoVisibility filterVisibility;
 
     private boolean fetchResourceRepos;
     private boolean fetchRepoContentSources;
@@ -86,6 +88,10 @@ public class RepoCriteria extends Criteria {
 
     public void addFilterContentSourceIds(Integer... filterContentSourceIds) {
         this.filterContentSourceIds = Arrays.asList(filterContentSourceIds);
+    }
+
+    public void addFilterVisibility(RepoVisibility filterVisibility) {
+        this.filterVisibility = filterVisibility;
     }
 
     public void fetchResourceRepos(boolean fetchResourceRepos) {
