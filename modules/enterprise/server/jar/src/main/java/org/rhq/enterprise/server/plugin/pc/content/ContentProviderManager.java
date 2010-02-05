@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -66,6 +67,8 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class ContentProviderManager {
     private static final Log log = LogFactory.getLog(ContentProviderManager.class);
 
+    public static final String RETRY_PROP_NAME = "rhq.content.retry.attempts";
+    private int retryTimes = 3;
     private ContentServerPluginManager pluginManager;
     private Map<ContentSource, ContentProvider> adapters;
 
@@ -73,6 +76,15 @@ public class ContentProviderManager {
     // it helps us avoid two content sources getting synchronized at the same
     // time.
     private final Object synchronizeContentSourceLock = new Object();
+
+    public ContentProviderManager() {
+        String val = System.getProperty(ContentProviderManager.RETRY_PROP_NAME);
+        if (!StringUtils.isEmpty(val)) {
+            retryTimes = Integer.parseInt(val);
+        }
+        log.info("Configuring ContentProviderManager retryTimes = " + retryTimes
+            + ", this value can be modified by changing the System Property: " + RETRY_PROP_NAME);
+    }
 
     /**
      * Asks that the adapter responsible for the given content source return a
@@ -89,7 +101,7 @@ public class ContentProviderManager {
      *             if the adapter failed to load the bits
      */
     public InputStream loadPackageBits(int contentSourceId, String location) throws Exception {
-        return __loadPackageBits(contentSourceId, location, 3);
+        return __loadPackageBits(contentSourceId, location, retryTimes);
     }
 
     protected InputStream __loadPackageBits(int contentSourceId, String location, int retryTimesLeft) throws Exception {
@@ -136,7 +148,7 @@ public class ContentProviderManager {
      *             if the adapter failed to load the bits
      */
     public InputStream loadDistributionFileBits(int contentSourceId, String location) throws Exception {
-        return __loadDistributionFileBits(contentSourceId, location, 3);
+        return __loadDistributionFileBits(contentSourceId, location, retryTimes);
     }
 
     protected InputStream __loadDistributionFileBits(int contentSourceId, String location, int retryTimesLeft)

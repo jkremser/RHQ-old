@@ -21,26 +21,38 @@ package org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc;
 
 import java.util.List;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.xmlrpc.XmlRpcException;
 import org.apache.xmlrpc.client.XmlRpcClient;
 
+import org.rhq.enterprise.server.plugin.pc.content.ContentProviderManager;
+
 public class ApacheXmlRpcExecutor implements XmlRpcExecutor {
 
     private final Log log = LogFactory.getLog(ApacheXmlRpcExecutor.class);
     private XmlRpcClient client;
+    protected int retryTimes = 3;
 
     public ApacheXmlRpcExecutor(XmlRpcClient clientIn) {
         this.client = clientIn;
+        String val = System.getProperty(ContentProviderManager.RETRY_PROP_NAME);
+        if (!StringUtils.isEmpty(val)) {
+            retryTimes = Integer.parseInt(val);
+        }
+        log
+            .info("Configuring ApacheXmlRpcExecutor:  retryTimes = " + retryTimes
+                + ", this value can be modified by changing the System Property: "
+                + ContentProviderManager.RETRY_PROP_NAME);
     }
 
     public Object execute(String methodName, Object[] params) throws XmlRpcException {
-        return execute(methodName, params, 3);
+        return execute(methodName, params, retryTimes);
     }
 
     public Object execute(String methodName, List pParams) throws XmlRpcException {
-        return execute(methodName, pParams, 3);
+        return execute(methodName, pParams, retryTimes);
     }
 
     protected Object execute(String methodName, Object[] params, int retryTimesLeft) throws XmlRpcException {
