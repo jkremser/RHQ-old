@@ -41,6 +41,7 @@ import org.rhq.core.domain.content.Distribution;
 import org.rhq.core.domain.content.DistributionFile;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.Repo;
+import org.rhq.core.domain.content.RepoVisibility;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -130,12 +131,15 @@ public class ContentHTTPServlet extends DefaultServlet {
             return;
         }
 
-        // validate entitlement
-        try {
-            ContentFilter x509Filter = new ContentFilter();
-            x509Filter.filter(request, repo.getId());
-        } catch (EntitlementException e) {
-            throw new ServletException(e);
+        // If a Repo is not PUBLIC, then a valid cert must be found
+        if (!repo.getVisibility().equals(RepoVisibility.PUBLIC)) {
+            // validate entitlement
+            try {
+                ContentFilter x509Filter = new ContentFilter();
+                x509Filter.filter(request, repo.getId());
+            } catch (EntitlementException e) {
+                throw new ServletException(e);
+            }
         }
 
         // Check if type of content has been specified
@@ -183,13 +187,17 @@ public class ContentHTTPServlet extends DefaultServlet {
         for (Repo r : repos) {
             log.debug("Potential repo: Name = " + r.getName() + ", ID = " + r.getId());
         }
-        log.debug("TODO: generate index.html");
+        log.debug("TODO: generate index.html like page");
         StringBuffer sb = new StringBuffer();
         HtmlRenderer.formStart(sb, "Index of ", request.getRequestURI());
         for (Repo r : repos) {
             log.debug("Potential repo: Name = " + r.getName() + ", ID = " + r.getId());
+            //
             // Skip candidate repos
-            if (!r.isCandidate()) {
+            // We will only render a repo for browsing if it is PUBLIC
+            // It's still possible to access content under a PRIVATE repo, but browsing is not supported.
+            //
+            if (!r.isCandidate() && r.getVisibility().equals(RepoVisibility.PUBLIC)) {
                 String lastMod = new Date(r.getLastModifiedDate()).toString();
                 HtmlRenderer.formDirEntry(sb, request, r.getName(), lastMod);
             }
@@ -204,7 +212,12 @@ public class ContentHTTPServlet extends DefaultServlet {
         HtmlRenderer.formStart(sb, "Index of ", request.getRequestURI());
         HtmlRenderer.formParentLink(sb, getParentURI(request.getRequestURI()));
         HtmlRenderer.formDirEntry(sb, request, PACKAGES, "-");
-        HtmlRenderer.formDirEntry(sb, request, DISTRIBUTIONS, "-");
+        List<Distribution> distList = repoMgr.findAssociatedDistributions(LookupUtil.getSubjectManager().getOverlord(),
+            repo.getId(), PageControl.getUnlimitedInstance());
+        if (!distList.isEmpty()) {
+            // we only want to render 'distributions' as a link for repos which have distribution content
+            HtmlRenderer.formDirEntry(sb, request, DISTRIBUTIONS, "-");
+        }
         HtmlRenderer.formEnd(sb);
         writeResponse(sb.toString(), response);
     }
@@ -245,6 +258,7 @@ public class ContentHTTPServlet extends DefaultServlet {
 
     protected void renderPackageIndex(HttpServletRequest request, HttpServletResponse response, Repo repo)
         throws IOException {
+
         log.debug("Forming packages index.html for repo: " + repo.getName() + ", ID = " + repo.getId());
 
         List<PackageVersion> pvs = repoMgr.findPackageVersionsInRepo(LookupUtil.getSubjectManager().getOverlord(), repo
