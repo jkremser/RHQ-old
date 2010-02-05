@@ -119,7 +119,6 @@ import org.rhq.enterprise.server.plugin.pc.content.RepoDetails;
 import org.rhq.enterprise.server.plugin.pc.content.SyncTracker;
 import org.rhq.enterprise.server.plugin.pc.content.ThreadUtil;
 import org.rhq.enterprise.server.resource.ProductVersionManagerLocal;
-import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * A SLSB wrapper around our server-side content source plugin container. This bean provides access to the
@@ -155,6 +154,10 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     private ProductVersionManagerLocal productVersionManager;
     @EJB
     private RepoManagerLocal repoManager;
+    @EJB
+    DistributionManagerLocal distManager;
+    @EJB
+    AdvisoryManagerLocal advManager;
 
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
@@ -715,7 +718,6 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     public void downloadDistributionBits(Subject subject, Repo repo, ContentSource contentSource, SyncTracker tracker) {
         try {
             log.debug("downloadDistributionBits invoked");
-            DistributionManagerLocal distManager = LookupUtil.getDistributionManagerLocal();
             ContentServerPluginContainer pc = ContentManagerHelper.getPluginContainer();
             int contentSourceId = contentSource.getId();
             ContentProviderManager cpMgr = pc.getAdapterManager();
@@ -733,7 +735,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             RepoCriteria reposForContentSource = new RepoCriteria();
             reposForContentSource.addFilterContentSourceIds(contentSourceId);
             reposForContentSource.addFilterCandidate(false); // Don't sync distributions for candidates
-            Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+            Subject overlord = subjectManager.getOverlord();
             List<Repo> repos = repoManager.findReposByCriteria(overlord, reposForContentSource);
             log.debug("downloadDistributionBits found " + repos.size() + " repos associated with this contentSourceId "
                 + contentSourceId);
@@ -1110,10 +1112,9 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     public RepoSyncResults _mergeAdvisorySyncReportADD(ContentSource contentSource, AdvisorySyncReport report,
         RepoSyncResults syncResults, StringBuilder progress) {
 
-        AdvisoryManagerLocal advManager = LookupUtil.getAdvisoryManagerLocal();
-        RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
-        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+        Subject overlord = subjectManager.getOverlord();
         List<AdvisoryDetails> newDetails = report.getAdvisory();
+
         for (AdvisoryDetails detail : newDetails) {
             try {
                 Advisory newAdv = advManager.getAdvisoryByName(detail.getAdvisory());
@@ -1129,7 +1130,6 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                     newAdv.setIssue_date(detail.getIssue_date());
                     newAdv.setUpdate_date(detail.getUpdate_date());
                     newAdv.setTopic(detail.getTopic());
-                    entityManager.flush();
                     entityManager.persist(newAdv);
                 }
 
@@ -1137,7 +1137,6 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                 RepoAdvisory repoAdv = new RepoAdvisory(repo, newAdv);
                 log.debug("Created new mapping of RepoAdvisory repoId = " + repo.getId() + ", distId = "
                     + newAdv.getId());
-                entityManager.flush();
                 entityManager.persist(repoAdv);
                 // persist pkgs associated with an errata
                 List<AdvisoryPackageDetails> pkgs = detail.getPkgs();
@@ -1152,7 +1151,6 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                         if (apkg == null) {
                             apkg = new AdvisoryPackage(newAdv, pExisting);
                             entityManager.persist(apkg);
-                            entityManager.flush();
                         }
                     } catch (NoResultException nre) {
                         log.info("Advisory has package thats not yet in the db [" + pkg.getRpmFilename()
@@ -1166,7 +1164,6 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                     for (AdvisoryCVEDetails cve : cves) {
                         AdvisoryCVE acve = new AdvisoryCVE(newAdv, advManager.createCVE(overlord, cve.getName()));
                         entityManager.persist(acve);
-                        entityManager.flush();
                     }
                 }
 
@@ -1179,10 +1176,13 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                         if (abuglist == null) {
                             abuglist = new AdvisoryBuglist(newAdv, abug.getBugInfo());
                             entityManager.persist(abuglist);
-                            entityManager.flush();
                         }
                     }
                 }
+
+                // Flush and clear at the end of the loop
+                entityManager.flush();
+                entityManager.clear();
 
             } catch (AdvisoryException e) {
                 progress.append("Caught exception when trying to add: " + detail.getAdvisory() + "\n");
@@ -1203,8 +1203,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         syncResults.setResults(progress.toString());
         syncResults = repoManager.mergeRepoSyncResults(syncResults);
 
-        AdvisoryManagerLocal advManager = LookupUtil.getAdvisoryManagerLocal();
-        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+        Subject overlord = subjectManager.getOverlord();
 
         // remove all advisories that are no longer available on the remote repository
         for (AdvisoryDetails advDetails : report.getDeletedAdvisorys()) {
@@ -1604,8 +1603,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         syncResults.setResults(progress.toString());
         syncResults = repoManager.mergeRepoSyncResults(syncResults);
 
-        DistributionManagerLocal distManager = LookupUtil.getDistributionManagerLocal();
-        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+        Subject overlord = subjectManager.getOverlord();
 
         // remove all distributions that are no longer available on the remote repository
         for (DistributionDetails doomedDetails : report.getDeletedDistributions()) {
@@ -1628,9 +1626,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     public RepoSyncResults _mergeDistributionSyncReportADD(ContentSource contentSource, DistributionSyncReport report,
         RepoSyncResults syncResults, StringBuilder progress) {
 
-        DistributionManagerLocal distManager = LookupUtil.getDistributionManagerLocal();
-        RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
-        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+        Subject overlord = subjectManager.getOverlord();
         List<DistributionDetails> newDetails = report.getDistributions();
         for (DistributionDetails detail : newDetails) {
             try {

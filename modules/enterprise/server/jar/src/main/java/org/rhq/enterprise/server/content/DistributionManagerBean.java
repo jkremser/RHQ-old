@@ -99,25 +99,21 @@ public class DistributionManagerBean implements DistributionManagerLocal, Distri
     public void deleteDistributionByDistId(Subject user, int distId) {
         log.debug("User [" + user + "] is deleting distribution tree [" + distId + "]");
 
-        entityManager.flush();
-        entityManager.clear();
-
         this.deleteDistributionFilesByDistId(user, distId);
 
         entityManager.createNamedQuery(RepoDistribution.DELETE_BY_DISTRO_ID).setParameter("distId", distId)
             .executeUpdate();
 
-        entityManager.createNamedQuery(Distribution.QUERY_DELETE_BY_DIST_ID).setParameter("distid", distId)
-            .executeUpdate();
+        int success = entityManager.createNamedQuery(Distribution.QUERY_DELETE_BY_DIST_ID).setParameter("distid",
+            distId).executeUpdate();
 
-        Distribution kstree = entityManager.find(Distribution.class, distId);
-        if (kstree != null) {
-            entityManager.remove(kstree);
-            log.debug("User [" + user + "] deleted kstree [" + kstree + "]");
-        } else {
-            log.debug("Distribution tree ID [" + distId + "] doesn't exist - nothing to delete");
+        if (log.isDebugEnabled()) {
+            if (success == 1) {
+                log.debug("User [" + user + "] deleted Distro [" + distId + "]");
+            } else {
+                log.debug("Distro ID [" + distId + "] doesn't exist - nothing to delete");
+            }
         }
-
     }
 
     @SuppressWarnings("unchecked")
