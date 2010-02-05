@@ -88,7 +88,7 @@ public class RHNHelper {
 
     public List<DistributionDetails> getDistributionMetaData(List<String> labels, SyncTracker tracker)
         throws IOException, XmlRpcException {
-        log.debug("getDistributionMetaData(" + labels + " invoked");
+        log.debug("getDistributionMetaData(" + labels + ") invoked");
 
         List<DistributionDetails> distros = new ArrayList<DistributionDetails>();
         List<RhnKickstartableTreeType> ksTreeTypes = rhndata.getKickstartTreeMetadata(this.systemid, labels);
@@ -175,10 +175,11 @@ public class RHNHelper {
                             + pkgd + ">");
                     }
                     String name = pkgd.getName();
+                    String epoch = pkgd.getEpoch();
                     String version = pkgd.getVersion();
                     String arch = pkgd.getPackageArch();
                     String release = pkgd.getRelease();
-                    String rpmname = constructRpmDisplayName(name, version, release, arch);
+                    String rpmname = constructRpmDisplayName(name, version, release, epoch, arch);
                     AdvisoryPackageDetails apkgd = new AdvisoryPackageDetails(name, version, arch, rpmname);
                     apkgdetails.add(apkgd);
                 }
@@ -250,7 +251,7 @@ public class RHNHelper {
         String epoch = p.getEpoch();
         String arch = p.getPackageArch();
         String downloadName = constructRpmDownloadName(name, version, release, epoch, arch);
-        String displayName = constructRpmDisplayName(name, version, release, arch);
+        String displayName = constructRpmDisplayName(name, version, release, epoch, arch);
         //
         // Release and epoch definition is added to Package domain model, so we do not need to append release and epoch
         // information to version string anymore. 
@@ -469,12 +470,16 @@ public class RHNHelper {
      * @param name
      * @param version
      * @param release
+     * @param epoch
      * @param arch
      * @return rpm name String
      */
-    static public String constructRpmDisplayName(String name, String version, String release, String arch) {
-
-        return name + "-" + version + "-" + release + "." + arch + ".rpm";
+    static public String constructRpmDisplayName(String name, String version, String release, String epoch, String arch) {
+        String val = name;
+        if (!StringUtils.isEmpty(epoch)) {
+            val = val + "-" + epoch + ":";
+        }
+        return val + version + "-" + release + "." + arch + ".rpm";
     }
 
     private byte[] gzip(byte[] input) throws IOException {
