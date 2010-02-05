@@ -165,18 +165,14 @@ public interface ContentManagerRemote {
 
     @WebMethod
     PackageVersion uploadPlatformPackageVersion(@WebParam(name = "subject") Subject user,
-        @WebParam(name = "packageName") String packageName, //
+        @WebParam(name = "packageversion") PackageVersion pv, //
         @WebParam(name = "packageTypeId") int packageTypeId, //
-        @WebParam(name = "version") String version, //
         @WebParam(name = "architectureId") Integer architectureId, //
-        @WebParam(name = "fileName") String fileName, //
-        @WebParam(name = "MD5sum") String MD5sum, //
         @WebParam(name = "packageBytes") byte[] packageBytes, //
         @WebParam(name = "dbmode") boolean dbmode);
 
     @WebMethod
     void updatePackageVersionMetadata(@WebParam(name = "subject") Subject user, //
         @WebParam(name = "pvId") int pvId, //
-        @WebParam(name = "metadata") byte[] metadata, //
-        @WebParam(name = "fileSize") long fileSize);
+        @WebParam(name = "metadata") byte[] metadata);
 }

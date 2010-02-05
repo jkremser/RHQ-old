@@ -1249,8 +1249,8 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         return newPackageVersion;
     }
 
-    public PackageVersion uploadPlatformPackageVersion(Subject subject, String packageName, int packageTypeId,
-        String version, Integer architectureId, String fileName, String MD5sum, byte[] packageBytes, boolean dbmode) {
+    public PackageVersion uploadPlatformPackageVersion(Subject subject, PackageVersion pv, int packageTypeId,
+        Integer architectureId, byte[] packageBytes, boolean dbmode) {
 
         // Check permissions first
         if (!authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_CONTENT)) {
@@ -1258,19 +1258,18 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                 + "] does not have permission to Upload Packages");
         }
 
-        return uploadPlatformPackageVersion(packageName, packageTypeId, version,
-            (null == architectureId) ? getNoArchitecture().getId() : architectureId, fileName, MD5sum,
-            new ByteArrayInputStream(packageBytes), dbmode);
+        return uploadPlatformPackageVersion(pv, packageTypeId, (null == architectureId) ? getNoArchitecture().getId()
+            : architectureId, new ByteArrayInputStream(packageBytes), dbmode);
     }
 
-    public PackageVersion uploadPlatformPackageVersion(String packageName, int packageTypeId, String version,
-        int architectureId, String fileName, String MD5sum, InputStream packageBitStream, boolean dbmode) {
+    public PackageVersion uploadPlatformPackageVersion(PackageVersion pv, int packageTypeId, int architectureId,
+        InputStream packageBitStream, boolean dbmode) {
         // See if the package version already exists and return that if it does
         Query packageVersionQuery = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_VER_ARCH);
-        packageVersionQuery.setParameter("name", packageName);
+        packageVersionQuery.setParameter("name", pv.getDisplayName());
         packageVersionQuery.setParameter("packageTypeId", packageTypeId);
         packageVersionQuery.setParameter("architectureId", architectureId);
-        packageVersionQuery.setParameter("version", version);
+        packageVersionQuery.setParameter("version", pv.getVersion());
 
         // Result of the query should be either 0 or 1
         List existingVersionList = packageVersionQuery.getResultList();
@@ -1280,7 +1279,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
         // If the package doesn't exist, create that here
         Query packageQuery = entityManager.createNamedQuery(Package.QUERY_FIND_BY_NAME_PKG_TYPE_ID);
-        packageQuery.setParameter("name", packageName);
+        packageQuery.setParameter("name", pv.getDisplayName());
         packageQuery.setParameter("packageTypeId", packageTypeId);
 
         Package existingPackage;
@@ -1289,7 +1288,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
         if (existingPackageList.size() == 0) {
             PackageType packageType = entityManager.find(PackageType.class, packageTypeId);
-            existingPackage = new Package(packageName, packageType);
+            existingPackage = new Package(pv.getDisplayName(), packageType);
             existingPackage = persistOrMergePackageSafely(existingPackage);
         } else {
             existingPackage = (Package) existingPackageList.get(0);
@@ -1298,10 +1297,11 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         // Create a package version and add it to the package
         Architecture architecture = entityManager.find(Architecture.class, architectureId);
 
-        PackageVersion newPackageVersion = new PackageVersion(existingPackage, version, architecture);
+        PackageVersion newPackageVersion = new PackageVersion(existingPackage, pv.getVersion(), architecture);
         newPackageVersion.setDisplayName(existingPackage.getName());
-        newPackageVersion.setMD5(MD5sum);
-        newPackageVersion.setFileName(fileName);
+        newPackageVersion.setMD5(pv.getMD5());
+        newPackageVersion.setFileName(pv.getFileName());
+        newPackageVersion.setFileSize(pv.getFileSize());
         if (dbmode) {
             // Write the content into the newly created package version.
             byte[] packageBits;
@@ -1332,7 +1332,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                         : "<unspecified MD5>";
                     String actualMD5 = MessageDigestGenerator.getDigestString(outputFile);
                     if (!expectedMD5.trim().toLowerCase().equals(actualMD5.toLowerCase())) {
-                        log.info("Package [" + fileName + "] Already exists, Nothing to do");
+                        log.info("Package [" + pv.getFileName() + "] Already exists, Nothing to do");
                         store = true;
                     } else {
                         store = false;
@@ -1349,7 +1349,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
                 existingPackage.addVersion(newPackageVersion);
             } catch (Throwable t) {
-                throw new RuntimeException("Did not store the package bits for [" + fileName + "]. Cause: "
+                throw new RuntimeException("Did not store the package bits for [" + pv.getFileName() + "]. Cause: "
                     + ThrowableUtil.getAllMessages(t), t);
             } finally {
                 if (packageBitStream != null) {
@@ -1366,7 +1366,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         return newPackageVersion;
     }
 
-    public void updatePackageVersionMetadata(Subject subject, int pvId, byte[] metadata, long fileSize) {
+    public void updatePackageVersionMetadata(Subject subject, int pvId, byte[] metadata) {
         // Check permissions first
         if (!authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_CONTENT)) {
             throw new PermissionException("User [" + subject.getName()
@@ -1380,7 +1380,6 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         } catch (RuntimeException re) {
             throw new RuntimeException("Error reading in the package file", re);
         }
-        pkgVersion.setFileSize(fileSize);
         pkgVersion.setMetadata(pkgmetadata);
         persistPackageVersion(pkgVersion);
     }
