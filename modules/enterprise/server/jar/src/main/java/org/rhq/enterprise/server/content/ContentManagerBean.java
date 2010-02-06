@@ -64,6 +64,7 @@ import org.rhq.core.domain.content.InstalledPackageHistory;
 import org.rhq.core.domain.content.InstalledPackageHistoryStatus;
 import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageBits;
+import org.rhq.core.domain.content.PackageCategory;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageInstallationStep;
 import org.rhq.core.domain.content.PackageType;
@@ -1249,12 +1250,18 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         return newPackageVersion;
     }
 
+<<<<<<< HEAD:modules/enterprise/server/jar/src/main/java/org/rhq/enterprise/server/content/ContentManagerBean.java
     public PackageVersion uploadPlatformPackageVersion(Subject subject, PackageVersion pv, int packageTypeId,
         Integer architectureId, byte[] packageBytes, boolean dbmode) {
+=======
+    public PackageVersion createConfigPackageVersion(Subject subject, String packageName, int packageTypeId,
+        String packageCategory, String version, Integer architectureId, byte[] packageBytes) {
+>>>>>>> 7a7f49a... 1599 - Adding methods for creating config package and associating it to a repo:modules/enterprise/server/jar/src/main/java/org/rhq/enterprise/server/content/ContentManagerBean.java
 
         // Check permissions first
         if (!authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_CONTENT)) {
             throw new PermissionException("User [" + subject.getName()
+<<<<<<< HEAD:modules/enterprise/server/jar/src/main/java/org/rhq/enterprise/server/content/ContentManagerBean.java
                 + "] does not have permission to Upload Packages");
         }
 
@@ -1270,6 +1277,28 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         packageVersionQuery.setParameter("packageTypeId", packageTypeId);
         packageVersionQuery.setParameter("architectureId", architectureId);
         packageVersionQuery.setParameter("version", pv.getVersion());
+=======
+                + "] does not have permission to create package versions");
+        }
+
+        return createConfigPackageVersion(packageName, packageTypeId, version, packageCategory,
+            (null == architectureId) ? getNoArchitecture().getId() : architectureId, new ByteArrayInputStream(
+                packageBytes));
+    }
+
+    @SuppressWarnings("unchecked")
+    @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
+    public PackageVersion createConfigPackageVersion(String packageName, int packageTypeId, String packageCategory,
+        String version, int architectureId, InputStream packageBitStream) {
+        // See if the package version already exists and return that if it does
+        Query packageVersionQuery = entityManager
+            .createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_VER_ARCH_CATEGORY);
+        packageVersionQuery.setParameter("name", packageName);
+        packageVersionQuery.setParameter("packageTypeId", packageTypeId);
+        packageVersionQuery.setParameter("category", packageCategory);
+        packageVersionQuery.setParameter("architectureId", architectureId);
+        packageVersionQuery.setParameter("version", version);
+>>>>>>> 7a7f49a... 1599 - Adding methods for creating config package and associating it to a repo:modules/enterprise/server/jar/src/main/java/org/rhq/enterprise/server/content/ContentManagerBean.java
 
         // Result of the query should be either 0 or 1
         List existingVersionList = packageVersionQuery.getResultList();
@@ -1278,9 +1307,16 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         }
 
         // If the package doesn't exist, create that here
+<<<<<<< HEAD:modules/enterprise/server/jar/src/main/java/org/rhq/enterprise/server/content/ContentManagerBean.java
         Query packageQuery = entityManager.createNamedQuery(Package.QUERY_FIND_BY_NAME_PKG_TYPE_ID);
         packageQuery.setParameter("name", pv.getDisplayName());
         packageQuery.setParameter("packageTypeId", packageTypeId);
+=======
+        Query packageQuery = entityManager.createNamedQuery(Package.QUERY_FIND_BY_NAME_PKG_TYPE_ID_CATEGORY);
+        packageQuery.setParameter("name", packageName);
+        packageQuery.setParameter("packageTypeId", packageTypeId);
+        packageQuery.setParameter("category", packageCategory);
+>>>>>>> 7a7f49a... 1599 - Adding methods for creating config package and associating it to a repo:modules/enterprise/server/jar/src/main/java/org/rhq/enterprise/server/content/ContentManagerBean.java
 
         Package existingPackage;
 
@@ -1288,7 +1324,15 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
         if (existingPackageList.size() == 0) {
             PackageType packageType = entityManager.find(PackageType.class, packageTypeId);
+<<<<<<< HEAD:modules/enterprise/server/jar/src/main/java/org/rhq/enterprise/server/content/ContentManagerBean.java
             existingPackage = new Package(pv.getDisplayName(), packageType);
+=======
+            if (packageCategory.equalsIgnoreCase("configuration"))
+                packageType.setCategory(PackageCategory.CONFIGURATION);
+            else
+                packageType.setCategory(PackageCategory.EXECUTABLE_SCRIPT);
+            existingPackage = new Package(packageName, packageType);
+>>>>>>> 7a7f49a... 1599 - Adding methods for creating config package and associating it to a repo:modules/enterprise/server/jar/src/main/java/org/rhq/enterprise/server/content/ContentManagerBean.java
             existingPackage = persistOrMergePackageSafely(existingPackage);
         } else {
             existingPackage = (Package) existingPackageList.get(0);
@@ -1297,6 +1341,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         // Create a package version and add it to the package
         Architecture architecture = entityManager.find(Architecture.class, architectureId);
 
+<<<<<<< HEAD:modules/enterprise/server/jar/src/main/java/org/rhq/enterprise/server/content/ContentManagerBean.java
         PackageVersion newPackageVersion = new PackageVersion(existingPackage, pv.getVersion(), architecture);
         newPackageVersion.setDisplayName(existingPackage.getName());
         newPackageVersion.setMD5(pv.getMD5());
@@ -1382,6 +1427,30 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         }
         pkgVersion.setMetadata(pkgmetadata);
         persistPackageVersion(pkgVersion);
+=======
+        PackageVersion newPackageVersion = new PackageVersion(existingPackage, version, architecture);
+        newPackageVersion.setDisplayName(existingPackage.getName());
+
+        // Write the content into the newly created package version. This may eventually move, but for now we'll just
+        // use the byte array in the package version to store the bits.
+        byte[] packageBits;
+        try {
+            packageBits = StreamUtil.slurp(packageBitStream);
+        } catch (RuntimeException re) {
+            throw new RuntimeException("Error reading in the package file", re);
+        }
+
+        PackageBits bits = new PackageBits();
+        bits.setBits(packageBits);
+
+        newPackageVersion.setPackageBits(bits);
+
+        newPackageVersion = persistOrMergePackageVersionSafely(newPackageVersion);
+
+        existingPackage.addVersion(newPackageVersion);
+
+        return newPackageVersion;
+>>>>>>> 7a7f49a... 1599 - Adding methods for creating config package and associating it to a repo:modules/enterprise/server/jar/src/main/java/org/rhq/enterprise/server/content/ContentManagerBean.java
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)

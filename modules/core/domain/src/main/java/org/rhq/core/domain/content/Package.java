@@ -59,6 +59,8 @@ import org.hibernate.annotations.NamedQuery;
 @Entity
 @NamedQueries( {
     @NamedQuery(name = Package.QUERY_FIND_BY_NAME_PKG_TYPE_ID, query = "SELECT p FROM Package AS p WHERE p.name = :name AND p.packageType.id = :packageTypeId"),
+    @NamedQuery(name = Package.QUERY_FIND_BY_NAME_PKG_TYPE_ID_CATEGORY, query = "SELECT p FROM Package AS p "
+        + "WHERE p.name = :name AND p.packageType.id = :packageTypeId " + "AND p.packageType.category = :category"),
     @NamedQuery(name = Package.QUERY_FIND_BY_NAME_PKG_TYPE_RESOURCE_TYPE, query = "SELECT p FROM Package AS p "
         + "WHERE p.name = :name " + "AND p.packageType.name = :packageTypeName "
         + "AND p.packageType.resourceType.id = :resourceTypeId") })
@@ -70,6 +72,7 @@ public class Package implements Serializable {
     private static final long serialVersionUID = 1L;
 
     public static final String QUERY_FIND_BY_NAME_PKG_TYPE_ID = "Package.findByNameAndPkgTypeId";
+    public static final String QUERY_FIND_BY_NAME_PKG_TYPE_ID_CATEGORY = "Package.findByNameAndPkgTypeIdAndCategory";
     public static final String QUERY_FIND_BY_NAME_PKG_TYPE_RESOURCE_TYPE = "Package.findByNamePkgTypeResourceType";
 
     // Attributes  --------------------------------------------
