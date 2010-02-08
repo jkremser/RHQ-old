@@ -16,8 +16,7 @@ public class ContentFilter {
     void filter(HttpServletRequest request, int repoId) throws EntitlementException {
         X509Extension[] certificates = (X509Extension[]) request.getAttribute(CERTS);
         if (certificates == null) {
-            log.warn("x509 client certificate not passed, not-checked.");
-            return;
+            throw new EntitlementException("No X509 certificate found.");
         }
         String oid = objectIdentifier(repoId);
         for (X509Extension x509 : certificates) {

@@ -191,7 +191,8 @@ public class ContentHTTPServlet extends DefaultServlet {
         StringBuffer sb = new StringBuffer();
         HtmlRenderer.formStart(sb, "Index of ", request.getRequestURI());
         for (Repo r : repos) {
-            log.debug("Potential repo: Name = " + r.getName() + ", ID = " + r.getId());
+            log.debug("Potential repo: Name = " + r.getName() + ", ID = " + r.getId() + ", Visibility = "
+                + r.getVisibility());
             //
             // Skip candidate repos
             // We will only render a repo for browsing if it is PUBLIC
