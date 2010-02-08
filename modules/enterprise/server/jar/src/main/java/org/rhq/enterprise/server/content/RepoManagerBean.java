@@ -312,6 +312,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
 
         query.setParameter("repoId", repoId);
         query.setParameter("filter", QueryUtility.formatSearchParameter(filter));
+        query.setParameter("escapeChar", QueryUtility.getEscapeCharacter());        
 
         List<PackageVersion> results = query.getResultList();
         long count = getPackageVersionCountFromRepo(subject, filter, repoId);
