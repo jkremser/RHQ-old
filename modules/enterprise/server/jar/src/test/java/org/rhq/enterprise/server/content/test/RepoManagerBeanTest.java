@@ -514,4 +514,31 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
         assert privateRepos.size() == 1 : "Found: " + privateRepos.size();
         assert privateRepos.get(0).getName().equals(repo2.getName());
     }
+
+    @Test(enabled = ENABLED)
+    public void updateRepoVisibility() throws Exception {
+        // Setup
+        Repo repo1 = new Repo("updateRepoVisibility1");
+        repo1.setVisibility(RepoVisibility.PUBLIC);
+
+        Repo repo2 = new Repo("updateRepoVisibility2");
+        repo2.setVisibility(RepoVisibility.PRIVATE);
+
+        repo1 = repoManager.createRepo(overlord, repo1);
+        repo2 = repoManager.createRepo(overlord, repo2);
+
+        List<Integer> repoIds = new ArrayList<Integer>(2);
+        repoIds.add(repo1.getId());
+        repoIds.add(repo2.getId());
+
+        // Test
+        repoManager.updateRepoVisibility(repoIds, RepoVisibility.PUBLIC);
+
+        // Verify
+        repo1 = repoManager.getRepo(overlord, repo1.getId());
+        assert repo1.getVisibility() == RepoVisibility.PUBLIC;
+
+        repo2 = repoManager.getRepo(overlord, repo2.getId());
+        assert repo2.getVisibility() == RepoVisibility.PUBLIC;
+    }
 }

@@ -33,6 +33,7 @@ import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.RepoGroup;
 import org.rhq.core.domain.content.RepoGroupType;
+import org.rhq.core.domain.content.RepoVisibility;
 import org.rhq.core.domain.content.transfer.SubscribedRepo;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.criteria.RepoCriteria;
@@ -67,7 +68,7 @@ public interface RepoManagerRemote {
      * @param repo a new repo object.
      *
      * @return the newly created repo
-     * @throws RepoException if a repo already exists with the same name 
+     * @throws RepoException if a repo already exists with the same name
      */
     @WebMethod
     Repo createRepo( //
@@ -151,7 +152,7 @@ public interface RepoManagerRemote {
      *
      * @param subject  user making the query
      * @param criteria describes how the query should function; may not be <code>null</code>
-     * @return any repos that match the given criteria; empty list if none match 
+     * @return any repos that match the given criteria; empty list if none match
      */
     @WebMethod
     PageList<Repo> findReposByCriteria( //
@@ -297,4 +298,10 @@ public interface RepoManagerRemote {
     List<SubscribedRepo> findSubscriptions( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "resourceId") int resourceId);
+
+    @WebMethod
+    void updateRepoVisibility( //
+        @WebParam(name = "repoIds") List<Integer> repoIds, //
+        @WebParam(name = "visibility") RepoVisibility visibility //
+    );
 }

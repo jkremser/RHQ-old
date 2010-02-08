@@ -32,6 +32,7 @@ import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.RepoGroup;
 import org.rhq.core.domain.content.RepoGroupType;
 import org.rhq.core.domain.content.RepoSyncResults;
+import org.rhq.core.domain.content.RepoVisibility;
 import org.rhq.core.domain.content.composite.RepoComposite;
 import org.rhq.core.domain.content.transfer.SubscribedRepo;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
@@ -389,4 +390,14 @@ public interface RepoManagerLocal {
      * @return
      */
     List<SubscribedRepo> findSubscriptions(Subject subject, int resourceId);
+
+    /**
+     * Batch updates the visibility for the repos identified by the given IDs. Each id must refer to a
+     * repo in the system. The existing visibility does not matter, it will be overwritten with the given
+     * visibility.
+     *
+     * @param repoIds
+     * @param visibility
+     */
+    void updateRepoVisibility(List<Integer> repoIds, RepoVisibility visibility);
 }

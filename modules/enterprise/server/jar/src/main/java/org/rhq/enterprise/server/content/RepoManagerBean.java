@@ -59,6 +59,7 @@ import org.rhq.core.domain.content.RepoRelationship;
 import org.rhq.core.domain.content.RepoRelationshipType;
 import org.rhq.core.domain.content.RepoRepoRelationship;
 import org.rhq.core.domain.content.RepoSyncResults;
+import org.rhq.core.domain.content.RepoVisibility;
 import org.rhq.core.domain.content.ResourceRepo;
 import org.rhq.core.domain.content.composite.RepoComposite;
 import org.rhq.core.domain.content.transfer.SubscribedRepo;
@@ -1114,4 +1115,10 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         return entityManager.find(RepoSyncResults.class, resultsId);
     }
 
+    public void updateRepoVisibility(List<Integer> repoIds, RepoVisibility visibility) {
+        for (Integer id : repoIds) {
+            Repo repo = entityManager.find(Repo.class, id);
+            repo.setVisibility(visibility);
+        }
+    }
 }
