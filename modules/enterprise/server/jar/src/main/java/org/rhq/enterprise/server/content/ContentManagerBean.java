@@ -19,9 +19,11 @@
 package org.rhq.enterprise.server.content;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -32,6 +34,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.zip.GZIPOutputStream;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -1302,6 +1305,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         newPackageVersion.setMD5(pv.getMD5());
         newPackageVersion.setFileName(pv.getFileName());
         newPackageVersion.setFileSize(pv.getFileSize());
+        newPackageVersion.setFileCreatedDate(System.currentTimeMillis());
         if (dbmode) {
             // Write the content into the newly created package version.
             byte[] packageBits;
@@ -1373,14 +1377,19 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                 + "] does not have permission to Manage Packages");
         }
         PackageVersion pkgVersion = entityManager.find(PackageVersion.class, pvId);
-        InputStream metastream = new ByteArrayInputStream(metadata);
-        byte[] pkgmetadata;
+        ByteArrayOutputStream metastream;
         try {
-            pkgmetadata = StreamUtil.slurp(metastream);
-        } catch (RuntimeException re) {
-            throw new RuntimeException("Error reading in the package file", re);
+            metastream = new ByteArrayOutputStream();
+
+            GZIPOutputStream zipper = new GZIPOutputStream(metastream);
+            zipper.write(metadata);
+            zipper.close();
+
+        } catch (IOException io) {
+            throw new RuntimeException("Error writing the package stream", io);
         }
-        pkgVersion.setMetadata(pkgmetadata);
+
+        pkgVersion.setMetadata(metastream.toByteArray());
         persistPackageVersion(pkgVersion);
     }
 
