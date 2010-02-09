@@ -304,6 +304,23 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
 
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public PageList<PackageVersion> findConfigFilesInRepo(Subject subject, int repoId, PageControl pc) {
+        pc.initDefaultOrderingField("pv.generalPackage.name, pv.version");
+
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
+            PackageVersion.QUERY_FIND_BY_REPO_ID_WITH_CONFIG_FILE, pc);
+
+        query.setParameter("repoId", repoId);
+        query.setParameter("name", "cfg");
+
+        List<PackageVersion> results = query.getResultList();
+        long count = getPackageVersionCountFromRepo(subject, null, repoId);
+
+        return new PageList<PackageVersion>(results, (int) count, pc);
+    }
+
+    @SuppressWarnings("unchecked")
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
     public PageList<PackageVersion> findPackageVersionsInRepo(Subject subject, int repoId, String filter, PageControl pc) {
         pc.initDefaultOrderingField("pv.generalPackage.name, pv.version");
 
@@ -753,6 +770,23 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public long getPackageVersionCountFromRepo(Subject subject, int repoId) {
         return getPackageVersionCountFromRepo(subject, null, repoId);
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public long getConfigPackageVersionCountFromRepo(Subject subject, String filter, int repoId) {
+        Query countQuery = PersistenceUtility.createCountQuery(entityManager,
+            PackageVersion.QUERY_FIND_BY_REPO_ID_WITH_CONFIG_FILE);
+
+        countQuery.setParameter("repoId", repoId);
+        countQuery.setParameter("name", "cfg");
+        countQuery.setParameter("filter", (filter == null) ? null : ("%" + filter.toUpperCase() + "%"));
+
+        return ((Long) countQuery.getSingleResult()).longValue();
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public long getConfigPackageVersionCountFromRepo(Subject subject, int repoId) {
+        return getConfigPackageVersionCountFromRepo(subject, null, repoId);
     }
 
     @SuppressWarnings("unchecked")
