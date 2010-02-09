@@ -58,11 +58,6 @@ import org.rhq.core.domain.resource.ProductVersion;
     @NamedQuery(name = PackageVersion.QUERY_FIND_BY_PACKAGE_VER_ARCH, query = "SELECT pv FROM PackageVersion AS pv "
         + " WHERE pv.generalPackage.name = :name " + "   AND pv.generalPackage.packageType.id = :packageTypeId "
         + "   AND pv.architecture.id = :architectureId " + "   AND pv.version = :version "),
-    @NamedQuery(name = PackageVersion.QUERY_FIND_BY_PACKAGE_VER_ARCH_CATEGORY, query = "SELECT pv FROM PackageVersion AS pv "
-        + " WHERE pv.generalPackage.name = :name "
-        + " AND pv.generalPackage.packageType.id = :packageTypeId "
-        + " AND pv.generalPackage.packageType.category = :packageCategory "
-        + " AND pv.architecture.id = :architectureId " + "   AND pv.version = :version "),
     @NamedQuery(name = PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY, query = "SELECT pv FROM PackageVersion AS pv "
         + " WHERE pv.generalPackage.name = :packageName "
         + "   AND pv.generalPackage.packageType.name = :packageTypeName "
@@ -283,7 +278,6 @@ public class PackageVersion implements Serializable {
     private static final long serialVersionUID = 1L;
 
     public static final String QUERY_FIND_BY_PACKAGE_VER_ARCH = "PackageVersion.findByPackageVerArch";
-    public static final String QUERY_FIND_BY_PACKAGE_VER_ARCH_CATEGORY = "PackageVersion.findByPackageVerArchCategory";
     public static final String QUERY_FIND_BY_PACKAGE_DETAILS_KEY = "PackageVersion.findByPackageDetailsKey";
     public static final String QUERY_FIND_ID_BY_PACKAGE_DETAILS_KEY_AND_RES_ID = "PackageVersion.findIdByPackageDetailsKeyAndResId";
     public static final String QUERY_FIND_BY_REPO_ID = "PackageVersion.findByRepoId";

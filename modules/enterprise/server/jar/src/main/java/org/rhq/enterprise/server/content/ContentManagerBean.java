@@ -64,7 +64,6 @@ import org.rhq.core.domain.content.InstalledPackageHistory;
 import org.rhq.core.domain.content.InstalledPackageHistoryStatus;
 import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageBits;
-import org.rhq.core.domain.content.PackageCategory;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageInstallationStep;
 import org.rhq.core.domain.content.PackageType;
@@ -1174,88 +1173,6 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         } catch (Throwable e) {
             log.error("Error while processing timed out requests", e);
         }
-    }
-
-    public PackageVersion createConfigPackageVersion(Subject subject, String packageName, int packageTypeId,
-        String packageCategory, String version, Integer architectureId, byte[] packageBytes) {
-
-        // Check permissions first
-        if (!authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_CONTENT)) {
-            throw new PermissionException("User [" + subject.getName()
-                + "] does not have permission to create package versions");
-        }
-
-        return createConfigPackageVersion(packageName, packageTypeId, version, packageCategory,
-            (null == architectureId) ? getNoArchitecture().getId() : architectureId, new ByteArrayInputStream(
-                packageBytes));
-    }
-
-    @SuppressWarnings("unchecked")
-    @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
-    public PackageVersion createConfigPackageVersion(String packageName, int packageTypeId, String packageCategory,
-        String version, int architectureId, InputStream packageBitStream) {
-        // See if the package version already exists and return that if it does
-        Query packageVersionQuery = entityManager
-            .createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_VER_ARCH_CATEGORY);
-        packageVersionQuery.setParameter("name", packageName);
-        packageVersionQuery.setParameter("packageTypeId", packageTypeId);
-        packageVersionQuery.setParameter("category", packageCategory);
-        packageVersionQuery.setParameter("architectureId", architectureId);
-        packageVersionQuery.setParameter("version", version);
-
-        // Result of the query should be either 0 or 1
-        List existingVersionList = packageVersionQuery.getResultList();
-        if (existingVersionList.size() > 0) {
-            return (PackageVersion) existingVersionList.get(0);
-        }
-
-        // If the package doesn't exist, create that here
-        Query packageQuery = entityManager.createNamedQuery(Package.QUERY_FIND_BY_NAME_PKG_TYPE_ID_CATEGORY);
-        packageQuery.setParameter("name", packageName);
-        packageQuery.setParameter("packageTypeId", packageTypeId);
-        packageQuery.setParameter("category", packageCategory);
-
-        Package existingPackage;
-
-        List existingPackageList = packageQuery.getResultList();
-
-        if (existingPackageList.size() == 0) {
-            PackageType packageType = entityManager.find(PackageType.class, packageTypeId);
-            if (packageCategory.equalsIgnoreCase("configuration"))
-                packageType.setCategory(PackageCategory.CONFIGURATION);
-            else
-                packageType.setCategory(PackageCategory.EXECUTABLE_SCRIPT);
-            existingPackage = new Package(packageName, packageType);
-            existingPackage = persistOrMergePackageSafely(existingPackage);
-        } else {
-            existingPackage = (Package) existingPackageList.get(0);
-        }
-
-        // Create a package version and add it to the package
-        Architecture architecture = entityManager.find(Architecture.class, architectureId);
-
-        PackageVersion newPackageVersion = new PackageVersion(existingPackage, version, architecture);
-        newPackageVersion.setDisplayName(existingPackage.getName());
-
-        // Write the content into the newly created package version. This may eventually move, but for now we'll just
-        // use the byte array in the package version to store the bits.
-        byte[] packageBits;
-        try {
-            packageBits = StreamUtil.slurp(packageBitStream);
-        } catch (RuntimeException re) {
-            throw new RuntimeException("Error reading in the package file", re);
-        }
-
-        PackageBits bits = new PackageBits();
-        bits.setBits(packageBits);
-
-        newPackageVersion.setPackageBits(bits);
-
-        newPackageVersion = persistOrMergePackageVersionSafely(newPackageVersion);
-
-        existingPackage.addVersion(newPackageVersion);
-
-        return newPackageVersion;
     }
 
     public PackageVersion createPackageVersion(Subject subject, String packageName, int packageTypeId, String version,

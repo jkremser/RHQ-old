@@ -211,23 +211,6 @@ public interface ContentManagerLocal {
         InputStream packageBitStream);
 
     /**
-     * Creates a new config package version in the system. If the parent package (identified by the packageName parameter) does
-     * not exist, it will be created. If a package version exists with the specified version ID, a new one will not be
-     * created and the existing package version instance will be returned.
-     *
-     * @param  packageName     parent package name; uniquely identifies the package under which this version goes
-     * @param  packageTypeId   identifies the type of package in case the general package needs to be created
-     * @param  packageCategory identifies category of config package (Executable Script or Configuration) 
-     * @param  version         identifies the version to be created
-     * @param  architectureId  architecture of the newly created package version
-     *
-     * @return newly created package version if one did not exist; existing package version that matches these data if
-     *         one was found
-     */
-    PackageVersion createConfigPackageVersion(String packageName, int packageTypeId, String packageCategory,
-        String version, int architectureId, InputStream packageBitStream);
-
-    /**
      * Very simple method that persists the given package version within its own transaction.
      *
      * <p>This method is here to support {@link #persistOrMergePackageVersionSafely(PackageVersion)},
@@ -319,12 +302,6 @@ public interface ContentManagerLocal {
      */
     PackageVersion createPackageVersion(Subject subject, String packageName, int packageTypeId, String version,
         Integer architectureId, byte[] packageBytes);
-
-    /**
-     * @see {@link createPackageVersion(Subject, String, int, String, int, byte[]);
-     */
-    PackageVersion createConfigPackageVersion(Subject subject, String packageName, int packageTypeId,
-        String packageCategory, String version, Integer architectureId, byte[] packageBytes);
 
     /**
      * @see {@link ContentManagerRemote#deletePackages(Subject, int, int[], String)}
