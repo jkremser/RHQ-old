@@ -541,4 +541,34 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
         repo2 = repoManager.getRepo(overlord, repo2.getId());
         assert repo2.getVisibility() == RepoVisibility.PUBLIC;
     }
+
+    @Test(enabled = ENABLED)
+    public void deleteOrphanCandidates() throws Exception {
+        // Setup
+        ContentSourceType contentSourceType = new ContentSourceType("testSourceType");
+        Set<ContentSourceType> types = new HashSet<ContentSourceType>(1);
+        types.add(contentSourceType);
+        contentSourceMetadataManager.registerTypes(types);
+
+        ContentSource source1 = new ContentSource("testSource1", contentSourceType);
+        source1 = contentSourceManager.simpleCreateContentSource(overlord, source1);
+
+        Repo repo1 = new Repo("deleteOrphanCandidates1");
+        repo1.setCandidate(true);
+        repo1.addContentSource(source1);
+
+        Repo repo2 = new Repo("deleteOrphanCandidates2");
+        repo2.setCandidate(true);
+        repo2.addContentSource(source1);
+
+        repo1 = repoManager.createCandidateRepo(overlord, repo1);
+        repo2 = repoManager.createCandidateRepo(overlord, repo2);
+
+        // Test
+        repoManager.deleteCandidatesWithOnlyContentSource(overlord, source1.getId());
+
+        // Verify
+        assert repoManager.getRepo(overlord, repo1.getId()) == null;
+        assert repoManager.getRepo(overlord, repo2.getId()) == null;
+    }
 }

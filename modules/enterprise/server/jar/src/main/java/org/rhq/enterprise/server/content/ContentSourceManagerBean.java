@@ -220,6 +220,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     public void deleteContentSource(Subject subject, int contentSourceId) {
         log.debug("User [" + subject + "] is deleting content source [" + contentSourceId + "]");
 
+        repoManager.deleteCandidatesWithOnlyContentSource(subject, contentSourceId);
+
         // bulk delete m-2-m mappings to the doomed content source
         // get ready for bulk delete by clearing entity manager
         entityManager.flush();
@@ -233,24 +235,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
         ContentSource cs = entityManager.find(ContentSource.class, contentSourceId);
         if (cs != null) {
-            if (cs.getConfiguration() != null) {
-                entityManager.remove(cs.getConfiguration());
-            }
-
-            List<ContentSourceSyncResults> results = cs.getSyncResults();
-            if (results != null) {
-                int[] ids = new int[results.size()];
-                for (int i = 0; i < ids.length; i++) {
-                    ids[i] = results.get(i).getId();
-                }
-
-                this.deleteContentSourceSyncResults(subject, ids);
-            }
-
             entityManager.remove(cs);
             log.debug("User [" + subject + "] deleted content source [" + cs + "]");
-
-            repoManager.deleteCandidatesWithOnlyContentSource(subject, contentSourceId);
 
             // make sure we stop its adapter and unschedule any sync job associated with it
             try {
@@ -266,6 +252,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
         // remove any unused, orphaned package versions
         purgeOrphanedPackageVersions(subject);
+
+
 
         return;
     }

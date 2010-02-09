@@ -329,7 +329,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
 
         query.setParameter("repoId", repoId);
         query.setParameter("filter", QueryUtility.formatSearchParameter(filter));
-        query.setParameter("escapeChar", QueryUtility.getEscapeCharacter());        
+        query.setParameter("escapeChar", QueryUtility.getEscapeCharacter());
 
         List<PackageVersion> results = query.getResultList();
         long count = getPackageVersionCountFromRepo(subject, filter, repoId);
@@ -402,7 +402,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         List<Repo> repoList = query.getResultList();
 
         for (Repo deleteMe : repoList) {
-            deleteRepo(subject, deleteMe.getId());
+            entityManager.remove(deleteMe);
         }
     }
 
