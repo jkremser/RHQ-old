@@ -193,8 +193,8 @@
             <ui:param name="contentProviderReposDataModel" value="#{ContentSourceReposUIBean.dataModel}"/>
             <rich:dataTable id="contentProviderReposDataTable"
                             rows="#{PageControl.ContentSourceReposList.pageSize}"
-                            value="contentProviderReposDataModel"
-                            var="repolitem"
+                            value="#{contentProviderReposDataModel}"
+                            var="repoitem"
                             width="100%"
                             columnsWidth="1%, 20%, 20%, 20%"
                             headerClass="tableRowHeader"
