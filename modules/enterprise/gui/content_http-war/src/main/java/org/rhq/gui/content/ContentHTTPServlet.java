@@ -269,8 +269,11 @@ public class ContentHTTPServlet extends DefaultServlet {
         HtmlRenderer.formStart(sb, "Index of ", request.getRequestURI());
         HtmlRenderer.formParentLink(sb, getParentURI(request.getRequestURI()));
         for (PackageVersion pv : pvs) {
-            HtmlRenderer.formFileEntry(sb, request, pv.getFileName(), new Date(pv.getFileCreatedDate()).toString(), pv
-                .getFileSize());
+            String createdDate = "-";
+            if (pv.getFileCreatedDate() != null) {
+                createdDate = new Date(pv.getFileCreatedDate()).toString();
+            }
+            HtmlRenderer.formFileEntry(sb, request, pv.getFileName(), createdDate, pv.getFileSize());
         }
         HtmlRenderer.formEnd(sb);
         writeResponse(sb.toString(), response);
