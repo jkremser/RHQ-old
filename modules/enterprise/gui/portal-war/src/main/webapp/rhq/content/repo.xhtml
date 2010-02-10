@@ -58,7 +58,7 @@
               value="#{RepoDetailsUIBean.repo.name}" /></td>
           </tr>
           <tr>
-            <td align="right"><b>Visibility:</b></td>
+           <td align="right"><b>Visibility:</b></td>
             <td align="left">
               <h:selectOneRadio value="#{RepoDetailsUIBean.repo.visibility}"
                                 rendered="${mode eq 'edit'}">
@@ -101,11 +101,8 @@
                 timeZone="#{ServerInfoUIBean.timeZone}" />
             </h:outputText></td>
           </tr>
-
+		
 		  <!-- ******* START AJAX REFRESH/POLLING BLOCK ****** -->
-          <a4j:region>
-          <a4j:poll id="statusPoll" interval="1005"
-            reRender="syncPercent,syncStatus" />
           <tr>
             <td align="right"><b>Synchronization Step:</b></td>
             <td align="left"><c:choose>
@@ -133,10 +130,14 @@
               <c:choose>
                 <c:when
                   test="#{RepoDetailsUIBean.currentlySyncing}">
+                  <!--  Warning:  Without that reRender attribute on the below tag you will not get refreshing
+                        fields and will generate a javascript error: Error: this._form is null if you are using
+                        Richfaces  3_3_2.SR1.  Also, you MUST put syncProgress as the first field to be re rendered
+                        in the list, otherwise you will see the above null error -->
 	              <rich:progressBar id="syncProgress"
 	                value="#{RepoDetailsUIBean.percentComplete}"
 	                label="#{RepoDetailsUIBean.percentComplete} %"
-	                interval="999" minValue="-1" maxValue="99">
+	                interval="4000" minValue="-1" maxValue="99" reRender="syncProgress,syncPercent,syncStatus">
 	                <f:facet name="complete">
 	                  <h:outputText value="Synchronizing Complete" />
 	                </f:facet>
@@ -148,24 +149,7 @@
 	          </c:choose>
             </td>
           </tr>
-          <!--
-          <tr>
-            <td align="right"><b>Synchronization Progress:</b></td>
-            <td align="left">
-              <rich:progressBar id="syncProgress"
-                value="#{RepoDetailsUIBean.percentComplete}"
-                label="#{RepoDetailsUIBean.percentComplete} %"
-                interval="999" minValue="-1" maxValue="99">
-                <f:facet name="complete">
-                  <h:outputText value="Synchronizing Complete" />
-                </f:facet>
-                <f:facet name="initial">
-                  <h:outputText value="Not Synching" />
-                </f:facet>
-              </rich:progressBar>
-            </td>
-          </tr>
-           -->
+          <!-- ******* END AJAX REFRESH/POLLING BLOCK ****** -->
           <tr>
             <td align="right"><b>Synchronization Results:</b></td>
             <td align="left"><h:outputLink
@@ -195,8 +179,7 @@
                   <PRE><h:outputText value="#{RepoDetailsUIBean.syncResults.results}" /></PRE>
             </rich:modalPanel></td>
           </tr>
-          </a4j:region>
-          <!-- ******* END AJAX REFRESH/POLLING BLOCK ****** -->
+          
         </table>
       </rich:panel>
 
@@ -719,8 +702,8 @@
                 </f:facet>
                 <h:outputText value="#{dist.lastModifiedDate}">
 					<f:converter converterId="UserDateTimeConverter" />
-				</h:outputText>
-
+				</h:outputText> 
+                
               </rich:column>
 
 
