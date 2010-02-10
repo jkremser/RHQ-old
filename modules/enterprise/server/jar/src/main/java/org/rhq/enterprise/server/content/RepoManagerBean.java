@@ -70,6 +70,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.PersistenceUtility;
+import org.rhq.core.util.RpmVersionComparator;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
@@ -302,9 +303,10 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         return new PageList<PackageVersion>(results, (int) count, pc);
     }
 
+    // List all versions of config file packages in a repository
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public PageList<PackageVersion> findConfigFilesInRepo(Subject subject, int repoId, PageControl pc) {
+    public PageList<PackageVersion> listConfigFileVersionsInRepo(Subject subject, int repoId, PageControl pc) {
         pc.initDefaultOrderingField("pv.generalPackage.name, pv.version");
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
@@ -317,6 +319,34 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         long count = getPackageVersionCountFromRepo(subject, null, repoId);
 
         return new PageList<PackageVersion>(results, (int) count, pc);
+    }
+
+    // Returns latest version of given config package in a repository or null if there is no config package 
+    // present with a given name
+    @SuppressWarnings("unchecked")
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public PackageVersion getLatestConfigFileVersionInRepo(Subject subject, int repoId, String packageName) {
+
+        Query query = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_REPO_ID_AND_NAME_WITH_CONFIG_FILE);
+
+        query.setParameter("repoId", repoId);
+        query.setParameter("name", "cfg");
+        query.setParameter("packageName", packageName);
+
+        List<PackageVersion> results = query.getResultList();
+        if (results.size() == 0)
+            return null;
+        else {
+            PackageVersion latestPackage = results.get(0);
+            RpmVersionComparator cmp = new RpmVersionComparator();
+            for (PackageVersion pv : results) {
+                if (cmp.compare(pv.getVersion(), latestPackage.getVersion()) > 0) {
+                    latestPackage = pv;
+                }
+            }
+
+            return latestPackage;
+        }
     }
 
     @SuppressWarnings("unchecked")
