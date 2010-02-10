@@ -101,7 +101,7 @@ import org.rhq.core.domain.resource.ProductVersion;
         + " WHERE pv.id IN (SELECT DISTINCT pv1.id " + "                   FROM PackageVersion pv1 "
         + "                        LEFT JOIN pv1.repoPackageVersions cpv "
         + "                  WHERE cpv.repo.id = :repoId) " + " AND pv.generalPackage.packageType.name = :name "
-        + "pv.generalPackage.name = :packageName"),
+        + "AND pv.generalPackage.name = :packageName"),
     @NamedQuery(name = PackageVersion.QUERY_FIND_BY_REPO_ID_WITH_PACKAGE_FILTERED, query = "SELECT pv "
         + "  FROM PackageVersion pv " + "       LEFT JOIN FETCH pv.generalPackage "
         + " WHERE pv.id IN (SELECT DISTINCT pv1.id " + "                   FROM PackageVersion pv1 "

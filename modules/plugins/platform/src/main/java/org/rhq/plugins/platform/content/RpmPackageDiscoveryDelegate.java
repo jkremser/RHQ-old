@@ -119,8 +119,7 @@ public class RpmPackageDiscoveryDelegate {
 
                 // Execute RPM query for each RPM
                 ProcessExecution rpmQuery = new ProcessExecution(rpmExecutable);
-                rpmQuery
-                    .setArguments(new String[] { "-q", "--qf", queryFormat, rpmName });
+                rpmQuery.setArguments(new String[] { "-q", "--qf", queryFormat, rpmName });
                 rpmQuery.setCaptureOutput(true);
 
                 ProcessExecutionResults rpmDataResults = systemInfo.executeProcess(rpmQuery);
@@ -177,7 +176,11 @@ public class RpmPackageDiscoveryDelegate {
                 packageDetails.setClassification(category);
                 packageDetails.setDisplayName(name);
                 packageDetails.setFileName(fileName);
-                packageDetails.setMD5(md5);
+                if (md5.length() <= 32) {
+                    packageDetails.setMD5(md5);
+                } else {
+                    packageDetails.setSHA256(md5);
+                }
                 packageDetails.setFileSize(fileSize);
                 packageDetails.setLicenseName(license);
                 packageDetails.setLongDescription(description.toString());
