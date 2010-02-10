@@ -25,6 +25,7 @@ import java.util.Random;
 import java.util.Set;
 
 import javax.persistence.EntityManager;
+import javax.persistence.Query;
 
 import org.apache.commons.lang.RandomStringUtils;
 import org.testng.annotations.AfterMethod;
@@ -32,8 +33,13 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.content.Architecture;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.ContentSourceType;
+import org.rhq.core.domain.content.Package;
+import org.rhq.core.domain.content.PackageCategory;
+import org.rhq.core.domain.content.PackageType;
+import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.RepoGroup;
 import org.rhq.core.domain.content.RepoGroupType;
@@ -41,8 +47,11 @@ import org.rhq.core.domain.content.RepoRelationshipType;
 import org.rhq.core.domain.content.RepoRepoRelationship;
 import org.rhq.core.domain.content.RepoVisibility;
 import org.rhq.core.domain.criteria.RepoCriteria;
+import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
 import org.rhq.enterprise.server.content.RepoException;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
@@ -56,6 +65,7 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
     private final static boolean ENABLED = true;
 
     private RepoManagerLocal repoManager;
+    private ContentManagerLocal contentManager;
     private ContentSourceManagerLocal contentSourceManager;
     private ContentSourceMetadataManagerLocal contentSourceMetadataManager;
 
@@ -570,5 +580,69 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
         // Verify
         assert repoManager.getRepo(overlord, repo1.getId()) == null;
         assert repoManager.getRepo(overlord, repo2.getId()) == null;
+    }
+
+    public void listConfigFilesInRepo() throws Exception {
+        Repo repo = new Repo("testListConfigFilesInRepo");
+        int id = repoManager.createRepo(overlord, repo).getId();
+        Repo lookedUp = repoManager.getRepo(overlord, id);
+        assert lookedUp != null;
+        Repo lookedUp2 = repoManager.getRepoByName(lookedUp.getName()).get(0);
+        assert lookedUp2 != null;
+        assert id == lookedUp.getId();
+        assert id == lookedUp2.getId();
+
+        EntityManager em = getEntityManager();
+        Query query = em.createNamedQuery(PackageVersion.QUERY_FIND_BY_REPO_ID_WITH_CONFIG_FILE);
+        query.setParameter("repoId", id);
+        query.setParameter("name", "cfg");
+
+        List result = query.getResultList();
+        assert result.size() == 0;
+
+        Architecture architecture1;
+        ResourceType resourceType1;
+        PackageType packageType1;
+        Package package1;
+        PackageVersion packageVersion1, packageVersion2;
+
+        try {
+            architecture1 = em.find(Architecture.class, 1);
+
+            resourceType1 = new ResourceType("resourcetype-" + System.currentTimeMillis(), "TestPlugin",
+                ResourceCategory.PLATFORM, null);
+            em.persist(resourceType1);
+
+            // Add package types to resource type
+            packageType1 = new PackageType();
+            packageType1.setName("cfg");
+            packageType1.setDescription("");
+            packageType1.setCategory(PackageCategory.CONFIGURATION);
+            packageType1.setDisplayName("TestCfgPackage");
+            packageType1.setCreationData(true);
+            packageType1.setResourceType(resourceType1);
+            em.persist(packageType1);
+
+            resourceType1.addPackageType(packageType1);
+
+            getTransactionManager().commit();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            getTransactionManager().rollback();
+            throw e;
+        }
+
+        package1 = new Package("package1", packageType1);
+
+        packageVersion1 = new PackageVersion(package1, "1.0.0", architecture1);
+        packageVersion2 = new PackageVersion(package1, "2.0.0", architecture1);
+
+        //assert (contentManager.uploadPlatformPackageVersion(overlord, packageVersion1, packageType1.getId(),
+        //  architecture1.getId(), "foo=asdf1234".getBytes(), true) != null);
+
+        //assert (contentManager.uploadPlatformPackageVersion(overlord, packageVersion2, packageType1.getId(),
+        //   architecture1.getId(), "foobar=asdf1234".getBytes(), true) != null);
+
     }
 }

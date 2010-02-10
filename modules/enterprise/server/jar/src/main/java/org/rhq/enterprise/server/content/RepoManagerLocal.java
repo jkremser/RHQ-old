@@ -110,6 +110,10 @@ public interface RepoManagerLocal {
      */
     PageList<PackageVersion> findPackageVersionsInRepo(Subject subject, int repoId, String filter, PageControl pc);
 
+    PageList<PackageVersion> listConfigFileVersionsInRepo(Subject subject, int repoId, PageControl pc);
+
+    PackageVersion getLatestConfigFileVersionInRepo(Subject subject, int repoId, String packageName);
+
     /**
      * Get the overall sync status of this Repository.  This is a summation of all the syncs.
      *
