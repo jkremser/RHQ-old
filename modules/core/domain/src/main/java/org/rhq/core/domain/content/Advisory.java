@@ -38,7 +38,12 @@ import javax.persistence.Table;
         + "          a.issue_date"
         + "       ) "
         + "  FROM Advisory a "
-        + "  WHERE a.id = :id ") })
+        + "  WHERE a.id = :id "),
+    @NamedQuery(name = Advisory.DELETE_IF_NO_PACKAGES, query = "" //
+        + "DELETE Advisory adv " //
+        + "WHERE adv.advisorypkgs IS EMPTY"
+    )
+})
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_ADVISORY_ID_SEQ")
 @Table(name = "RHQ_ADVISORY")
 public class Advisory implements Serializable {
@@ -49,6 +54,9 @@ public class Advisory implements Serializable {
     public static final String QUERY_DELETE_BY_ADV_ID = "Advisory.deleteByAdvId";
     public static final String QUERY_FIND_COMPOSITE_BY_ID = "Advisory.queryFindCompositeByAdvId";
     public static final String QUERY_FIND_BY_ADV_ID = "Advisory.queryFindByAdvId";
+
+    public static final String DELETE_IF_NO_PACKAGES = "Advisory.deleteIfNoPackages";
+
     // Attributes  --------------------------------------------
 
     @Column(name = "ID", nullable = false)

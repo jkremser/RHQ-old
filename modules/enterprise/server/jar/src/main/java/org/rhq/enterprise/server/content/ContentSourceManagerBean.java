@@ -187,6 +187,10 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         // remove the productVersion->packageVersion mappings for all orphaned package versions
         entityManager.createNamedQuery(PackageVersion.DELETE_PVPV_IF_NO_CONTENT_SOURCES_OR_REPOS).executeUpdate();
 
+        // remove any advisories that are now invalid
+        entityManager.createNamedQuery(AdvisoryPackage.DELETE_IF_NO_CONTENT_SOURCES_OR_REPOS).executeUpdate();
+        entityManager.createNamedQuery(Advisory.DELETE_IF_NO_PACKAGES).executeUpdate();
+
         // remove the orphaned package versions
         int count = entityManager.createNamedQuery(PackageVersion.DELETE_IF_NO_CONTENT_SOURCES_OR_REPOS)
             .executeUpdate();
