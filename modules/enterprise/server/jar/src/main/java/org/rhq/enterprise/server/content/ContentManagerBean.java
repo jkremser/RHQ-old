@@ -1268,11 +1268,13 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
     public PackageVersion uploadPlatformPackageVersion(PackageVersion pv, int packageTypeId, int architectureId,
         InputStream packageBitStream, boolean dbmode) {
         // See if the package version already exists and return that if it does
-        Query packageVersionQuery = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_VER_ARCH);
+        //Query packageVersionQuery = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_VER_ARCH);
+        Query packageVersionQuery = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_VER_REL_ARCH);
         packageVersionQuery.setParameter("name", pv.getDisplayName());
         packageVersionQuery.setParameter("packageTypeId", packageTypeId);
         packageVersionQuery.setParameter("architectureId", architectureId);
         packageVersionQuery.setParameter("version", pv.getVersion());
+        packageVersionQuery.setParameter("release", pv.getRelease());
 
         // Result of the query should be either 0 or 1
         List existingVersionList = packageVersionQuery.getResultList();
@@ -1302,6 +1304,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
 
         PackageVersion newPackageVersion = new PackageVersion(existingPackage, pv.getVersion(), architecture);
         newPackageVersion.setDisplayName(existingPackage.getName());
+        newPackageVersion.setRelease(pv.getRelease());
         newPackageVersion.setMD5(pv.getMD5());
         newPackageVersion.setFileName(pv.getFileName());
         newPackageVersion.setFileSize(pv.getFileSize());
@@ -1325,9 +1328,13 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             existingPackage.addVersion(newPackageVersion);
         } else {
             try {
+                newPackageVersion = persistOrMergePackageVersionSafely(newPackageVersion);
+
+                existingPackage.addVersion(newPackageVersion);
                 // store content to local file system
                 File outputFile = contentSourceManager.getPackageBitsLocalFileAndCreateParentDir(newPackageVersion
                     .getId(), newPackageVersion.getFileName());
+                log.info("New pkg " + newPackageVersion.getId() + newPackageVersion.getDisplayName());
                 log.info("OutPutFile is located at: " + outputFile);
                 boolean store = false;
 
@@ -1349,9 +1356,6 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
                     packageBitStream = null;
                 }
 
-                newPackageVersion = persistOrMergePackageVersionSafely(newPackageVersion);
-
-                existingPackage.addVersion(newPackageVersion);
             } catch (Throwable t) {
                 throw new RuntimeException("Did not store the package bits for [" + pv.getFileName() + "]. Cause: "
                     + ThrowableUtil.getAllMessages(t), t);

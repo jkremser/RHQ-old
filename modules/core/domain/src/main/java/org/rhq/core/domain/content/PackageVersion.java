@@ -58,6 +58,12 @@ import org.rhq.core.domain.resource.ProductVersion;
     @NamedQuery(name = PackageVersion.QUERY_FIND_BY_PACKAGE_VER_ARCH, query = "SELECT pv FROM PackageVersion AS pv "
         + " WHERE pv.generalPackage.name = :name " + "   AND pv.generalPackage.packageType.id = :packageTypeId "
         + "   AND pv.architecture.id = :architectureId " + "   AND pv.version = :version "),
+    @NamedQuery(name = PackageVersion.QUERY_FIND_BY_PACKAGE_VER_REL_ARCH, query = "SELECT pv FROM PackageVersion AS pv "
+        + " WHERE pv.generalPackage.name = :name "
+        + "   AND pv.generalPackage.packageType.id = :packageTypeId "
+        + "   AND pv.architecture.id = :architectureId "
+        + "   AND pv.version = :version "
+        + "  AND pv.release =:release "),
     @NamedQuery(name = PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY, query = "SELECT pv FROM PackageVersion AS pv "
         + " WHERE pv.generalPackage.name = :packageName "
         + "   AND pv.generalPackage.packageType.name = :packageTypeName "
@@ -309,6 +315,7 @@ public class PackageVersion implements Serializable {
     public static final String QUERY_FIND_BY_ID = "PackageVersion.findById";
     public static final String QUERY_FIND_PACKAGE_BY_FILENAME = "PackageVersion.findPackageByFilename";
     public static final String QUERY_FIND_PACKAGEVERSION_BY_FILENAME = "PackageVersion.findPackageVersionByFilename";
+    public static final String QUERY_FIND_BY_PACKAGE_VER_REL_ARCH = "PackageVersion.findByPackageVerRelArch";
     // Attributes  --------------------------------------------
 
     @Column(name = "ID", nullable = false)
