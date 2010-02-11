@@ -18,7 +18,10 @@
  */
 package org.rhq.enterprise.gui.content;
 
+import java.io.ByteArrayOutputStream;
+
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.composite.PackageVersionComposite;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
@@ -31,6 +34,15 @@ public class PackageVersionDetailsUIBean {
     public PackageVersionComposite getPackageVersionComposite() {
         loadPackageVersionComposite();
         return this.packageVersionComposite;
+    }
+
+    public String getPackageBits() {
+        Integer id = FacesContextUtility.getRequiredRequestParameter("id", Integer.class);
+        PackageVersion pv = LookupUtil.getContentUIManager().getPackageVersion(id);
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        LookupUtil.getContentSourceManager().outputPackageVersionBits(pv, bos);
+        byte[] bits = bos.toByteArray();
+        return new String(bits);
     }
 
     private void loadPackageVersionComposite() {
