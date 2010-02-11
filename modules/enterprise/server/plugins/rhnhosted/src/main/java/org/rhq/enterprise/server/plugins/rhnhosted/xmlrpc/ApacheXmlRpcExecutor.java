@@ -55,7 +55,7 @@ public class ApacheXmlRpcExecutor implements XmlRpcExecutor {
         return execute(methodName, pParams, retryTimes);
     }
 
-    protected Object execute(String methodName, Object[] params, int retryTimesLeft) throws XmlRpcException {
+    public Object execute(String methodName, Object[] params, int retryTimesLeft) throws XmlRpcException {
         Object retVal = null;
         try {
             retVal = client.execute(methodName, params);
@@ -71,7 +71,7 @@ public class ApacheXmlRpcExecutor implements XmlRpcExecutor {
         return retVal;
     }
 
-    protected Object execute(String pMethodName, List pParams, int retryTimesLeft) throws XmlRpcException {
+    public Object execute(String pMethodName, List pParams, int retryTimesLeft) throws XmlRpcException {
         Object retVal = null;
         try {
             retVal = client.execute(pMethodName, pParams);

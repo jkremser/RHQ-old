@@ -184,8 +184,8 @@ public class RHNProvider implements ContentProvider, PackageSource, RepoSource, 
             int sliceSize = 10;
             for (int index = 0; index < pkgIds.size(); index += sliceSize) {
                 int end = index + sliceSize;
-                if (end >= pkgIds.size()) {
-                    end = pkgIds.size() - 1;
+                if (end > pkgIds.size()) {
+                    end = pkgIds.size();
                 }
                 long startTimeSlice = System.currentTimeMillis();
                 log.debug("Getting package details for slice [" + index + " -> " + end + "]");

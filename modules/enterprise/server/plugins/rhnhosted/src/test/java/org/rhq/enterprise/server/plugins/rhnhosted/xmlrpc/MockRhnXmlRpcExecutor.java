@@ -69,6 +69,10 @@ public class MockRhnXmlRpcExecutor implements XmlRpcExecutor {
         this.serverUrl = config.getServerURL();
     }
 
+    public Object execute(String methodName, Object[] params, int retryTimes) throws XmlRpcException {
+        return execute(methodName, params);
+    }
+
     /* (non-Javadoc)
      * @see org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc.XmlRpcExecutor#execute(java.lang.String, java.lang.Object[])
      */
@@ -266,6 +270,10 @@ public class MockRhnXmlRpcExecutor implements XmlRpcExecutor {
             throw new RuntimeException(e);
         }
 
+    }
+
+    public Object execute(String pMethodName, List pParams, int retryTimes) throws XmlRpcException {
+        return execute(pMethodName, pParams.toArray());
     }
 
     public Object execute(String pMethodName, List pParams) throws XmlRpcException {

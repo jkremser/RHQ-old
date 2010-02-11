@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.zip.GZIPOutputStream;
 
@@ -58,6 +59,15 @@ import org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc.RhnDownloader;
  */
 public class RHNHelper {
 
+    //
+    // Used to speed up Advisory Synchs
+    // This is a hashmap with first index being the RHN package ID to AdvisoryPackageDetails
+    // Example of a RHN package ID is "rhn-package-405014"
+    // Background:  Hosted uses the rhn package id and we need to translate this to the package
+    // info which has been stored in RHQ.
+    //
+    static protected HashMap<String, AdvisoryPackageDetails> cacheAdvPkgDetails;
+
     private final String baseurl;
     private final RhnComm rhndata;
     private final RhnDownloader rhndownload;
@@ -79,7 +89,9 @@ public class RHNHelper {
         this.rhndownload = new RhnDownloader(baseurl);
         this.systemid = systemIdIn;
         this.distributionType = "kickstart";
-
+        if (cacheAdvPkgDetails == null) {
+            cacheAdvPkgDetails = new HashMap<String, AdvisoryPackageDetails>();
+        }
     }
 
     public boolean checkSystemId(String systemId) throws IOException, XmlRpcException {
@@ -119,16 +131,22 @@ public class RHNHelper {
 
     public List<AdvisoryDetails> getAdvisoryMetadata(List<String> advisoryList, String repoName, SyncTracker tracker)
         throws XmlRpcException, IOException, InterruptedException {
+
         List<AdvisoryDetails> erratadetails = new ArrayList<AdvisoryDetails>();
         // ADD WORK
         tracker.addWork(advisoryList.size());
         tracker.persistResults();
+        int counter = 0;
         for (int i = 0; i < advisoryList.size(); i++) {
             String[] advisory = { advisoryList.get(i) };
             List<RhnErratumType> errata = rhndata.getErrataMetadata(this.systemid, Arrays.asList(advisory));
+            log.info("getAdvisoryMetadata() processing [" + counter + "/" + advisoryList.size() + "] advisory");
             for (RhnErratumType erratum : errata) {
                 ThreadUtil.checkInterrupted();
-                log.debug("Forming AdvisoryDetails(" + erratum.getAdvisory());
+                if (log.isDebugEnabled()) {
+                    log.debug("[" + counter + "/" + advisoryList.size() + "] Forming AdvisoryDetails("
+                        + erratum.getAdvisory() + ")");
+                }
                 AdvisoryDetails details = new AdvisoryDetails(erratum.getAdvisory(), erratum
                     .getRhnErratumAdvisoryType(), erratum.getRhnErratumSynopsis());
                 details.setDescription(erratum.getRhnErratumDescription());
@@ -140,53 +158,128 @@ public class RHNHelper {
                 details.setAdvisory_rel(erratum.getRhnErratumAdvisoryRel());
                 String cvestr = erratum.getCveNames();
                 String[] cves = cvestr.split(" ");
-                log.debug("list of cves " + cvestr + cves.toString());
-
+                if (log.isDebugEnabled()) {
+                    log.debug("AdvisoryDetails = " + details);
+                    log.debug("list of cves " + cvestr + cves.toString());
+                    log.debug("[" + counter + "/" + advisoryList.size() + "] AdvisoryDetails = " + details);
+                }
+                //
+                // CVES RELATED TO ERRATA
+                //
                 for (String cve : cves) {
                     if (log.isDebugEnabled()) {
-                        log.debug("RHNHelper::getAdvisoryMetaData<Advisory=" + erratum.getAdvisory() + "> CVEs<" + cve
+                        log.debug("[" + counter + "/" + advisoryList.size()
+                            + "] RHNHelper::getAdvisoryMetaData<Advisory=" + erratum.getAdvisory() + "> CVEs<" + cve
                             + ">");
                     }
                     AdvisoryCVEDetails acve = new AdvisoryCVEDetails(cve);
                     details.addCVE(acve);
                 }
-
+                //
+                // BUGS RELATED TO ERRATA
+                //
                 List<RhnErratumBugType> ebugs = erratum.getRhnErratumBugs().getRhnErratumBug();
-
                 if (ebugs != null) {
                     for (RhnErratumBugType ebug : ebugs) {
                         if (log.isDebugEnabled()) {
-                            log.debug("RHNHelper::getAdvisoryMetaData<Advisory=" + erratum.getAdvisory() + "> Bugs<"
+                            log.debug("[" + counter + "/" + advisoryList.size()
+                                + "] RHNHelper::getAdvisoryMetaData<Advisory=" + erratum.getAdvisory() + "> Bugs<"
                                 + ebug + ">");
                         }
                         AdvisoryBugDetails dbug = new AdvisoryBugDetails(ebug.getRhnErratumBugId());
                         details.addBug(dbug);
                     }
                 }
-
+                //
+                // PACKAGES RELATED TO ERRATA
+                //
+                // Find out what packages are associated to this errata
+                // Background info:  RHN tells us package ids as rhn-package-45839
+                // We don't store this info on RHQ...so our problem is how do we map RHN package ID to the
+                // name-epoch:version-release.arch format.
+                //
+                // We need the info we get from getPackageMetadata, we pass in the RHN package ID and it comes back
+                // with name,version,release, etc info about the package.
+                //
+                // To speed things up we are caching this info when we do a package metadata sync, we cache the info
+                // in a lookup map held in this class's memory, if that lookup fails then we default to talking to RHN
+                //
+                // Note: that while we may be synching saying rhel-i386-server-5, an Errata will span more packages than
+                // just what is in the repo.  Therefore the Errata may include packages of all arches, including those
+                // that we may not be "entitled" to see...hence "Package not found" errors are possible and likely during
+                // this operation.  We will skip those errors, since they are for packages we don't care about anyway.
+                //
                 String pkgs = erratum.getPackages();
-                String[] pkgIds = pkgs.split(" ");
-
                 List<AdvisoryPackageDetails> apkgdetails = new ArrayList<AdvisoryPackageDetails>();
-                List<RhnPackageType> pkgdetails = rhndata.getPackageMetadata(this.systemid, Arrays.asList(pkgIds));
-                for (RhnPackageType pkgd : pkgdetails) {
-                    if (log.isDebugEnabled()) {
-                        log.debug("RHNHelper::getAdvisoryMetaData<Advisory=" + erratum.getAdvisory() + "> Package<"
-                            + pkgd + ">");
+                if (log.isDebugEnabled()) {
+                    log.debug("getAdvisoryMetadata() [" + counter + "/" + advisoryList.size() + "] :  pkgs.length() = "
+                        + pkgs.length() + " = " + pkgs);
+                }
+                String[] pkgIds = pkgs.split(" ");
+                for (String packageId : pkgIds) {
+                    List<String> tempList = new ArrayList<String>();
+                    tempList.add(packageId);
+                    // See if we already have cached data on this rhn package id
+                    AdvisoryPackageDetails cachedDetails = lookupAdvisoryPackageDetails(packageId);
+                    if (cachedDetails != null) {
+                        if (log.isDebugEnabled()) {
+                            log.debug("[" + counter + "/" + advisoryList.size()
+                                + "] Lookup cached AdvisoryPackageDetails<" + cachedDetails.getRpmFilename()
+                                + "> object for rhn pkg id: " + packageId);
+                        }
+                        apkgdetails.add(cachedDetails);
+                        continue;
                     }
-                    String name = pkgd.getName();
-                    String epoch = pkgd.getEpoch();
-                    String version = pkgd.getVersion();
-                    String arch = pkgd.getPackageArch();
-                    String release = pkgd.getRelease();
-                    String rpmname = constructRpmDisplayName(name, version, release, epoch, arch);
-                    AdvisoryPackageDetails apkgd = new AdvisoryPackageDetails(name, version, arch, rpmname);
-                    apkgdetails.add(apkgd);
+                    if (log.isDebugEnabled()) {
+                        log.debug("[" + counter + "/" + advisoryList.size() + "] Unable to fetch " + packageId
+                            + " from cache, will talk to RHN to retrieve data.");
+                    }
+                    //
+                    //  We are seeing some package ids which fail on lookup to Hosted.
+                    //  We believe this might be related to the Certificate used to create the Content Provider
+                    //  not having access to get package metadata for packages outside of it's allowed channels.
+                    //  Adding a try/catch to ignore the XmlRpcException
+                    //  ...we think those packages are not ones we are interested in anyway....so we are adding a
+                    //  try/catch here to ignore the XmlRpcException and continue with the next package.
+                    //
+                    try {
+                        List<RhnPackageType> pkgdetails = rhndata.getPackageMetadata(this.systemid, tempList, 0);
+                        for (RhnPackageType pkgd : pkgdetails) {
+                            if (log.isDebugEnabled()) {
+                                log.debug("RHNHelper::getAdvisoryMetaData<Advisory=" + erratum.getAdvisory()
+                                    + "> Package<" + pkgd + ">: " + tempList);
+                            }
+                            String name = pkgd.getName();
+                            String epoch = pkgd.getEpoch();
+                            String version = pkgd.getVersion();
+                            String arch = pkgd.getPackageArch();
+                            String release = pkgd.getRelease();
+                            String rpmname = constructRpmDisplayName(name, version, release, epoch, arch);
+                            AdvisoryPackageDetails apkgd = new AdvisoryPackageDetails(name, version, arch, rpmname);
+                            apkgdetails.add(apkgd);
+                            // Add to cache
+                            cacheAdvisoryPackageDetails(packageId, apkgd);
+                            log.debug("Fetched info for " + packageId + " = " + rpmname);
+                        }
+                    } catch (XmlRpcException e) {
+                        if (!e.getMessage().contains("No such package")) {
+                            // re-throw exception, it's something other than the one we wanted to ignore
+                            log.info(e.getMessage());
+                            log.warn(e);
+                            throw e;
+                        }
+                        if (log.isDebugEnabled()) {
+                            log.debug("We shall continue and not include this package " + packageId
+                                + " with advisory info since"
+                                + " RHN Hosted reported 'No such package' for our credentials.");
+                        }
+                    }
                 }
                 details.addPkgs(apkgdetails);
-
                 erratadetails.add(details);
             }
+            counter++;
+            log.debug("RHNHelper gathered data for Errata: [" + counter + "/" + advisoryList.size() + "]");
             tracker.finishWork(1);
             tracker.persistResults();
         }
@@ -211,6 +304,7 @@ public class RHNHelper {
             try {
                 ContentProviderPackageDetails details = getDetails(pkg, channelName);
                 pdlist.add(details);
+                cacheAdvisoryPackageDetails(pkg.getId(), pkg);
             } catch (Exception e) {
                 if (pkg != null) {
                     if (StringUtils.isBlank(pkg.getName())) {
@@ -228,9 +322,9 @@ public class RHNHelper {
                 continue;
             }
         }
-        log.info("We skipped: " + skippedPackages + " packages. " + "We also skipped " + pkgNoName
+        log.debug("We skipped: " + skippedPackages + " packages. " + "We also skipped " + pkgNoName
             + " packages because they had no name");
-        log.info("getPackageDetails was called with a list of package ids size = " + packageIds.size()
+        log.debug("getPackageDetails was called with a list of package ids size = " + packageIds.size()
             + " we have fetched metadata for " + pdlist.size() + " packages");
         return pdlist;
     }
@@ -504,4 +598,53 @@ public class RHNHelper {
         return baseurl;
     }
 
+    /**
+     * If a cache of AdvisoryPackageDetails objects exists it is cleared.
+     */
+    public void clearCacheAdvisoryPackageDetails() {
+        if (cacheAdvPkgDetails == null) {
+            return;
+        }
+        cacheAdvPkgDetails.clear();
+    }
+
+    protected AdvisoryPackageDetails lookupAdvisoryPackageDetails(String rhnPkgId) {
+
+        if (cacheAdvPkgDetails == null) {
+            return null;
+        }
+        if (cacheAdvPkgDetails.containsKey(rhnPkgId)) {
+            return cacheAdvPkgDetails.get(rhnPkgId);
+        }
+        return null;
+    }
+
+    protected void cacheAdvisoryPackageDetails(String rhnPkgId, AdvisoryPackageDetails pkgDetails) {
+        if (cacheAdvPkgDetails == null) {
+            cacheAdvPkgDetails = new HashMap<String, AdvisoryPackageDetails>();
+        }
+        if (cacheAdvPkgDetails.containsKey(rhnPkgId)) {
+            AdvisoryPackageDetails existing = cacheAdvPkgDetails.get(rhnPkgId);
+            if (!existing.equals(pkgDetails)) {
+                log.warn("cacheToAdvisoryDetails(" + rhnPkgId + ", " + pkgDetails
+                    + ") packages differ from what's cached.");
+                log.warn("Existing AdvisoryDetailsPackage in cache = " + existing);
+                log.warn("New AdvisoryDetailsPackage to add to cache is " + pkgDetails);
+            }
+        }
+        // Will override rhnPkgId if it was already in cache
+        cacheAdvPkgDetails.put(rhnPkgId, pkgDetails);
+    }
+
+    protected void cacheAdvisoryPackageDetails(String rhnPkgId, RhnPackageType pType) {
+
+        String name = pType.getName();
+        String epoch = pType.getEpoch();
+        String version = pType.getVersion();
+        String arch = pType.getPackageArch();
+        String release = pType.getRelease();
+        String rpmname = constructRpmDisplayName(name, version, release, epoch, arch);
+        AdvisoryPackageDetails apkgd = new AdvisoryPackageDetails(name, version, arch, rpmname);
+        cacheAdvisoryPackageDetails(rhnPkgId, apkgd);
+    }
 }

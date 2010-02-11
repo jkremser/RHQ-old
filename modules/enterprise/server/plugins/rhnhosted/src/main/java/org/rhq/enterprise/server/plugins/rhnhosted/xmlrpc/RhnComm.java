@@ -88,10 +88,20 @@ public class RhnComm {
 
     public List<RhnPackageType> getPackageMetadata(String systemId, List<String> pkgIds) throws IOException,
         XmlRpcException {
+        return getPackageMetadata(systemId, pkgIds, -1);
+    }
+
+    public List<RhnPackageType> getPackageMetadata(String systemId, List<String> pkgIds, int retryTimes)
+        throws IOException, XmlRpcException {
 
         log.debug("getPackageMetadata() passed in package id list has " + pkgIds.size() + " entries");
         Object[] params = new Object[] { systemId, pkgIds };
-        JAXBElement<RhnSatelliteType> result = (JAXBElement) dumpHandler.execute("dump.packages", params);
+        JAXBElement<RhnSatelliteType> result = null;
+        if (retryTimes < 0) {
+            result = (JAXBElement) dumpHandler.execute("dump.packages", params);
+        } else {
+            result = (JAXBElement) dumpHandler.execute("dump.packages", params, retryTimes);
+        }
         RhnSatelliteType sat = result.getValue();
         List<RhnPackageType> pkgs = sat.getRhnPackages().getRhnPackage();
         return pkgs;

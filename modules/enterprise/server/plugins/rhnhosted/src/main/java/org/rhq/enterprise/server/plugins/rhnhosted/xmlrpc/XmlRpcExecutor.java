@@ -24,6 +24,14 @@ import java.util.List;
 import org.apache.xmlrpc.XmlRpcException;
 
 public interface XmlRpcExecutor {
+    /**
+     * Execute an XMLRPC method
+     * @param methodName
+     * @param params
+     * @param retryTimes
+     * @return
+     */
+    public Object execute(String methodName, Object[] params, int retryTimes) throws XmlRpcException;
 
     /**
      * Execute an XMLRPC method
@@ -32,6 +40,15 @@ public interface XmlRpcExecutor {
      * @return
      */
     public Object execute(String methodName, Object[] params) throws XmlRpcException;
+
+    /** Performs a request with the clients default configuration.
+     * @param pMethodName The method being performed.
+     * @param pParams The parameters.
+     * @param retryTimes
+     * @return The result object.
+     * @throws XmlRpcException Performing the request failed.
+     */
+    public Object execute(String pMethodName, List pParams, int retryTimes) throws XmlRpcException;
 
     /** Performs a request with the clients default configuration.
      * @param pMethodName The method being performed.
