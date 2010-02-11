@@ -150,6 +150,11 @@
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
    <managed-bean>
+      <managed-bean-name>RepoConfigPackageVersionsUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.content.RepoConfigPackageVersionsUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+   <managed-bean>
       <managed-bean-name>RepoDistributionUIBean</managed-bean-name>
       <managed-bean-class>org.rhq.enterprise.gui.content.RepoDistributionUIBean</managed-bean-class>
       <managed-bean-scope>request</managed-bean-scope>

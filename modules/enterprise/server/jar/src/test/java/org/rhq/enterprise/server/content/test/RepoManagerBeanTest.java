@@ -638,11 +638,11 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
         packageVersion1 = new PackageVersion(package1, "1.0.0", architecture1);
         packageVersion2 = new PackageVersion(package1, "2.0.0", architecture1);
 
-        //assert (contentManager.uploadPlatformPackageVersion(overlord, packageVersion1, packageType1.getId(),
-        //  architecture1.getId(), "foo=asdf1234".getBytes(), true) != null);
+        assert (contentManager.uploadPlatformPackageVersion(overlord, packageVersion1, packageType1.getId(),
+            architecture1.getId(), "foo=asdf1234".getBytes(), true) != null);
 
-        //assert (contentManager.uploadPlatformPackageVersion(overlord, packageVersion2, packageType1.getId(),
-        //   architecture1.getId(), "foobar=asdf1234".getBytes(), true) != null);
+        assert (contentManager.uploadPlatformPackageVersion(overlord, packageVersion2, packageType1.getId(),
+            architecture1.getId(), "foobar=asdf1234".getBytes(), true) != null);
 
     }
 }
