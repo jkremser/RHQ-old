@@ -306,26 +306,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
     // List all versions of config file packages in a repository
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public PageList<PackageVersion> findConfigPackageVersionsInRepo(Subject subject, int repoId, PageControl pc) {
-        pc.initDefaultOrderingField("pv.generalPackage.name, pv.version");
-
-        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
-            PackageVersion.QUERY_FIND_BY_REPO_ID_WITH_CONFIG_FILE, pc);
-
-        query.setParameter("repoId", repoId);
-        query.setParameter("name", "cfg");
-
-        List<PackageVersion> results = query.getResultList();
-        long count = getPackageVersionCountFromRepo(subject, null, repoId);
-
-        return new PageList<PackageVersion>(results, (int) count, pc);
-    }
-
-    // List all versions of config file packages in a repository
-    @SuppressWarnings("unchecked")
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public PageList<PackageVersion> findConfigPackageVersionsInRepo(Subject subject, int repoId, String filter,
-        PageControl pc) {
+    public PageList<PackageVersion> listConfigFileVersionsInRepo(Subject subject, int repoId, PageControl pc) {
         pc.initDefaultOrderingField("pv.generalPackage.name, pv.version");
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,

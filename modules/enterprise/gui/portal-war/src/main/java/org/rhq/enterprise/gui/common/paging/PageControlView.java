@@ -43,7 +43,6 @@ import org.rhq.enterprise.gui.content.ListPackagesUIBean;
 import org.rhq.enterprise.gui.content.ListReposUIBean;
 import org.rhq.enterprise.gui.content.RepoAdvisoryUIBean;
 import org.rhq.enterprise.gui.content.RepoAssociationsUIBean;
-import org.rhq.enterprise.gui.content.RepoConfigPackageVersionsUIBean;
 import org.rhq.enterprise.gui.content.RepoContentSourcesUIBean;
 import org.rhq.enterprise.gui.content.RepoDisassociationsUIBean;
 import org.rhq.enterprise.gui.content.RepoDistributionUIBean;
@@ -145,8 +144,6 @@ public enum PageControlView {
     ContentSourceCandidateReposList(ContentSourceCandidateReposUIBean.class),
     /** */
     RepoPackageVersionsList(RepoPackageVersionsUIBean.class),
-    /** */
-    RepoConfigPackageVersionsList(RepoConfigPackageVersionsUIBean.class),
     /** */
     RepoDistributionList(RepoDistributionUIBean.class),
     /** */

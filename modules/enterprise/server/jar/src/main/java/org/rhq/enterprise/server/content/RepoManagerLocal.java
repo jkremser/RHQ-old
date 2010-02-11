@@ -110,9 +110,7 @@ public interface RepoManagerLocal {
      */
     PageList<PackageVersion> findPackageVersionsInRepo(Subject subject, int repoId, String filter, PageControl pc);
 
-    PageList<PackageVersion> findConfigPackageVersionsInRepo(Subject subject, int repoId, String filter, PageControl pc);
-
-    PageList<PackageVersion> findConfigPackageVersionsInRepo(Subject subject, int repoId, PageControl pc);
+    PageList<PackageVersion> listConfigFileVersionsInRepo(Subject subject, int repoId, PageControl pc);
 
     PackageVersion getLatestConfigFileVersionInRepo(Subject subject, int repoId, String packageName);
 
