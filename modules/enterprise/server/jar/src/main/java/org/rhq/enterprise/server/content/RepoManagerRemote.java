@@ -304,4 +304,9 @@ public interface RepoManagerRemote {
         @WebParam(name = "repoIds") List<Integer> repoIds, //
         @WebParam(name = "visibility") RepoVisibility visibility //
     );
+
+    @WebMethod
+    void addPackageVersionsToRepoContentSource( //
+        @WebParam(name = "subject") Subject subject, int repoId, //
+        @WebParam(name = "packageVersionId") int packageVersionId);
 }

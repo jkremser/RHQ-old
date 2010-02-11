@@ -1075,7 +1075,7 @@ public class WebservicesManagerBean implements WebservicesRemote {
     }
 
     public void updateRepoVisibility(@WebParam(name = "repoIds") List<Integer> repoIds,
-                                     @WebParam(name = "visibility") RepoVisibility visibility) {
+        @WebParam(name = "visibility") RepoVisibility visibility) {
         repoManager.updateRepoVisibility(repoIds, visibility);
     }
 
@@ -1091,6 +1091,11 @@ public class WebservicesManagerBean implements WebservicesRemote {
 
     public void updatePackageVersionMetadata(Subject user, int pvId, byte[] metadata) {
         contentManager.updatePackageVersionMetadata(user, pvId, metadata);
+    }
+
+    @Override
+    public void addPackageVersionsToRepoContentSource(Subject subject, int repoId, int packageVersionId) {
+        repoManager.addPackageVersionsToRepoContentSource(subject, repoId, packageVersionId);
     }
 
 }

@@ -21,6 +21,7 @@ package org.rhq.enterprise.server.content;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -693,6 +694,31 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
             RepoPackageVersion mapping = new RepoPackageVersion(repo, packageVersion);
             entityManager.persist(mapping);
         }
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public void addPackageVersionsToRepoContentSource(Subject subject, int repoId, int packageVersionId) {
+        Repo repo = entityManager.find(Repo.class, repoId);
+
+        PackageVersion packageVersion = entityManager.find(PackageVersion.class, packageVersionId);
+
+        Set<ContentSource> css = repo.getContentSources();
+        if (!css.isEmpty()) {
+            Iterator csit = css.iterator();
+            while (csit.hasNext()) {
+                try {
+                    ContentSource cs = (ContentSource) csit.next();
+                    PackageVersionContentSource newPvcs = new PackageVersionContentSource(packageVersion, cs, "");
+                    entityManager.persist(newPvcs);
+                } catch (Exception e) {
+                    log.info("Could not associate Package Version " + packageVersion + " to COntent SOurce ");
+                }
+            }
+        }
+
+        RepoPackageVersion mapping = new RepoPackageVersion(repo, packageVersion);
+        entityManager.persist(mapping);
+
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)

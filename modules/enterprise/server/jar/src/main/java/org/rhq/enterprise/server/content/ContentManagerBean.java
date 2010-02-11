@@ -1309,28 +1309,25 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         newPackageVersion.setFileName(pv.getFileName());
         newPackageVersion.setFileSize(pv.getFileSize());
         newPackageVersion.setFileCreatedDate(System.currentTimeMillis());
-        if (dbmode) {
-            // Write the content into the newly created package version.
-            byte[] packageBits;
+
+        byte[] packageBits;
+        try {
+            packageBits = StreamUtil.slurp(packageBitStream);
+        } catch (RuntimeException re) {
+            throw new RuntimeException("Error reading in the package file", re);
+        }
+
+        PackageBits bits = new PackageBits();
+        bits.setBits(packageBits);
+
+        newPackageVersion.setPackageBits(bits);
+
+        newPackageVersion = persistOrMergePackageVersionSafely(newPackageVersion);
+
+        existingPackage.addVersion(newPackageVersion);
+
+        if (!dbmode) {
             try {
-                packageBits = StreamUtil.slurp(packageBitStream);
-            } catch (RuntimeException re) {
-                throw new RuntimeException("Error reading in the package file", re);
-            }
-
-            PackageBits bits = new PackageBits();
-            bits.setBits(packageBits);
-
-            newPackageVersion.setPackageBits(bits);
-
-            newPackageVersion = persistOrMergePackageVersionSafely(newPackageVersion);
-
-            existingPackage.addVersion(newPackageVersion);
-        } else {
-            try {
-                newPackageVersion = persistOrMergePackageVersionSafely(newPackageVersion);
-
-                existingPackage.addVersion(newPackageVersion);
                 // store content to local file system
                 File outputFile = contentSourceManager.getPackageBitsLocalFileAndCreateParentDir(newPackageVersion
                     .getId(), newPackageVersion.getFileName());

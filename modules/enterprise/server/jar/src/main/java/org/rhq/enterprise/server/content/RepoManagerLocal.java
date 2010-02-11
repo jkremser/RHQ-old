@@ -406,4 +406,6 @@ public interface RepoManagerLocal {
      * @param visibility
      */
     void updateRepoVisibility(List<Integer> repoIds, RepoVisibility visibility);
+
+    void addPackageVersionsToRepoContentSource(Subject subject, int repoId, int packageVersionId);
 }
