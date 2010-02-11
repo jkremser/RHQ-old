@@ -72,7 +72,7 @@ public class RepoConfigPackageVersionsUIBean extends PagedDataTableUIBean {
             RepoManagerLocal manager = LookupUtil.getRepoManagerLocal();
 
             PageList<PackageVersion> results;
-            results = manager.findConfigPackageVersionsInRepo(subject, id, getPackageFilter(), pc);
+            results = manager.findConfigPackageVersionsInRepo(subject, id, pc);
             return results;
         }
     }

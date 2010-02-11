@@ -316,7 +316,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         query.setParameter("name", "cfg");
 
         List<PackageVersion> results = query.getResultList();
-        long count = getPackageVersionCountFromRepo(subject, null, repoId);
+        long count = getConfigPackageVersionCountFromRepo(subject, null, repoId);
 
         return new PageList<PackageVersion>(results, (int) count, pc);
     }
@@ -335,7 +335,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         query.setParameter("name", "cfg");
 
         List<PackageVersion> results = query.getResultList();
-        long count = getPackageVersionCountFromRepo(subject, null, repoId);
+        long count = getConfigPackageVersionCountFromRepo(subject, null, repoId);
 
         return new PageList<PackageVersion>(results, (int) count, pc);
     }
@@ -828,7 +828,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
 
         countQuery.setParameter("repoId", repoId);
         countQuery.setParameter("name", "cfg");
-        countQuery.setParameter("filter", (filter == null) ? null : ("%" + filter.toUpperCase() + "%"));
+        //countQuery.setParameter("filter", (filter == null) ? null : ("%" + filter.toUpperCase() + "%"));
 
         return ((Long) countQuery.getSingleResult()).longValue();
     }
