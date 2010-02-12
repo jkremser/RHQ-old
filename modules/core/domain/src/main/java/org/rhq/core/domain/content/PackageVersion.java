@@ -115,6 +115,13 @@ import org.rhq.core.domain.resource.ProductVersion;
         + "                  WHERE cpv.repo.id = :repoId"
         + "                          AND (UPPER(pv1.displayName) LIKE :filter ESCAPE :escapeChar "
         + "                             OR :filter IS NULL)) "),
+    @NamedQuery(name = PackageVersion.QUERY_FIND_BY_REPO_ID_WITH_CONFIG_FILE_FILTERED, query = "SELECT pv "
+        + "  FROM PackageVersion pv " + "       LEFT JOIN FETCH pv.generalPackage "
+        + " WHERE pv.id IN (SELECT DISTINCT pv1.id " + "                   FROM PackageVersion pv1 "
+        + "                        LEFT JOIN pv1.repoPackageVersions cpv "
+        + "                  WHERE cpv.repo.id = :repoId"
+        + "                          AND (UPPER(pv1.displayName) LIKE :filter ESCAPE :escapeChar "
+        + "                             OR :filter IS NULL)) " + " AND pv.generalPackage.packageType.name = :name "),
     @NamedQuery(name = PackageVersion.QUERY_FIND_METADATA_BY_RESOURCE_ID, query = "SELECT new org.rhq.core.domain.content.composite.PackageVersionMetadataComposite "
         + "                ( "
         + "                   pv.id, "
@@ -299,6 +306,7 @@ public class PackageVersion implements Serializable {
     public static final String QUERY_FIND_BY_REPO_ID_WITH_CONFIG_FILE = "PackageVersion.findByRepoIdWithConfigFile";
     public static final String QUERY_FIND_BY_REPO_ID_AND_NAME_WITH_CONFIG_FILE = "PackageVersion.findByRepoIdAndNameWithConfigFile";
     public static final String QUERY_FIND_BY_REPO_ID_WITH_PACKAGE_FILTERED = "PackageVersion.findByRepoIdWithPackageFiltered";
+    public static final String QUERY_FIND_BY_REPO_ID_WITH_CONFIG_FILE_FILTERED = "PackageVersion.findByRepoIdWithConfigFileFiltered";
     public static final String QUERY_FIND_METADATA_BY_RESOURCE_ID = "PackageVersion.findMetadataByResourceId";
     public static final String QUERY_FIND_BY_ID_IF_NO_CONTENT_SOURCES_OR_REPOS = "PackageVersion.findByIdIfNoContentSourcesOrRepos";
     public static final String QUERY_GET_PKG_BITS_LENGTH_BY_PKG_DETAILS_AND_RES_ID = "PackageVersion.getPkgBitsLengthByPkgDetailsAndResId";

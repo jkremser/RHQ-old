@@ -651,12 +651,37 @@
               value="Config Package Versions Accessible To This Repository" />
           </f:facet>
 
+          <h:panelGrid columns="1" width="100%">
+
+            <h:panelGroup layout="block" style="margin-bottom: 6px;">
+
+              <b>Filter By: </b>
+              <h:inputText id="packageFilter"
+                value="#{RepoConfigPackageVersionsUIBean.packageFilter}">
+                <a4j:support event="onchange"
+                  reRender="repoConfigPackageVersionsDataTable, repoConfigPackageVersionsDataTableScroller" />
+              </h:inputText>
+              <a4j:commandButton value="GO"
+                reRender="repoConfigPackageVersionsDataTable, repoConfigPackageVersionsDataTableScroller"
+                styleClass="buttonmed">
+                <s:defaultAction />
+              </a4j:commandButton>
+
+              <a4j:status>
+                <f:facet name="start">
+                        &nbsp; &nbsp; <h:graphicImage
+                    value="/images/status_bar.gif" />
+                </f:facet>
+              </a4j:status>
+
+            </h:panelGroup>
+
             <ui:param name="repoConfigPackageVersionsDataModel"
               value="#{RepoConfigPackageVersionsUIBean.dataModel}" />
             <rich:dataTable id="repoConfigPackageVersionsDataTable"
               rows="#{PageControl.RepoConfigPackageVersionsList.pageSize}"
               value="#{repoConfigPackageVersionsDataModel}" var="pvitem"
-              width="100%" columnsWidth="5%,20%, 10%, 5%, 60%"
+              width="100%" columnsWidth="20%, 10%, 10%"
               headerClass="tableRowHeader" footerClass="on-pager-footer"
               onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
               onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
@@ -728,8 +753,10 @@
                   </rich:column>
                 </rich:columnGroup>
               </f:facet>
-
             </rich:dataTable>
+
+          </h:panelGrid>
+
         </rich:panel>
       </a4j:region>
     </h:form>

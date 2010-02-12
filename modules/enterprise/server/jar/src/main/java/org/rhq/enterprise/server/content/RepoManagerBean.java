@@ -330,13 +330,15 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         pc.initDefaultOrderingField("pv.generalPackage.name, pv.version");
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
-            PackageVersion.QUERY_FIND_BY_REPO_ID_WITH_CONFIG_FILE, pc);
+            PackageVersion.QUERY_FIND_BY_REPO_ID_WITH_CONFIG_FILE_FILTERED, pc);
 
         query.setParameter("repoId", repoId);
+        query.setParameter("filter", QueryUtility.formatSearchParameter(filter));
+        query.setParameter("escapeChar", QueryUtility.getEscapeCharacter());
         query.setParameter("name", "cfg");
 
         List<PackageVersion> results = query.getResultList();
-        long count = getConfigPackageVersionCountFromRepo(subject, null, repoId);
+        long count = getConfigPackageVersionCountFromRepo(subject, filter, repoId);
 
         return new PageList<PackageVersion>(results, (int) count, pc);
     }
@@ -850,11 +852,12 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public long getConfigPackageVersionCountFromRepo(Subject subject, String filter, int repoId) {
         Query countQuery = PersistenceUtility.createCountQuery(entityManager,
-            PackageVersion.QUERY_FIND_BY_REPO_ID_WITH_CONFIG_FILE);
+            PackageVersion.QUERY_FIND_BY_REPO_ID_WITH_CONFIG_FILE_FILTERED);
 
         countQuery.setParameter("repoId", repoId);
+        countQuery.setParameter("filter", (filter == null) ? null : ("%" + filter.toUpperCase() + "%"));
+        countQuery.setParameter("escapeChar", QueryUtility.getEscapeCharacter());
         countQuery.setParameter("name", "cfg");
-        //countQuery.setParameter("filter", (filter == null) ? null : ("%" + filter.toUpperCase() + "%"));
 
         return ((Long) countQuery.getSingleResult()).longValue();
     }
