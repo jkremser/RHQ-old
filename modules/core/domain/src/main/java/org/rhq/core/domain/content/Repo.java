@@ -71,6 +71,11 @@ import org.rhq.core.domain.resource.Resource;
     @NamedQuery(name = Repo.QUERY_FIND_IMPORTED_BY_CONTENT_SOURCE_ID, query = "SELECT c FROM Repo c LEFT JOIN c.repoContentSources ccs WHERE ccs.contentSource.id = :id AND c.candidate = false"),
     @NamedQuery(name = Repo.QUERY_FIND_CANDIDATE_BY_CONTENT_SOURCE_ID, query = "SELECT c FROM Repo c LEFT JOIN c.repoContentSources ccs WHERE ccs.contentSource.id = :id AND c.candidate = true"),
     @NamedQuery(name = Repo.QUERY_FIND_SUBSCRIBER_RESOURCES, query = "SELECT rc.resource FROM ResourceRepo rc WHERE rc.repo.id = :id"),
+    // DO NOT SELECT DISTINCT IN OUTER SELECT - Oracle bombs on PackageVersion.metadata BLOB column
+    @NamedQuery(name = Repo.QUERY_FIND_BY_PACKAGE_VER_ID, query = "SELECT c FROM Repo c WHERE "
+        + "  c.id IN (SELECT DISTINCT c1.id " + "                   FROM Repo c1 "
+        + "                        LEFT JOIN c1.repoPackageVersions cpv "
+        + "                  WHERE cpv.packageVersion.id = :packageVersionId) "),
     @NamedQuery(name = Repo.QUERY_FIND_REPOS_BY_RESOURCE_ID, query = "SELECT c "
         + "FROM ResourceRepo rc JOIN rc.repo c WHERE rc.resource.id = :resourceId "),
 
@@ -111,6 +116,7 @@ public class Repo implements Serializable, Taggable {
     public static final String QUERY_FIND_ALL_IMPORTED_REPOS = "Repo.findAll";
     public static final String QUERY_FIND_BY_IDS = "Repo.findByIds";
     public static final String QUERY_FIND_BY_NAME = "Repo.findByName";
+    public static final String QUERY_FIND_BY_PACKAGE_VER_ID = "Repo.findByPackageVersionId";
     public static final String QUERY_FIND_IMPORTED_BY_CONTENT_SOURCE_ID_FETCH_CCS = "Repo.findByContentSourceIdFetchCCS";
     public static final String QUERY_FIND_IMPORTED_BY_CONTENT_SOURCE_ID = "Repo.findByContentSourceId";
     public static final String QUERY_FIND_CANDIDATE_BY_CONTENT_SOURCE_ID = "Repo.findCandidateByContentSourceId";
@@ -148,7 +154,7 @@ public class Repo implements Serializable, Taggable {
 
     @Column(name = "VISIBILITY", nullable = false)
     @Enumerated(EnumType.STRING)
-    private RepoVisibility visibility = RepoVisibility.PUBLIC; 
+    private RepoVisibility visibility = RepoVisibility.PUBLIC;
 
     @Column(name = "SYNC_SCHEDULE", nullable = true)
     private String syncSchedule = "0 0 3 * * ?";

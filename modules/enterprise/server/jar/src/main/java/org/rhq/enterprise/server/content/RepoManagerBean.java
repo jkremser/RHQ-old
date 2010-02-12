@@ -47,6 +47,7 @@ import org.rhq.core.domain.content.Advisory;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.ContentSyncStatus;
 import org.rhq.core.domain.content.Distribution;
+import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.PackageVersionContentSource;
 import org.rhq.core.domain.content.Repo;
@@ -314,7 +315,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
             PackageVersion.QUERY_FIND_BY_REPO_ID_WITH_CONFIG_FILE, pc);
 
         query.setParameter("repoId", repoId);
-        query.setParameter("name", "cfg");
+        query.setParameter("name", PackageType.TYPE_NAME_CFG);
 
         List<PackageVersion> results = query.getResultList();
         long count = getConfigPackageVersionCountFromRepo(subject, null, repoId);
@@ -335,7 +336,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         query.setParameter("repoId", repoId);
         query.setParameter("filter", QueryUtility.formatSearchParameter(filter));
         query.setParameter("escapeChar", QueryUtility.getEscapeCharacter());
-        query.setParameter("name", "cfg");
+        query.setParameter("name", PackageType.TYPE_NAME_CFG);
 
         List<PackageVersion> results = query.getResultList();
         long count = getConfigPackageVersionCountFromRepo(subject, filter, repoId);
@@ -352,7 +353,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         Query query = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_REPO_ID_AND_NAME_WITH_CONFIG_FILE);
 
         query.setParameter("repoId", repoId);
-        query.setParameter("name", "cfg");
+        query.setParameter("name", PackageType.TYPE_NAME_CFG);
         query.setParameter("packageName", packageName);
 
         List<PackageVersion> results = query.getResultList();
@@ -1233,5 +1234,16 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
             Repo repo = entityManager.find(Repo.class, id);
             repo.setVisibility(visibility);
         }
+    }
+
+    @Override
+    public PageList<Repo> findReposByPackageVersionId(Subject overlord, int packageVersionId) {
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, Repo.QUERY_FIND_BY_PACKAGE_VER_ID);
+
+        query.setParameter("packageVersionId", packageVersionId);
+
+        List<Repo> results = query.getResultList();
+
+        return new PageList<Repo>(results, results.size(), PageControl.getUnlimitedInstance());
     }
 }

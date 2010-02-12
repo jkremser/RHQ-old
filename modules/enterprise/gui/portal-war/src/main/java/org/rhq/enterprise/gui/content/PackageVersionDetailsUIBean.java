@@ -21,11 +21,16 @@ package org.rhq.enterprise.gui.content;
 import java.io.ByteArrayOutputStream;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.content.Package;
+import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.composite.PackageVersionComposite;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.content.ContentUIManagerLocal;
+import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class PackageVersionDetailsUIBean {
@@ -36,13 +41,27 @@ public class PackageVersionDetailsUIBean {
         return this.packageVersionComposite;
     }
 
+    public String getPackageDownloadUrl() {
+        return "";
+    }
+
     public String getPackageBits() {
         Integer id = FacesContextUtility.getRequiredRequestParameter("id", Integer.class);
         PackageVersion pv = LookupUtil.getContentUIManager().getPackageVersion(id);
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        LookupUtil.getContentSourceManager().outputPackageVersionBits(pv, bos);
-        byte[] bits = bos.toByteArray();
-        return new String(bits);
+        Package p = pv.getGeneralPackage();
+        if (p.getPackageType().getName().equals(PackageType.TYPE_NAME_CFG)) {
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            LookupUtil.getContentSourceManager().outputPackageVersionBits(pv, bos);
+            return new String(bos.toByteArray());
+        } else {
+            RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
+            Subject subject = EnterpriseFacesContextUtility.getSubject();
+            PageList<Repo> repos = repoManager.findReposByPackageVersionId(subject, pv.getId());
+            String repoName = repos.get(0).getName();
+            String packageName = pv.getFileName();
+            String path = "content/" + repoName + "/packages/" + packageName;
+            return path;
+        }
     }
 
     private void loadPackageVersionComposite() {
