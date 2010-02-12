@@ -36,6 +36,7 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.composite.IntegerOptionItem;
 import org.rhq.core.domain.content.Advisory;
+import org.rhq.core.domain.content.AdvisoryCVE;
 import org.rhq.core.domain.content.ContentRequestStatus;
 import org.rhq.core.domain.content.ContentServiceRequest;
 import org.rhq.core.domain.content.InstalledPackage;
@@ -366,6 +367,11 @@ public class ContentUIManagerBean implements ContentUIManagerLocal {
         Query q = entityManager.createNamedQuery(Advisory.QUERY_FIND_COMPOSITE_BY_ID);
         q.setParameter("id", advisoryId);
         AdvisoryDetailsComposite results = (AdvisoryDetailsComposite) q.getSingleResult();
+
+        Query qCVE = entityManager.createNamedQuery(AdvisoryCVE.FIND_CVE_BY_ADV_ID);
+        qCVE.setParameter("advId", advisoryId);
+        List<AdvisoryCVE> cves = qCVE.getResultList();
+        results.setAdvisoryCVEs(cves);
 
         return results;
     }

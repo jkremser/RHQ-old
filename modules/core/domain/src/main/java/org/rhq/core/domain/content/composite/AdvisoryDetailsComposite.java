@@ -56,6 +56,7 @@ public class AdvisoryDetailsComposite implements Serializable {
     private final Date issueDate;
     private final List<PackageVersion> pkgs;
     private String bugid;
+    private List<AdvisoryCVE> advisoryCVEs;
 
     public AdvisoryDetailsComposite(Advisory advisory, String advisoryName, String advisoryType, String topic,
         String synopsis, String description, String solution, String severity, Long updateDate, Long issueDate) {
@@ -138,6 +139,22 @@ public class AdvisoryDetailsComposite implements Serializable {
 
     public Date getIssueDate() {
         return issueDate;
+    }
+
+    public void setAdvisoryCVEs(List<AdvisoryCVE> cves) {
+        this.advisoryCVEs = cves;
+    }
+
+    public List<AdvisoryCVE> getAdvisoryCVEs() {
+        return this.advisoryCVEs;
+    }
+
+    public String getCve() {
+        List<String> cves = new ArrayList<String>();
+        for (AdvisoryCVE acve : advisoryCVEs) {
+            cves.add(acve.getCVE().getName());
+        }
+        return StringUtils.getListAsString(cves, " ");
     }
 
 }
