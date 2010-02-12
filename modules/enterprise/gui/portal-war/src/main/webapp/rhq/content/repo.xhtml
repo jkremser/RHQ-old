@@ -51,7 +51,8 @@
         <table>
           <tr>
             <td align="right"><b>Name:</b></td>
-            <td align="left"><h:inputText
+            <td align="left">
+             <h:inputText
               rendered="${mode eq 'edit'}"
               value="#{RepoDetailsUIBean.repo.name}" /> <h:outputText
               rendered="${mode ne 'edit'}"
@@ -103,92 +104,94 @@
           </tr>
 		
 		  <!-- ******* START AJAX REFRESH/POLLING BLOCK ****** -->
-          <tr>
-            <td align="right"><b>Synchronization Step:</b></td>
-            <td align="left"><c:choose>
-              <c:when
-                test="#{RepoDetailsUIBean.percentComplete != '100'}">
-                  <h:outputText id="syncStatus"
-                    value="#{RepoDetailsUIBean.syncStatus}" />
-              </c:when>
-              <c:otherwise>
-                <h:outputText id="syncStatus"
-                  value="#{RepoDetailsUIBean.syncStatus}" />
-              </c:otherwise>
-            </c:choose></td>
-          </tr>
-          <tr>
-            <td align="right"><b>Raw Percentage :</b></td>
-            <td align="left">
-                  <h:outputText id="syncPercent"
-                    value="#{RepoDetailsUIBean.percentComplete}" />
-			</td>
-          </tr>
-          <tr>
-            <td align="right"><b>Step Progress:</b></td>
-            <td align="left">
-              <c:choose>
-                <c:when
-                  test="#{RepoDetailsUIBean.currentlySyncing}">
-                  <!--  Warning:  Without that reRender attribute on the below tag you will not get refreshing
-                        fields and will generate a javascript error: Error: this._form is null if you are using
-                        Richfaces  3_3_2.SR1.  Also, you MUST put syncProgress as the first field to be re rendered
-                        in the list, otherwise you will see the above null error -->
-	              <rich:progressBar id="syncProgress"
-	                value="#{RepoDetailsUIBean.percentComplete}"
-	                label="#{RepoDetailsUIBean.percentComplete} %"
-	                interval="4000" minValue="-1" maxValue="99" reRender="syncProgress,syncPercent,syncStatus">
-	                <f:facet name="complete">
-	                  <h:outputText value="Synchronizing Complete" />
-	                </f:facet>
-	              </rich:progressBar>
-	            </c:when>
-	            <c:otherwise>
-	            	Not Synching
-	            </c:otherwise>
-	          </c:choose>
-            </td>
-          </tr>
-          <!-- ******* END AJAX REFRESH/POLLING BLOCK ****** -->
-          <tr>
-            <td align="right"><b>Synchronization Results:</b></td>
-            <td align="left"><h:outputLink
-              rendered="#{RepoDetailsUIBean.syncResults.results ne null}"
-              value="#" id="resultsLink">
-              <h:outputText value="Click here to view..." />
-              <rich:componentControl for="resultsModalPanel"
-                attachTo="resultsLink" operation="show" event="onclick" />
-            </h:outputLink> <h:outputText rendered="#{syncitem.results eq null}"
-              value="" /> <rich:modalPanel id="resultsModalPanel"
-              width="640" height="300" style="overflow: auto;">
-              <f:facet name="header">
-                <h:panelGroup>
-                  <h:outputText value="Results" />
-                </h:panelGroup>
-              </f:facet>
-              <f:facet name="controls">
-                <h:panelGroup>
-                  <h:graphicImage value="/images/close.png"
-                    style="cursor:pointer"
-                    id="resultsModelPanelHideLink" />
+          <c:if test="#{!RepoDetailsUIBean.repo.candidate}">
+              <tr>
+                <td align="right"><b>Synchronization Step:</b></td>
+                <td align="left"><c:choose>
+                  <c:when
+                    test="#{RepoDetailsUIBean.percentComplete != '100'}">
+                      <h:outputText id="syncStatus"
+                        value="#{RepoDetailsUIBean.syncStatus}" />
+                  </c:when>
+                  <c:otherwise>
+                    <h:outputText id="syncStatus"
+                      value="#{RepoDetailsUIBean.syncStatus}" />
+                  </c:otherwise>
+                </c:choose></td>
+              </tr>
+              <tr>
+                <td align="right"><b>Raw Percentage :</b></td>
+                <td align="left">
+                      <h:outputText id="syncPercent"
+                        value="#{RepoDetailsUIBean.percentComplete}" />
+    			</td>
+              </tr>
+              <tr>
+                <td align="right"><b>Step Progress:</b></td>
+                <td align="left">
+                  <c:choose>
+                    <c:when
+                      test="#{RepoDetailsUIBean.currentlySyncing}">
+                      <!--  Warning:  Without that reRender attribute on the below tag you will not get refreshing
+                            fields and will generate a javascript error: Error: this._form is null if you are using
+                            Richfaces  3_3_2.SR1.  Also, you MUST put syncProgress as the first field to be re rendered
+                            in the list, otherwise you will see the above null error -->
+    	              <rich:progressBar id="syncProgress"
+    	                value="#{RepoDetailsUIBean.percentComplete}"
+    	                label="#{RepoDetailsUIBean.percentComplete} %"
+    	                interval="4000" minValue="-1" maxValue="99" reRender="syncProgress,syncPercent,syncStatus">
+    	                <f:facet name="complete">
+    	                  <h:outputText value="Synchronizing Complete" />
+    	                </f:facet>
+    	              </rich:progressBar>
+    	            </c:when>
+    	            <c:otherwise>
+    	            	Not Synching
+    	            </c:otherwise>
+    	          </c:choose>
+                </td>
+              </tr>
+              <!-- ******* END AJAX REFRESH/POLLING BLOCK ****** -->
+              <tr>
+                <td align="right"><b>Synchronization Results:</b></td>
+                <td align="left"><h:outputLink
+                  rendered="#{RepoDetailsUIBean.syncResults.results ne null}"
+                  value="#" id="resultsLink">
+                  <h:outputText value="Click here to view..." />
                   <rich:componentControl for="resultsModalPanel"
-                    attachTo="resultsModelPanelHideLink"
-                    operation="hide" event="onclick" />
-                </h:panelGroup>
-              </f:facet>
-                  <PRE><h:outputText value="#{RepoDetailsUIBean.syncResults.results}" /></PRE>
-            </rich:modalPanel></td>
-          </tr>
+                    attachTo="resultsLink" operation="show" event="onclick" />
+                </h:outputLink> <h:outputText rendered="#{syncitem.results eq null}"
+                  value="" /> <rich:modalPanel id="resultsModalPanel"
+                  width="640" height="300" style="overflow: auto;">
+                  <f:facet name="header">
+                    <h:panelGroup>
+                      <h:outputText value="Results" />
+                    </h:panelGroup>
+                  </f:facet>
+                  <f:facet name="controls">
+                    <h:panelGroup>
+                      <h:graphicImage value="/images/close.png"
+                        style="cursor:pointer"
+                        id="resultsModelPanelHideLink" />
+                      <rich:componentControl for="resultsModalPanel"
+                        attachTo="resultsModelPanelHideLink"
+                        operation="hide" event="onclick" />
+                    </h:panelGroup>
+                  </f:facet>
+                      <PRE><h:outputText value="#{RepoDetailsUIBean.syncResults.results}" /></PRE>
+                </rich:modalPanel></td>
+              </tr>
+          </c:if>
           
         </table>
       </rich:panel>
 
       <h:panelGrid columns="3" styleClass="buttons-table"
         columnClasses="button-cell">
-        <h:commandButton rendered="${mode ne 'edit'}" value="EDIT"
+        <h:commandButton  rendered="#{!RepoDetailsUIBean.repo.candidate and mode ne 'edit'}" value="EDIT"
           action="#{RepoDetailsUIBean.edit}" alt="Edit"
           styleClass="buttonmed" id="editButton" />
-        <h:commandButton rendered="${mode ne 'edit'}"
+        <h:commandButton rendered="#{!RepoDetailsUIBean.repo.candidate and mode ne 'edit'}"
           value="SYNCHRONIZE" action="#{RepoDetailsUIBean.sync}"
           alt="Synchronize" styleClass="buttonmed" id="syncButton" />
         <h:commandButton rendered="#{RepoDetailsUIBean.currentlySyncing}"
