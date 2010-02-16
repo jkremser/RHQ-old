@@ -22,8 +22,14 @@ import java.util.List;
 
 import javax.ejb.Local;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.bundle.Bundle;
+import org.rhq.core.domain.bundle.BundleDeployDefinition;
+import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleType;
+import org.rhq.core.domain.criteria.BundleDeployDefinitionCriteria;
+import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
+import org.rhq.core.domain.util.PageList;
 
 /**
  * Local interface to the manager responsible for creating and managing bundles.
@@ -36,6 +42,15 @@ public interface BundleManagerLocal {
 
     Bundle createBundle(Bundle b);
 
-    List<BundleType> getAllBundleTypes();
+    PageList<BundleDeployDefinition> findBundleDeployDefinitionsByCriteria(BundleDeployDefinitionCriteria criteria);
 
+    PageList<BundleDeployment> findBundleDeploymentsByCriteria(BundleDeploymentCriteria criteria);
+
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    //
+    // The following are shared with the Remote Interface
+    //
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    List<BundleType> getAllBundleTypes(Subject subject);
 }

@@ -28,8 +28,14 @@ import javax.persistence.Query;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.bundle.Bundle;
+import org.rhq.core.domain.bundle.BundleDeployDefinition;
+import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleType;
+import org.rhq.core.domain.criteria.BundleDeployDefinitionCriteria;
+import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.RHQConstants;
 
 /**
@@ -38,7 +44,7 @@ import org.rhq.enterprise.server.RHQConstants;
  * @author John Mazzitelli
  */
 @Stateless
-public class BundleManagerBean implements BundleManagerLocal {
+public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemote {
     private final Log log = LogFactory.getLog(this.getClass());
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
@@ -55,11 +61,22 @@ public class BundleManagerBean implements BundleManagerLocal {
     }
 
     @SuppressWarnings("unchecked")
-    public List<BundleType> getAllBundleTypes() {
+    public List<BundleType> getAllBundleTypes(Subject subject) {
         // the list of types will be small, no need to support paging
         Query q = entityManager.createNamedQuery(BundleType.QUERY_FIND_ALL);
         List<BundleType> types = q.getResultList();
         return types;
+    }
+
+    public PageList<BundleDeployDefinition> findBundleDeployDefinitionsByCriteria(
+        BundleDeployDefinitionCriteria criteria) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public PageList<BundleDeployment> findBundleDeploymentsByCriteria(BundleDeploymentCriteria criteria) {
+        // TODO Auto-generated method stub
+        return null;
     }
 
 }

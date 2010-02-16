@@ -950,8 +950,8 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
      * The extended data in the composite object, however, is treated differently:
      * 
      *   1) It is always fetched
-     *   2) It can not a candidate for filtering
-     *   3) It must be sorted by using the zero-based positional ordinal within the project
+     *   2) It can not be a candidate for filtering
+     *   3) It must be sorted by using the zero-based positional ordinal within the projection
      *   
      * This method offers 4 new aggregates that you can sort on.  The 
      * 
@@ -967,10 +967,10 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
         String replacementSelectList = ""
             + " new org.rhq.core.domain.resource.group.composite.ResourceGroupComposite( "
-            + "   ( SELECT COUNT(avail) FROM rg.explicitResources res JOIN res.currentAvailability avail) AS explicitCount,"
-            + "   ( SELECT AVG(avail.availabilityType) FROM rg.explicitResources res JOIN res.currentAvailability avail) AS explicitAvail,"
-            + "   ( SELECT COUNT(avail) FROM rg.implicitResources res JOIN res.currentAvailability avail) AS implicitCount,"
-            + "   ( SELECT AVG(avail.availabilityType) FROM rg.implicitResources res JOIN res.currentAvailability avail) AS implicitAvail,"
+            + "   ( SELECT COUNT(avail) FROM rg.explicitResources res JOIN res.currentAvailability avail ) AS explicitCount,"
+            + "   ( SELECT AVG(avail.availabilityType) FROM rg.explicitResources res JOIN res.currentAvailability avail ) AS explicitAvail,"
+            + "   ( SELECT COUNT(avail) FROM rg.implicitResources res JOIN res.currentAvailability avail ) AS implicitCount,"
+            + "   ( SELECT AVG(avail.availabilityType) FROM rg.implicitResources res JOIN res.currentAvailability avail ) AS implicitAvail,"
             + "   rg ) ";
         generator.alterProjection(replacementSelectList);
 
@@ -1305,7 +1305,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
                 ((Number) data[3]).doubleValue(), //
                 group, facets);
         } else {
-            composite = new ResourceGroupComposite(0, 0, 0, 0, group, facets);
+            composite = new ResourceGroupComposite(0L, 0.0, 0L, 0.0, group, facets);
         }
         group.getModifiedBy().getFirstName();
 

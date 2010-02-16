@@ -3019,36 +3019,41 @@
               <schema-alterColumn table="RHQ_PACKAGE_VERSION" column="RELEASE" nullable="TRUE" />
 	      <schema-addColumn table="RHQ_PACKAGE_VERSION" column="EPOCH" columnType="VARCHAR2" precision="255"/>
 	      <schema-alterColumn table="RHQ_PACKAGE_VERSION" column="EPOCH" nullable="TRUE" />
-            </schemaSpec>
-            <schemaSpec version="2.79">
-                <!-- Make Filemd5 longer to avoid errors on F11 onwards -->
-                <schema-alterColumn table="RHQ_PACKAGE_VERSION" column="FILE_MD5" columnType="VARCHAR2" precision="255" />
-            </schemaSpec>
-            <schemaSpec version="2.79.1">
-                <schema-directSQL>
-                    <statement desc="Deleting index RHQ_PACKAGE_VERSION_IDX">
-                        DROP INDEX RHQ_PACKAGE_VERSION_IDX
-                    </statement>
-                </schema-directSQL>
-                <schema-directSQL>
-                    <statement desc="Creating index on RHQ_PACKAGE_VERSION_IDX after including release and epoch">
-                        CREATE UNIQUE INDEX RHQ_PACKAGE_VERSION_IDX ON RHQ_PACKAGE_VERSION (PACKAGE_ID, VERSION, RELEASE, EPOCH, ARCHITECTURE_ID)
-                    </statement>
-                </schema-directSQL>
-            </schemaSpec>
-            <schemaSpec version="2.80">
-                <schema-addColumn table="RHQ_REPO" column="VISIBILITY" columnType="VARCHAR2" precision="12"/>
-                <schema-directSQL>
-                    <statement desc="Updating existing repos to public visibility">
-                        UPDATE RHQ_REPO SET VISIBILITY = 'PUBLIC'
-                    </statement>
-                </schema-directSQL>
-                <schema-alterColumn table="RHQ_REPO" column="VISIBILITY" nullable="FALSE" />
-            </schemaSpec>
-            <schemaSpec version="2.81">
-                <!-- Filemd5 need not be longer after fixing code as we can use SHA256 attribute instead -->
-                <schema-alterColumn table="RHQ_PACKAGE_VERSION" column="FILE_MD5" columnType="VARCHAR2" precision="32" />
-            </schemaSpec>
+        </schemaSpec>
+
+        <schemaSpec version="2.79">
+            <!-- Make Filemd5 longer to avoid errors on F11 onwards -->
+            <schema-alterColumn table="RHQ_PACKAGE_VERSION" column="FILE_MD5" columnType="VARCHAR2" precision="255" />
+        </schemaSpec>
+
+        <schemaSpec version="2.79.1">
+            <schema-directSQL>
+                <statement desc="Deleting index RHQ_PACKAGE_VERSION_IDX">
+                    DROP INDEX RHQ_PACKAGE_VERSION_IDX
+                </statement>
+            </schema-directSQL>
+            <schema-directSQL>
+                <statement desc="Creating index on RHQ_PACKAGE_VERSION_IDX after including release and epoch">
+                    CREATE UNIQUE INDEX RHQ_PACKAGE_VERSION_IDX ON RHQ_PACKAGE_VERSION (PACKAGE_ID, VERSION, RELEASE, EPOCH, ARCHITECTURE_ID)
+                </statement>
+            </schema-directSQL>
+        </schemaSpec>
+
+        <schemaSpec version="2.80">
+            <schema-addColumn table="RHQ_REPO" column="VISIBILITY" columnType="VARCHAR2" precision="12"/>
+            <schema-directSQL>
+                <statement desc="Updating existing repos to public visibility">
+                    UPDATE RHQ_REPO SET VISIBILITY = 'PUBLIC'
+                </statement>
+            </schema-directSQL>
+            <schema-alterColumn table="RHQ_REPO" column="VISIBILITY" nullable="FALSE" />
+        </schemaSpec>
+
+        <schemaSpec version="2.81">
+            <!-- Filemd5 need not be longer after fixing code as we can use SHA256 attribute instead -->
+            <schema-alterColumn table="RHQ_PACKAGE_VERSION" column="FILE_MD5" columnType="VARCHAR2" precision="32" />
+        </schemaSpec>
+
         </dbupgrade>
     </target>
 </project>
