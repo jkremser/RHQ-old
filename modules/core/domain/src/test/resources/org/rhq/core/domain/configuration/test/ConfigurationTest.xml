@@ -1,0 +1,9 @@
+<dataset>
+    <rhq_resource_type/>
+    <rhq_config/>
+    <rhq_config_property/>
+    <rhq_raw_config/>
+    <rhq_resource/>
+    <rhq_availability/>
+    <rhq_config_update/>
+</dataset>

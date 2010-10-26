@@ -1,0 +1,22 @@
+<dataset>
+    <rhq_resource_type/>
+    <rhq_operation_def/>
+    <rhq_measurement_def/>
+    <rhq_package_type/>
+    <rhq_resource/>
+    <rhq_resource_group/>
+    <rhq_resource_group_res_exp_map/>
+    <rhq_availability/>
+    <rhq_resource_error/>
+    <rhq_alert_definition/>
+    <rhq_measurement_sched/>
+    <rhq_operation_history/>
+    <rhq_package/>
+    <rhq_package_version/>
+    <rhq_repo/>
+    <rhq_bundle_type/>
+    <rhq_bundle/>
+    <rhq_bundle_version/>
+    <rhq_bundle_version_repo/>
+    <rhq_config_update/>
+</dataset>

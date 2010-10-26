@@ -1,0 +1,13 @@
+<dataset>
+    <rhq_resource_type/>
+    <rhq_operation_def/>
+    <rhq_measurement_def/>
+    <rhq_resource/>
+    <rhq_alert_definition/>
+    <rhq_alert/>
+    <rhq_availability/>
+    <rhq_measurement_sched/>
+    <rhq_resource_group/>
+    <rhq_resource_group_res_exp_map/>
+    <rhq_operation_history/>
+</dataset>

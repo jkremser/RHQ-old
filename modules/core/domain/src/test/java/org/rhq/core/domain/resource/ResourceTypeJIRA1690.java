@@ -20,27 +20,39 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
+package org.rhq.core.domain.resource;
 
-package org.rhq.core.domain.search;
-
-import javax.persistence.EntityManager;
+import javax.persistence.Query;
 
 import org.testng.annotations.Test;
 
-import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.test.AbstractEJB3Test;
 import org.rhq.core.domain.test.JPATest;
 
-public class SavedSearchTest extends JPATest {
-
+/**
+ * Tests the query of JBNADM-1690
+ *
+ * @author Heiko W. Rupp
+ */
+public class ResourceTypeJIRA1690 extends JPATest {
     @Test
-    public void testInsert() throws Exception {
-        Subject subject = new Subject("searcher", true, true);
-        entityMgr.persist(subject);
-
-        SavedSearch search = new SavedSearch(SearchSubsystem.RESOURCE, "test search", "test pattern", subject);
-        search.setGlobal(true);
-        entityMgr.persist(search);
-        entityMgr.flush();
+    public void testSimple() throws Exception {
+        Query q = entityMgr.createNamedQuery(ResourceType.QUERY_FIND_CHILDREN_BY_CATEGORY);
+        q.setParameter(1, 50);
+        q.setParameter(2, "categoryName");
+        q.setParameter(3, 50);
+        q.setParameter(4, "categoryName");
+        q.getResultList();
     }
 
+    @Test
+    public void testWithAdmin() throws Exception {
+        Query q = entityMgr.createNamedQuery(ResourceType.QUERY_FIND_CHILDREN_BY_CATEGORY_admin);
+        q.setParameter(1, 50);
+        q.setParameter(2, "categoryName");
+        q.setParameter(3, 50);
+        q.setParameter(4, "categoryName");
+        q.getResultList();
+    }
 }

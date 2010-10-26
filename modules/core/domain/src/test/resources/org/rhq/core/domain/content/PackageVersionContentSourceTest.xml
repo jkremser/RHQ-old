@@ -1,0 +1,15 @@
+<dataset>
+    <rhq_resource_type/>
+    <rhq_architecture/>
+    <rhq_package_type/>
+    <rhq_resource/>
+    <rhq_package/>
+    <rhq_package_version/>
+    <rhq_repo/>
+    <rhq_repo_pkg_version_map/>
+    <rhq_package_bits/>
+    <rhq_content_source_type/>
+    <rhq_content_source/>
+    <rhq_repo_resource_map/>
+    <rhq_repo_content_src_map/>
+</dataset>

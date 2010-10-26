@@ -1,0 +1,15 @@
+<dataset>
+    <rhq_resource_type/>
+    <rhq_package_type/>
+    <rhq_config/>
+    <rhq_raw_config/>
+    <rhq_resource/>
+    <rhq_resource_error/>
+    <rhq_package/>
+    <rhq_package_version/>
+    <rhq_bundle_type/>
+    <rhq_bundle/>
+    <rhq_bundle_version/>
+    <rhq_bundle_version_repo/>
+    <rhq_config_update/>
+</dataset>

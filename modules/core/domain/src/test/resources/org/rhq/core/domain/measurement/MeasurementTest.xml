@@ -1,0 +1,11 @@
+<dataset>
+    <rhq_resource_type/>
+    <rhq_package_type/>
+    <rhq_package/>
+    <rhq_package_version/>
+    <rhq_resource/>
+    <rhq_availability/>
+    <rhq_measurement_def/>
+    <rhq_measurement_sched/>
+    <rhq_measurement_bline/>
+</dataset>

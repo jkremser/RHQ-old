@@ -44,7 +44,7 @@ import org.jboss.ejb3.embedded.EJB3StandaloneDeployer;
 
 public abstract class AbstractEJB3Test extends AssertJUnit {
 //    @BeforeSuite(groups = "integration.ejb3")
-    @BeforeGroups(groups = "integration.ejb3")
+//    @BeforeGroups(groups = "integration.ejb3")
     public static void startupEmbeddedJboss() {
         System.out.println("Starting ejb3...");
         String classesDir = System.getProperty("ejbjarDirectory", "target/classes");
@@ -85,7 +85,7 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
     }
 
 //    @AfterSuite
-    @AfterGroups(groups = "integration.ejb3")
+//    @AfterGroups(groups = "integration.ejb3")
     public static void shutdownEmbeddedJboss() {
         EJB3StandaloneBootstrap.shutdown();
     }

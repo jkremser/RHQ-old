@@ -27,48 +27,42 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.test.AbstractEJB3Test;
+import org.rhq.core.domain.test.JPATest;
+
 import org.testng.annotations.Test;
 
 import javax.persistence.EntityManager;
 
-public class ResourceConfigurationUpdateIntegrationTest extends AbstractEJB3Test {
+public class ResourceConfigurationUpdateIntegrationTest extends JPATest {
 
-    @Test(groups = "integration.ejb3")
+    @Test
     public void testUpdate() throws Exception {
-        try {
-            getTransactionManager().begin();
-            EntityManager entityMgr = getEntityManager();
+        ResourceType resourceType = new ResourceType("Test Resource Type", "Test Plugin", ResourceCategory.PLATFORM,
+            null);
+        entityMgr.persist(resourceType);
+        entityMgr.flush();
 
-            ResourceType resourceType = new ResourceType("Test Resource Type", "Test Plugin", ResourceCategory.PLATFORM,
-                null);
-            entityMgr.persist(resourceType);
-            entityMgr.flush();
+        Resource resource = new Resource("test-resource", "Test Resource", resourceType);
+        resource.setUuid("123456789");
+        entityMgr.persist(resource);
+        entityMgr.flush();
 
-            Resource resource = new Resource("test-resource", "Test Resource", resourceType);
-            resource.setUuid("123456789");
-            entityMgr.persist(resource);
-            entityMgr.flush();
+        Configuration configuration = new Configuration();
 
-            Configuration configuration = new Configuration();
+        PropertyList listProperty = new PropertyList("listProperty");
+        listProperty.add(new PropertySimple("x", 1));
+        listProperty.add(new PropertySimple("x", 2));
 
-            PropertyList listProperty = new PropertyList("listProperty");
-            listProperty.add(new PropertySimple("x", 1));
-            listProperty.add(new PropertySimple("x", 2));
+        configuration.put(listProperty);
 
-            configuration.put(listProperty);
+        ResourceConfigurationUpdate configUpdate = new ResourceConfigurationUpdate(resource, configuration,
+            "tester");
+        entityMgr.persist(configUpdate);
+        entityMgr.flush();
 
-            ResourceConfigurationUpdate configUpdate = new ResourceConfigurationUpdate(resource, configuration,
-                "tester");
-            entityMgr.persist(configUpdate);
-            entityMgr.flush();
+        entityMgr.clear();
 
-            entityMgr.clear();
-
-            configUpdate = entityMgr.find(ResourceConfigurationUpdate.class, configUpdate.getId());
-            entityMgr.flush();
-        } finally {
-            getTransactionManager().rollback();
-        }
+        configUpdate = entityMgr.find(ResourceConfigurationUpdate.class, configUpdate.getId());
     }
 
 }

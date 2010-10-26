@@ -54,20 +54,20 @@ import org.rhq.core.util.exception.ThrowableUtil;
  * Use this to explicitly test any of our named queries with any set of parameters. Useful to make sure these run on
  * both postgres and oracle, specifically those that try to do select distinct queries while retrieve LOB columns.
  */
-@Test(groups = "integration.ejb3")
-public class QueriesTest extends AbstractEJB3Test {
+@Test
+public class QueriesTest extends JPATest {
     private Map<String, Map<String, Object>> queries; // here just so we dont have to pass it to the add()
 
-    @AfterMethod
-    public void afterMethod() throws Exception {
-        try {
-            TransactionManager tx = getTransactionManager();
-            if (tx != null) {
-                tx.rollback();
-            }
-        } catch (Exception who_cares) {
-        }
-    }
+//    @AfterMethod
+//    public void afterMethod() throws Exception {
+//        try {
+//            TransactionManager tx = getTransactionManager();
+//            if (tx != null) {
+//                tx.rollback();
+//            }
+//        } catch (Exception who_cares) {
+//        }
+//    }
 
     public void testQueries() throws Exception {
         queries = new HashMap<String, Map<String, Object>>();
@@ -103,8 +103,6 @@ public class QueriesTest extends AbstractEJB3Test {
         Map<String, Throwable> errors = new TreeMap<String, Throwable>(); // tree map so I sort output by query name
 
         for (Map.Entry<String, Map<String, Object>> entry : queries.entrySet()) {
-            getTransactionManager().begin();
-
             Query q = getEntityManager().createNamedQuery(entry.getKey());
             for (Map.Entry<String, Object> param : entry.getValue().entrySet()) {
                 q.setParameter(param.getKey(), param.getValue());
@@ -114,8 +112,6 @@ public class QueriesTest extends AbstractEJB3Test {
                 assert null != q.getResultList();
             } catch (Throwable t) {
                 errors.put(entry.getKey(), t);
-            } finally {
-                getTransactionManager().rollback();
             }
         }
 
@@ -147,11 +143,7 @@ public class QueriesTest extends AbstractEJB3Test {
     }
 
     public void testAsyncUninventory() throws Exception {
-        TransactionManager tx = getTransactionManager();
-        tx.begin();
-
-        EntityManager entityManager = getEntityManager();
-        Query q = entityManager.createNamedQuery(Resource.QUERY_MARK_RESOURCES_FOR_ASYNC_DELETION_QUICK);
+        Query q = entityMgr.createNamedQuery(Resource.QUERY_MARK_RESOURCES_FOR_ASYNC_DELETION_QUICK);
         List<Integer> ids = new ArrayList<Integer>();
         ids.add(1);
         q.setParameter("resourceIds", ids);
@@ -160,19 +152,14 @@ public class QueriesTest extends AbstractEJB3Test {
     }
 
     public void testLongVarChar() throws Exception {
-        TransactionManager tx = getTransactionManager();
-        tx.begin();
-
-        EntityManager entityManager = getEntityManager();
-
         // I just want to see this tested even though I haven't seen this fail on oracle or postgres ever
         ContentSourceType cst = new ContentSourceType("testLongVarCharCST");
-        entityManager.persist(cst);
+        entityMgr.persist(cst);
         ContentSource cs = new ContentSource("testLongVarCharCS", cst);
         cs.setLoadErrorMessage("longvarchar column here");
-        entityManager.persist(cs);
+        entityMgr.persist(cs);
 
-        Query q = entityManager.createNamedQuery(ContentSource.QUERY_FIND_BY_ID_WITH_CONFIG);
+        Query q = entityMgr.createNamedQuery(ContentSource.QUERY_FIND_BY_ID_WITH_CONFIG);
         ContentSource result = (ContentSource) q.setParameter("id", cs.getId()).getSingleResult();
         assert result != null;
         assert "longvarchar column here".equals(result.getLoadErrorMessage());

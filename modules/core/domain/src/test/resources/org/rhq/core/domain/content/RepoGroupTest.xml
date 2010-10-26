@@ -1,0 +1,11 @@
+<dataset>
+    <rhq_resource_type/>
+    <rhq_architecture/>
+    <rhq_package_type/>
+    <rhq_package/>
+    <rhq_package_version/>
+    <rhq_resource/>
+    <rhq_content_source_type/>
+    <rhq_content_source/>
+    <rhq_content_src_sync/>
+</dataset>

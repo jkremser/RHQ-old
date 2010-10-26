@@ -20,27 +20,28 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-
-package org.rhq.core.domain.search;
+package org.rhq.core.domain.content;
 
 import javax.persistence.EntityManager;
 
 import org.testng.annotations.Test;
 
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.test.JPATest;
 
-public class SavedSearchTest extends JPATest {
-
-    @Test
+@Test
+public class RepoTest extends JPATest {
     public void testInsert() throws Exception {
-        Subject subject = new Subject("searcher", true, true);
-        entityMgr.persist(subject);
+        EntityManager entityMgr = getEntityManager();
+        Repo repo = new Repo("testRepoTest");
+        repo.setSyncSchedule("0 0 5 * * ?");
+        entityMgr.persist(repo);
 
-        SavedSearch search = new SavedSearch(SearchSubsystem.RESOURCE, "test search", "test pattern", subject);
-        search.setGlobal(true);
-        entityMgr.persist(search);
         entityMgr.flush();
+        entityMgr.clear();
+
+        Repo lookedUp = entityMgr.find(Repo.class, repo.getId());
+        assert lookedUp != null;
+        assert lookedUp.getSyncSchedule().equals("0 0 5 * * ?");
     }
 
 }

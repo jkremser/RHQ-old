@@ -28,33 +28,29 @@ import javax.persistence.EntityManager;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.test.AbstractEJB3Test;
+import org.rhq.core.domain.test.JPATest;
 import org.rhq.core.util.MessageDigestGenerator;
 
-public class RawConfigurationIntegrationTest extends AbstractEJB3Test {
+import static org.testng.Assert.assertNotNull;
 
-    @Test(groups = "integration.ejb3")
+public class RawConfigurationIntegrationTest extends JPATest {
+
+    @Test
     public void veryPersistAndFindById() throws Exception {
-        getTransactionManager().begin();
-        EntityManager entityMgr = getEntityManager();
+        Configuration config = createAndSaveConfiguration();
 
-        try {
-            Configuration config = createAndSaveConfiguration();
+        RawConfiguration rawConfig = new RawConfiguration();
+        rawConfig.setConfiguration(config);
+        String contents = "contents";
+        String sha256 = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(contents);
+        rawConfig.setContents(contents, sha256);
+        rawConfig.setPath("/tmp/foo.txt");
 
-            RawConfiguration rawConfig = new RawConfiguration();
-            rawConfig.setConfiguration(config);
-            String contents = "contents";
-            String sha256 = new MessageDigestGenerator(MessageDigestGenerator.SHA_256).calcDigestString(contents);
-            rawConfig.setContents(contents, sha256);
-            rawConfig.setPath("/tmp/foo.txt");
+        entityMgr.persist(rawConfig);
 
-            entityMgr.persist(rawConfig);
+        RawConfiguration savedRawConfig = entityMgr.find(RawConfiguration.class, rawConfig.getId());
 
-            RawConfiguration savedRawConfig = entityMgr.find(RawConfiguration.class, rawConfig.getId());
-
-            assertNotNull("Failed to find " + RawConfiguration.class.getSimpleName() + " by id.", savedRawConfig);
-        } finally {
-            getTransactionManager().rollback();
-        }
+        assertNotNull(savedRawConfig, "Failed to find " + RawConfiguration.class.getSimpleName() + " by id.");
     }
 
     Configuration createAndSaveConfiguration() {

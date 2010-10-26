@@ -95,8 +95,10 @@ import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.server.PersistenceUtility;
 import org.rhq.core.util.exception.ThrowableUtil;
 
+import static org.testng.Assert.*;
+
 @SuppressWarnings("unchecked")
-public class QueryAllTest extends AbstractEJB3Test {
+public class QueryAllTest extends JPATest {
     protected SessionFactoryImplementor sessionFactory;
 
     private static final String[] ENTITY_NAMES = {
@@ -162,15 +164,11 @@ public class QueryAllTest extends AbstractEJB3Test {
         // measurement calltime
         CallTimeDataKey.class.getSimpleName(), CallTimeDataValue.class.getSimpleName() };
 
-    @Test(groups = "integration.ejb3")
+    @Test
     public void testQueryAllEntities() throws Exception {
-        TransactionManager tm = getTransactionManager();
-        tm.begin();
-        EntityManager em = getEntityManager();
-        try {
             for (String entityName : ENTITY_NAMES) {
                 System.out.print("Querying " + entityName);
-                Query query = em.createQuery("SELECT e FROM " + entityName + " e");
+                Query query = entityMgr.createQuery("SELECT e FROM " + entityName + " e");
                 query.setMaxResults(100);
                 try {
                     Collection results = query.getResultList();
@@ -182,84 +180,53 @@ public class QueryAllTest extends AbstractEJB3Test {
                         + ThrowableUtil.getAllMessages(t, true);
                 }
             }
-        } finally {
-            tm.rollback();
-        }
     }
 
-    @Test(groups = "integration.ejb3")
+    @Test
     public void testSimpleQueryWithOrderBy() throws Exception {
-        TransactionManager tm = getTransactionManager();
-        tm.begin();
-        EntityManager em = getEntityManager();
-        try {
-            Query q = em.createNamedQuery(SystemConfiguration.QUERY_FIND_ALL);
+            Query q = entityMgr.createNamedQuery(SystemConfiguration.QUERY_FIND_ALL);
             List l = q.getResultList();
             int results = l.size();
 
             for (PageOrdering ord : PageOrdering.values()) {
-                q = PersistenceUtility.createQueryWithOrderBy(em, SystemConfiguration.QUERY_FIND_ALL,
+                q = PersistenceUtility.createQueryWithOrderBy(entityMgr, SystemConfiguration.QUERY_FIND_ALL,
                     new OrderingField("propertyKey", ord));
                 l = q.getResultList();
                 assertEquals(results, l.size());
             }
-        } finally {
-            getTransactionManager().rollback();
-        }
     }
 
-    @Test(groups = "integration.ejb3")
+    @Test
     public void testSimpleQueryWithMultipleOrderByAndCount() throws Exception {
-        TransactionManager tm = getTransactionManager();
-        tm.begin();
-        EntityManager em = getEntityManager();
-        try {
-            Query q = PersistenceUtility.createCountQuery(em, Subject.QUERY_FIND_ALL);
+            Query q = PersistenceUtility.createCountQuery(entityMgr, Subject.QUERY_FIND_ALL);
             long count = (Long) q.getSingleResult();
 
-            q = PersistenceUtility.createQueryWithOrderBy(em, Subject.QUERY_FIND_ALL, new OrderingField("firstName",
+            q = PersistenceUtility.createQueryWithOrderBy(entityMgr, Subject.QUERY_FIND_ALL, new OrderingField("firstName",
                 PageOrdering.ASC), new OrderingField("lastName", PageOrdering.DESC));
             long size = q.getResultList().size();
 
             assert count == size;
-        } finally {
-            getTransactionManager().rollback();
-        }
     }
 
-    @Test(groups = "integration.ejb3")
+    @Test
     public void testAdvQueryWithOrderby() throws Exception {
-        TransactionManager tm = getTransactionManager();
-        tm.begin();
-        EntityManager em = getEntityManager();
-        try {
-            Query q = em.createNamedQuery(SystemConfiguration.QUERY_FIND_ALL);
+            Query q = entityMgr.createNamedQuery(SystemConfiguration.QUERY_FIND_ALL);
             List l = q.getResultList();
             int results = l.size();
 
             for (PageOrdering order : PageOrdering.values()) {
-                q = PersistenceUtility.createQueryWithOrderBy(em, SystemConfiguration.QUERY_FIND_ALL,
+                q = PersistenceUtility.createQueryWithOrderBy(entityMgr, SystemConfiguration.QUERY_FIND_ALL,
                     new OrderingField("propertyKey", order));
                 l = q.getResultList();
                 assertEquals(results, l.size());
             }
-        } finally {
-            tm.rollback();
-        }
     }
 
-    @Test(groups = "integration.ejb3")
+    @Test
     public void testCountQuery() throws Exception {
-        TransactionManager tm = getTransactionManager();
-        tm.begin();
-        EntityManager em = getEntityManager();
-        try {
-            Long count = (Long) PersistenceUtility.createCountQuery(em, SystemConfiguration.QUERY_FIND_ALL)
+            Long count = (Long) PersistenceUtility.createCountQuery(entityMgr, SystemConfiguration.QUERY_FIND_ALL)
                 .getSingleResult();
             System.out.println("Transformed query to get count found: " + count);
-        } finally {
-            tm.rollback();
-        }
     }
 
     /**
@@ -269,8 +236,7 @@ public class QueryAllTest extends AbstractEJB3Test {
      */
     @Test(groups = "integration.ejb3")
     public void testQueryAllSimpleNamedQueries() throws Exception {
-        EntityManager em = getEntityManager();
-        Object o = em.getDelegate();
+        Object o = entityMgr.getDelegate();
         Class del = o.getClass();
         System.out.println("Delegate is " + del.toString());
         Session sess = (Session) o; // Hibernate Session in JBoss
@@ -281,8 +247,6 @@ public class QueryAllTest extends AbstractEJB3Test {
 
         Collection<ClassMetadata> metas = cMeta.values();
 
-        getTransactionManager().begin();
-        try {
             for (ClassMetadata cm : metas) {
                 String entity = cm.getEntityName();
                 String shortName = entity.substring(entity.lastIndexOf(".") + 1);
@@ -323,9 +287,7 @@ public class QueryAllTest extends AbstractEJB3Test {
                         continue;
                     }
 
-                    try {
-                        //System.out.print("  == query " + nq.name());
-                        Query query = em.createNamedQuery(nq.name());
+                        Query query = entityMgr.createNamedQuery(nq.name());
 
                         // TODO set parameters here
                         // fillParameters(query, nq);
@@ -338,17 +300,8 @@ public class QueryAllTest extends AbstractEJB3Test {
                         query.setMaxResults(5);
                         Collection results = query.getResultList();
                         System.out.println("   " + nq.name() + "==> #results: " + results.size());
-                    } catch (Throwable t) {
-                        assert false : "Failed to query named query " + nq.name() + ": "
-                            + ThrowableUtil.getAllMessages(t, true);
-                    }
                 }
             }
-        } catch (NoResultException nre) {
-            System.out.println("  ==> no results found");
-        } finally {
-            getTransactionManager().rollback();
-        }
     }
 
     /**

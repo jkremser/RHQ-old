@@ -1,0 +1,10 @@
+<dataset>
+    <rhq_resource_type/>
+    <rhq_measurement_def/>
+    <rhq_resource/>
+    <rhq_availability/>
+    <rhq_alert_definition/>
+    <rhq_resource_error/>
+    <rhq_config_update/>
+    <rhq_measurement_sched/>
+</dataset>
