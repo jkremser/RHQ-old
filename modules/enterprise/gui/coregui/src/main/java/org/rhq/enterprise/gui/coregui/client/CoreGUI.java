@@ -252,6 +252,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     public void onValueChange(ValueChangeEvent<String> stringValueChangeEvent) {
         currentView = URL.decodeComponent(stringValueChangeEvent.getValue());
         Log.debug("Handling history event for view: " + currentView);
+        SC.say("history!");
 
         currentViewPath = new ViewPath(currentView);
         coreGUI.rootCanvas.renderView(currentViewPath);
@@ -501,4 +502,5 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     public static boolean isDebugMode() {
         return !GWT.isScript();
     }
+
 }

@@ -24,6 +24,8 @@ package org.rhq.enterprise.gui.coregui.client.components.table;
 
 import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.History;
+import com.google.gwt.user.client.ui.Hyperlink;
+import com.google.gwt.user.client.ui.InlineHyperlink;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.AnimationEffect;
@@ -36,6 +38,7 @@ import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
@@ -45,6 +48,8 @@ import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
@@ -130,6 +135,7 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
     @Override
     protected void configureTable() {
         if (isDetailsEnabled()) {
+/*
             ListGrid grid = getListGrid();
 
             // Make the value of some specific field a link to the details view for the corresponding record.
@@ -137,6 +143,7 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
             if (field != null) {
                 field.setCellFormatter(getDetailsLinkColumnCellFormatter());
             }
+*/
 
             setListGridDoubleClickHandler(new DoubleClickHandler() {
                 @Override
@@ -383,6 +390,42 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
             } else {
                 contents.animateShow(AnimationEffect.WIPE);
             }
+        }
+    }
+
+    @Override
+    protected LocatableListGrid createListGrid(String locatorId) {
+        return new TableSectionListGrid(locatorId);
+    }
+
+    class TableSectionListGrid extends LocatableListGrid {
+        public TableSectionListGrid(String locatorId) {
+            super(locatorId);
+
+            if (isDetailsEnabled() && getDetailsLinkColumnName() != null) {
+                setShowRecordComponents(true);
+                setShowRecordComponentsByCell(true);
+            }
+        }
+
+        @Override
+        protected Canvas createRecordComponent(ListGridRecord record, Integer colNum) {
+            Canvas canvas;
+            String fieldName = this.getFieldName(colNum);
+            if (fieldName.equals(getDetailsLinkColumnName())) {
+                canvas = new LocatableHLayout(extendLocatorId(fieldName + getRecordIndex(record)));
+                Integer recordId = getId(record);
+                String detailsViewPath = getBasePath() + "/" + recordId;
+                String recordValue = record.getAttribute(getDetailsLinkColumnName());
+                String formattedValue = (escapeHtmlInDetailsLinkColumn) ? StringUtility.escapeHtml(recordValue.toString())
+                    : recordValue.toString();
+                // TODO: Make the below Hyperlink Locatable.
+                InlineHyperlink hyperlink = new InlineHyperlink(formattedValue, detailsViewPath);
+                canvas.addChild(hyperlink);
+            } else {
+                canvas = null;
+            }
+            return canvas;
         }
     }
 

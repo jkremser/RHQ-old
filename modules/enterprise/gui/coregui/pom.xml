@@ -299,6 +299,7 @@
                         </goals>
                         <configuration>
                             <module>org.rhq.enterprise.gui.coregui.CoreGUI</module>
+                            <!--<bindAddress>0.0.0.0</bindAddress>-->
                         </configuration>    
                     </execution>
                 </executions>

@@ -88,8 +88,6 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
-import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.VERSION;
-
 /**
  * A tabular view of set of data records from an {@link RPCDataSource}.
  *
@@ -239,7 +237,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
             }
         }
 
-        listGrid = new LocatableListGrid(contents.extendLocatorId("ListGrid"));
+        listGrid = createListGrid(contents.extendLocatorId("ListGrid"));
         listGrid.setAutoFetchData(autoFetchData);
 
         if (initialCriteria != null) {
@@ -274,6 +272,10 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         }
 
         contents.addMember(listGrid);
+    }
+
+    protected LocatableListGrid createListGrid(String locatorId) {
+        return new LocatableListGrid(locatorId);
     }
 
     protected SelectionStyle getDefaultSelectionStyle() {
