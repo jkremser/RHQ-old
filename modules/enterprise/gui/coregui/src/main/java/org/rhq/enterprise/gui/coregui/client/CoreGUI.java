@@ -104,7 +104,6 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     private static boolean pendingRefresh = false;
 
     private RootCanvas rootCanvas;
-    private MenuBarView menuBarView;
     private Footer footer;
 
     public void onModuleLoad() {
@@ -210,7 +209,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     public void buildCoreUI() {
         // If the core gui is already built (eg. from previous login) skip the build and just refire event
         if (rootCanvas == null) {
-            menuBarView = new MenuBarView("TopMenu");
+            MenuBarView menuBarView = new MenuBarView("TopMenu");
             menuBarView.setWidth("100%");
             footer = new Footer();
 
@@ -252,8 +251,6 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String> {
     public void onValueChange(ValueChangeEvent<String> stringValueChangeEvent) {
         currentView = URL.decodeComponent(stringValueChangeEvent.getValue());
         Log.debug("Handling history event for view: " + currentView);
-        SC.say("history!");
-
         currentViewPath = new ViewPath(currentView);
         coreGUI.rootCanvas.renderView(currentViewPath);
     }

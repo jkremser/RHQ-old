@@ -419,6 +419,7 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
                 String recordValue = record.getAttribute(getDetailsLinkColumnName());
                 String formattedValue = (escapeHtmlInDetailsLinkColumn) ? StringUtility.escapeHtml(recordValue.toString())
                     : recordValue.toString();
+                formattedValue = "***" + formattedValue + "***";
                 // TODO: Make the below Hyperlink Locatable.
                 InlineHyperlink hyperlink = new InlineHyperlink(formattedValue, detailsViewPath);
                 canvas.addChild(hyperlink);
