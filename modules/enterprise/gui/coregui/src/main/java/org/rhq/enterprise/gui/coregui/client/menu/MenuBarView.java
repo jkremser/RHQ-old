@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,26 +23,34 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.ui.Hyperlink;
 import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.layout.HLayout;
+import com.smartgwt.client.widgets.layout.Layout;
+import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
 import org.rhq.enterprise.gui.coregui.client.bundle.BundleTopView;
 import org.rhq.enterprise.gui.coregui.client.components.AboutModalWindow;
+import org.rhq.enterprise.gui.coregui.client.components.ViewLink;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.dashboard.DashboardsView;
 import org.rhq.enterprise.gui.coregui.client.help.HelpView;
 import org.rhq.enterprise.gui.coregui.client.inventory.InventoryView;
 import org.rhq.enterprise.gui.coregui.client.report.ReportTopView;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHStack;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableLabel;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Greg Hinkle
@@ -80,7 +88,7 @@ public class MenuBarView extends LocatableVLayout {
         markForRedraw();
     }
 
-    // When redrawing, ensire the correct session infor is displayed
+    // When redrawing, ensure the correct session info is displayed
     @Override
     public void markForRedraw() {
         String currentDisplayName = userLabel.getContents();
@@ -92,7 +100,7 @@ public class MenuBarView extends LocatableVLayout {
         super.markForRedraw();
     }
 
-    private Canvas getLogoSection() {
+    private Img getLogoSection() {
         final AboutModalWindow aboutModalWindow = new AboutModalWindow(extendLocatorId("AboutModalWindow"));
         Img logo = new Img("header/rhq_logo_28px.png", 80, 28);
         logo.addClickHandler(new ClickHandler() {
@@ -103,51 +111,10 @@ public class MenuBarView extends LocatableVLayout {
         return logo;
     }
 
-    private Canvas getLinksSection() {
-        final HTMLFlow linksPane = new HTMLFlow();
-        linksPane.setContents(setupLinks());
-
-        History.addValueChangeHandler(new ValueChangeHandler<String>() {
-            public void onValueChange(ValueChangeEvent<String> stringValueChangeEvent) {
-                String first = stringValueChangeEvent.getValue().split("/")[0];
-
-                if ("Resource".equals(first)) {
-                    first = "Inventory";
-                }
-
-                currentlySelectedSection = first;
-                linksPane.setContents(setupLinks());
-                linksPane.markForRedraw();
-            }
-        });
-        return linksPane;
-    }
-
-    private String setupLinks() {
-        // TODO: Replace the below HTML with SmartGWT widgets.
-        StringBuilder headerString = new StringBuilder(
-            "<table style=\"height: 34px;\" cellpadding=\"0\" cellspacing=\"0\"><tr>");
-
-        headerString.append("<td style=\"width: 1px;\"><img src=\"images/header/header_bg_line.png\"/></td>");
-        for (ViewName sectionName : SECTIONS) {
-
-            String styleClass = "TopSectionLink";
-            if (sectionName.getName().equals(currentlySelectedSection)) {
-                styleClass = "TopSectionLinkSelected";
-            }
-
-            // Set explicit identifiers because the generated scLocator is not getting picked up by Selenium.
-            headerString.append("<td style=\"vertical-align:middle\" id=\"").append(sectionName).append("\" class=\"")
-                .append(styleClass).append("\" onclick=\"window.location.href='#").append(sectionName).append("'\" >");
-            headerString.append(sectionName.getTitle());
-            headerString.append("</td>\n");
-
-            headerString.append("<td style=\"width: 1px;\"><img src=\"images/header/header_bg_line.png\"/></td>");
-        }
-
-        headerString.append("</tr></table>");
-
-        return headerString.toString();
+    private LinkBar getLinksSection() {
+        LinkBar linksSection = new LinkBar();
+        History.addValueChangeHandler(linksSection);
+        return linksSection;
     }
 
     private Canvas getActionsSection() {
@@ -171,6 +138,65 @@ public class MenuBarView extends LocatableVLayout {
         layout.addMember(logoutLink);
 
         return layout;
+    }
+
+    class LinkBar extends LocatableHStack implements ValueChangeHandler<String> {
+        private final Map<String, LocatableVLayout> sectionNameToViewLinkMap = new HashMap<String, LocatableVLayout>();
+
+        LinkBar() {
+            super(MenuBarView.this.extendLocatorId("LinkBar"));
+
+            setWidth100();
+            setHeight(34);
+
+            Img divider = new Img("images/header/header_bg_line.png");
+            divider.setWidth(1);
+            addMember(divider);
+
+            for (ViewName sectionName : SECTIONS) {
+                LocatableVLayout viewLinkContainer = new LocatableVLayout(extendLocatorId(sectionName.getName()));
+                viewLinkContainer.setAlign(VerticalAlignment.CENTER);
+                ViewLink viewLink = new ViewLink(extendLocatorId(sectionName.getName()), sectionName.getTitle(),
+                        sectionName.getName());
+                viewLink.setStyleName(null);
+                viewLink.setMouseOutStyleName(null);
+                viewLink.setMouseOverStyleName(null);
+                this.sectionNameToViewLinkMap.put(sectionName.getName(), viewLinkContainer);
+                viewLinkContainer.addMember(viewLink);
+                updateViewLinkStyle(sectionName.getName());
+                addMember(viewLinkContainer);
+
+                divider = new Img("images/header/header_bg_line.png");
+                divider.setWidth(1);
+                addMember(divider);
+            }
+        }
+
+        @Override
+        public void onValueChange(ValueChangeEvent<String> stringValueChangeEvent) {
+            String viewPath = stringValueChangeEvent.getValue();
+            String topViewId = viewPath.split("/")[0];
+            if ("Resource".equals(topViewId)) {
+                topViewId = InventoryView.VIEW_ID.getName();
+            }
+            currentlySelectedSection = topViewId;
+
+            for (String sectionName : this.sectionNameToViewLinkMap.keySet()) {
+                updateViewLinkStyle(sectionName);
+            }
+        }
+
+        private void updateViewLinkStyle(String sectionName) {
+            String styleClass;
+            if (sectionName.equals(currentlySelectedSection)) {
+                styleClass = "TopSectionLinkSelected";
+            } else {
+                styleClass = "TopSectionLink";
+            }
+            LocatableVLayout viewLinkContainer = this.sectionNameToViewLinkMap.get(sectionName);
+            viewLinkContainer.setStyleName(styleClass);
+            viewLinkContainer.markForRedraw();
+        }
     }
 
 }

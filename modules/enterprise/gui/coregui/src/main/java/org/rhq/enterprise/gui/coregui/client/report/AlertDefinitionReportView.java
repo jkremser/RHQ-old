@@ -57,7 +57,8 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
     @Override
     protected void configureTable() {
         ListGrid listGrid = getListGrid();
-        listGrid.setFields(getDataSource().getListGridFields().toArray(new ListGridField[0]));
+        ArrayList<ListGridField> listGridFields = getDataSource().getListGridFields();
+        listGrid.setFields(listGridFields.toArray(new ListGridField[listGridFields.size()]));
 
         setListGridDoubleClickHandler(new DoubleClickHandler() {
             @Override

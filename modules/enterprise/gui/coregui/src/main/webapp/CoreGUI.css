@@ -1,15 +1,10 @@
-/*body {
-    background-color: white;
-    color: black;
-    font-family: Arial, sans-serif;
-    font-size: small;
-    margin: 8px;
-}*/
-
 body, p, td, th, option, input, textarea, select {
-    color: #000000;
     font-family: tahoma, verdana, sans-serif !important;
     font-size: 11px !important;
+}
+
+body {
+    color: #000000;
 }
 
 img {
@@ -27,13 +22,13 @@ hr {
     width: 100%;
 }
 
-a, a:link, a:visited, a:hover {
+a, a:link, a:visited, a:hover, .viewLink, .viewLinkHover {
     color: #4A5D75 !important;
     font-weight: bold !important;
     text-decoration: none !important;
 }
 
-a:hover {
+a:hover, .viewLinkHover {
     text-decoration: underline !important;
 }
 
@@ -97,22 +92,25 @@ a:hover {
 
 }
 
-.TopSectionLink, .topsectionlinkselected {
+.TopSectionLink, .TopSectionLinkSelected {
     vertical-align: bottom;
     padding:5px;
     padding-left: 15px;
     padding-right: 15px;
 
     cursor: pointer;
-    font-size: 10pt;
-    font-weight: bold;
-    text-decoration: none;
-    color: #4A5D75;
+    font-size: 10pt !important;
+    font-weight: bold !important;
+    text-decoration: none !important;
+}
+
+.TopSectionLink {
+    color: #4A5D75 !important;
 }
 
 .TopSectionLinkSelected {
     background-image: url('images/header/header_bg_selected.png');
-    color: white;
+    color: #FFFFFF !important;
 }
 
 .BreadCrumb {

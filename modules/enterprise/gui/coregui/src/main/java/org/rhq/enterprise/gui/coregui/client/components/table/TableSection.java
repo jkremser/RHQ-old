@@ -24,11 +24,10 @@ package org.rhq.enterprise.gui.coregui.client.components.table;
 
 import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.user.client.History;
-import com.google.gwt.user.client.ui.Hyperlink;
-import com.google.gwt.user.client.ui.InlineHyperlink;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.AnimationEffect;
+import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.AnimationCallback;
 import com.smartgwt.client.widgets.Canvas;
@@ -38,13 +37,14 @@ import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-import com.smartgwt.client.widgets.layout.HLayout;
+import com.smartgwt.client.widgets.layout.Layout;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.DetailsView;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.components.ViewLink;
 import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
@@ -135,15 +135,19 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
     @Override
     protected void configureTable() {
         if (isDetailsEnabled()) {
-/*
+
             ListGrid grid = getListGrid();
 
             // Make the value of some specific field a link to the details view for the corresponding record.
             ListGridField field = (grid != null) ? grid.getField(getDetailsLinkColumnName()) : null;
             if (field != null) {
-                field.setCellFormatter(getDetailsLinkColumnCellFormatter());
+                //field.setCellFormatter(getDetailsLinkColumnCellFormatter());
+                field.setCellFormatter(new CellFormatter() {
+                    public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
+                        return "";
+                    }
+                });
             }
-*/
 
             setListGridDoubleClickHandler(new DoubleClickHandler() {
                 @Override
@@ -410,23 +414,25 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
 
         @Override
         protected Canvas createRecordComponent(ListGridRecord record, Integer colNum) {
-            Canvas canvas;
+            Layout component;
             String fieldName = this.getFieldName(colNum);
             if (fieldName.equals(getDetailsLinkColumnName())) {
-                canvas = new LocatableHLayout(extendLocatorId(fieldName + getRecordIndex(record)));
+                component = new LocatableHLayout(extendLocatorId(fieldName + getRecordIndex(record)));
+                component.setWidth100();
+                component.setHeight(25);
+                component.setMargin(getCellPadding());
+                component.setOverflow(Overflow.HIDDEN);
                 Integer recordId = getId(record);
                 String detailsViewPath = getBasePath() + "/" + recordId;
                 String recordValue = record.getAttribute(getDetailsLinkColumnName());
                 String formattedValue = (escapeHtmlInDetailsLinkColumn) ? StringUtility.escapeHtml(recordValue.toString())
                     : recordValue.toString();
-                formattedValue = "***" + formattedValue + "***";
-                // TODO: Make the below Hyperlink Locatable.
-                InlineHyperlink hyperlink = new InlineHyperlink(formattedValue, detailsViewPath);
-                canvas.addChild(hyperlink);
+                ViewLink viewLink = new ViewLink(extendLocatorId("ViewLink"), formattedValue, detailsViewPath);
+                component.addMember(viewLink);
             } else {
-                canvas = null;
+                component = null;
             }
-            return canvas;
+            return component;
         }
     }
 

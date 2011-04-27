@@ -133,7 +133,7 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
                         return value.toString();
                     }
 
-                    return "<a href=\"" + url + "\">" + value.toString() + "</a>";
+                    return "<a href=\"" + url + "\">" + value + "</a>";
                 }
             });
 
