@@ -58,12 +58,12 @@ public abstract class AncestryUtil {
     private static final String TITLE_PLATFORM = CoreGUI.getMessages().common_title_platform() + ": ";
 
     /**
-     * Convienence method that creates a standard ancestry ListGridField.
+     * Convenience method that creates a standard ancestry ListGridField.
+     *
      * @return ancestry field
      */
     public static ListGridField setupAncestryListGridField() {
-        ListGridField ancestryField;
-        ancestryField = new ListGridField(AncestryUtil.RESOURCE_ANCESTRY, CoreGUI.getMessages().common_title_ancestry());
+        ListGridField ancestryField = new ListGridField(AncestryUtil.RESOURCE_ANCESTRY, CoreGUI.getMessages().common_title_ancestry());
         ancestryField.setAlign(Alignment.LEFT);
         ancestryField.setCellAlign(Alignment.LEFT);
         setupAncestryListGridFieldCellFormatter(ancestryField);
@@ -72,7 +72,7 @@ public abstract class AncestryUtil {
     }
 
     /**
-     * Convienence method that creates a standard ancestry ListGridField where the field already exists
+     * Convenience method that creates a standard ancestry ListGridField where the field already exists
      * in the given list grid.
      * 
      * @return ancestry field

@@ -9,20 +9,24 @@ import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.ListGridFieldType;
+import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
-import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import com.smartgwt.client.widgets.layout.HLayout;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.composite.ResourceInstallCount;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.components.ViewLink;
+import org.rhq.enterprise.gui.coregui.client.components.table.CanvasField;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -30,6 +34,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -113,7 +118,21 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
 
         @Override
         protected void configureTable() {
-            ListGridField fieldTypeName = new ListGridField(DataSource.Field.TYPENAME, MSG.common_title_resource_type());
+            CanvasField fieldTypeName = new CanvasField(DataSource.Field.TYPENAME, MSG.common_title_resource_type()) {
+                protected Canvas createCanvas(ListGrid grid, ListGridRecord record) {
+                    HLayout hLayout = createHLayout(grid);
+                    String typeName = record.getAttribute(DataSource.Field.TYPENAME);
+                    String url = getResourceTypeTableUrl(record);
+                    if (url != null) {
+                        ViewLink viewLink = new ViewLink(extendLocatorId("ViewLink"), typeName, url);
+                        hLayout.addMember(viewLink);
+                    } else {
+                        HTMLFlow html = new HTMLFlow(typeName);
+                        hLayout.addMember(html);
+                    }
+                    return hLayout;
+                }
+            };
             ListGridField fieldPlugin = new ListGridField(DataSource.Field.TYPEPLUGIN, MSG.common_title_plugin());
             ListGridField fieldCategory = new ListGridField(DataSource.Field.CATEGORY, MSG.common_title_category());
             ListGridField fieldVersion = new ListGridField(DataSource.Field.VERSION, MSG.common_title_version());
@@ -124,18 +143,6 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
             fieldCategory.setWidth("25");
             fieldVersion.setWidth("*");
             fieldCount.setWidth("10%");
-
-            fieldTypeName.setCellFormatter(new CellFormatter() {
-                @Override
-                public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
-                    String url = getResourceTypeTableUrl(record);
-                    if (url == null) {
-                        return value.toString();
-                    }
-
-                    return "<a href=\"" + url + "\">" + value + "</a>";
-                }
-            });
 
             fieldCategory.setType(ListGridFieldType.ICON);
             fieldCategory.setShowValueIconOnly(true);
@@ -165,8 +172,8 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
                 @Override
                 public void onDoubleClick(DoubleClickEvent event) {
                     ListGrid lg = (ListGrid) event.getSource();
-                    ListGridRecord selected = lg.getSelectedRecord();
-                    String url = getResourceTypeTableUrl(selected);
+                    ListGridRecord selectedRecord = lg.getSelectedRecord();
+                    String url = getResourceTypeTableUrl(selectedRecord);
                     if (url != null) {
                         CoreGUI.goToView(url);
                     }

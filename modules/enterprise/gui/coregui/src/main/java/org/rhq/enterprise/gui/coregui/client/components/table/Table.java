@@ -106,7 +106,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
     private Canvas titleComponent;
 
     private TableFilter filterForm;
-    private ListGrid listGrid;
+    private EnhancedListGrid listGrid;
     private Label tableInfo;
 
     private List<String> headerIcons = new ArrayList<String>();
@@ -273,8 +273,8 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         contents.addMember(listGrid);
     }
 
-    protected LocatableListGrid createListGrid(String locatorId) {
-        return new LocatableListGrid(locatorId);
+    protected EnhancedListGrid createListGrid(String locatorId) {
+        return new EnhancedListGrid(locatorId);
     }
 
     protected SelectionStyle getDefaultSelectionStyle() {
@@ -671,7 +671,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         this.dataSource = dataSource;
     }
 
-    public ListGrid getListGrid() {
+    public EnhancedListGrid getListGrid() {
         return listGrid;
     }
 

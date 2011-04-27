@@ -34,77 +34,23 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHTMLFlow;
  *
  * @author Ian Springer
  */
-public class ViewLink extends LocatableHTMLFlow {
-
-    private static final String DEFAULT_MOUSE_OUT_STYLE_NAME = "viewLink";
-    private static final String DEFAULT_MOUSE_OVER_STYLE_NAME = "viewLinkHover";
+public class ViewLink extends Link {
 
     private String viewPath;
-    private String mouseOverStyleName;
-    private String mouseOutStyleName;
 
     public ViewLink(String locatorId, String linkText, final String viewPath) {
-        super(locatorId);
-
-        this.viewPath = viewPath;
-        this.mouseOutStyleName = DEFAULT_MOUSE_OUT_STYLE_NAME;
-        this.mouseOverStyleName = DEFAULT_MOUSE_OVER_STYLE_NAME;
-
-	    setWidth100();
-        setHeight(25);
-        setContents(linkText);
-
-        addClickHandler(new ClickHandler() {
+        super(locatorId, linkText, new ClickHandler() {
             public void onClick(ClickEvent event) {
                 CoreGUI.goToView(viewPath);
             }
         });
 
-        addMouseOverHandler(new MouseOverHandler() {
-            public void onMouseOver(MouseOverEvent event) {
-                if (mouseOutStyleName != null && mouseOverStyleName != null) {
-                    setStyleName(mouseOverStyleName);
-                    markForRedraw();
-                }
-            }
-        });
-
-        addMouseOutHandler(new MouseOutHandler() {
-            public void onMouseOut(MouseOutEvent event) {
-                if (mouseOutStyleName != null && mouseOverStyleName != null) {
-                    setStyleName(mouseOutStyleName);
-                    markForRedraw();
-                }
-            }
-        });
-    }
-
-    @Override
-    protected void onInit() {
-        super.onInit();
-
-        setStyleName(getMouseOutStyleName());
-    }
-
-    public String getMouseOverStyleName() {
-        return this.mouseOverStyleName;
-    }
-
-    public void setMouseOverStyleName(String mouseOverStyleName) {
-        this.mouseOverStyleName = mouseOverStyleName;
-    }
-
-    public String getMouseOutStyleName() {
-        return this.mouseOutStyleName;
-    }
-
-    public void setMouseOutStyleName(String mouseOutStyleName) {
-        this.mouseOutStyleName = mouseOutStyleName;
+        this.viewPath = viewPath;
     }
 
     @Override
     public String toString() {
-        return super.toString() + "[" + getContents() + " -> " + this.viewPath + "]";
+        return getClass().getName() + "[" + getContents() + " -> " + this.viewPath + "]";
     }
 
 }

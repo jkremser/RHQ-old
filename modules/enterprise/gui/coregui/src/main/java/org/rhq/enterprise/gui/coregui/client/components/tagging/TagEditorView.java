@@ -51,7 +51,9 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.components.ViewLink;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDialog;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
@@ -165,10 +167,9 @@ public class TagEditorView extends LocatableLayout {
             tagLayout.setHeight(18);
             tagLayout.setHeight(16);
 
-            HTMLFlow tagString = new HTMLFlow("<a href=\"" + LinkManager.getTagLink(tag.toString()) + "\">"
-                + tag.toString() + "</a>");
-            tagString.setAutoWidth();
-            tagLayout.addMember(tagString);
+            ViewLink viewLink = new ViewLink(tagLayout.extendLocatorId("ViewLink"),
+                    StringUtility.escapeHtml(tag.toString()), LinkManager.getTagLink(tag.toString()));
+            tagLayout.addMember(viewLink);
 
             if (!readOnly) {
                 final LayoutSpacer spacer = new LayoutSpacer();

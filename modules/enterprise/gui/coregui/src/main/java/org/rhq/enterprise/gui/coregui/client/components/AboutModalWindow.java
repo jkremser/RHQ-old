@@ -102,6 +102,7 @@ public class AboutModalWindow extends LocatableWindow {
         contentPane.setPadding(15);
         contentPane.setMembersMargin(25);
 
+        // TODO: Replace the below raw HTML w/ GWT widgets.
         HTMLFlow htmlFlow = new HTMLFlow();
         String html = "<span class=\"DisplaySubhead\">\n" + "  <a href=\"" + PRODUCT_INFO.getUrl() + "\" title=\""
             + PRODUCT_INFO.getFullName() + " " + MSG.view_aboutBox_homepage() + "\" target=\"_blank\">"

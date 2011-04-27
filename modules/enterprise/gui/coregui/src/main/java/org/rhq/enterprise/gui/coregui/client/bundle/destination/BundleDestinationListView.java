@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -28,7 +28,6 @@ import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
-import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -36,8 +35,10 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.components.ViewLink;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
+import org.rhq.enterprise.gui.coregui.client.components.table.ViewLinkField;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 
 /**
@@ -58,13 +59,36 @@ public class BundleDestinationListView extends Table<BundleDestinationDataSource
     @Override
     protected void configureTable() {
         ListGridField idField = new ListGridField(BundleDestinationDataSource.FIELD_ID, MSG.common_title_id());
-        ListGridField nameField = new ListGridField(BundleDestinationDataSource.FIELD_NAME, MSG.common_title_name());
+        ViewLinkField nameField = new ViewLinkField(BundleDestinationDataSource.FIELD_NAME, MSG.common_title_name()) {
+            protected ViewLink getViewLink(ListGrid grid, ListGridRecord record) {
+                String bundleName = record.getAttribute(BundleDestinationDataSource.FIELD_NAME);
+                String linkText = StringUtility.escapeHtml(bundleName);
+                String viewPath = getBundleDestinationLink(record);
+                return new ViewLink(extendLocatorId("ViewLink"), linkText, viewPath);
+            }
+        };
         ListGridField descriptionField = new ListGridField(BundleDestinationDataSource.FIELD_DESCRIPTION, MSG
             .common_title_description());
-        ListGridField bundleNameField = new ListGridField(BundleDestinationDataSource.FIELD_BUNDLE_NAME, MSG
-            .view_bundle_bundle());
-        ListGridField groupNameField = new ListGridField(BundleDestinationDataSource.FIELD_GROUP_NAME, MSG
-            .view_bundle_dest_group());
+        ViewLinkField bundleNameField = new ViewLinkField(BundleDestinationDataSource.FIELD_BUNDLE_NAME, MSG
+            .view_bundle_bundle()) {
+            protected ViewLink getViewLink(ListGrid grid, ListGridRecord record) {
+                String bundleName = record.getAttribute(BundleDestinationDataSource.FIELD_BUNDLE_NAME);
+                String linkText = StringUtility.escapeHtml(bundleName);
+                Integer bundleId = record.getAttributeAsInt(BundleDestinationDataSource.FIELD_BUNDLE_ID);
+                String viewPath = LinkManager.getBundleLink(bundleId);
+                return new ViewLink(extendLocatorId("ViewLink"), linkText, viewPath);
+            }
+        };
+        ViewLinkField groupNameField = new ViewLinkField(BundleDestinationDataSource.FIELD_GROUP_NAME, MSG
+            .view_bundle_dest_group()) {
+            protected ViewLink getViewLink(ListGrid grid, ListGridRecord record) {
+                String groupName = record.getAttribute(BundleDestinationDataSource.FIELD_GROUP_NAME);
+                String linkText = StringUtility.escapeHtml(groupName);
+                Integer groupId = record.getAttributeAsInt(BundleDestinationDataSource.FIELD_GROUP_ID);
+                String viewPath = LinkManager.getResourceGroupLink(groupId);
+                return new ViewLink(extendLocatorId("ViewLink"), linkText, viewPath);
+            }
+        };
         ListGridField deployDirField = new ListGridField(BundleDestinationDataSource.FIELD_DEPLOY_DIR, MSG
             .view_bundle_dest_deployDir());
         ListGridField latestDeploymentVersionField = new ListGridField(
@@ -76,31 +100,6 @@ public class BundleDestinationListView extends Table<BundleDestinationDataSource
 
         latestDeploymentDateField.setType(ListGridFieldType.DATE);
         TimestampCellFormatter.prepareDateField(latestDeploymentDateField);
-
-        nameField.setCellFormatter(new CellFormatter() {
-            public String format(Object value, ListGridRecord listGridRecord, int i, int i1) {
-                Integer bundleId = listGridRecord.getAttributeAsInt(BundleDestinationDataSource.FIELD_BUNDLE_ID);
-                Integer bundleDestId = listGridRecord.getAttributeAsInt(BundleDestinationDataSource.FIELD_ID);
-                return "<a href=\"" + LinkManager.getBundleDestinationLink(bundleId, bundleDestId) + "\">"
-                        + StringUtility.escapeHtml(value.toString()) + "</a>";
-            }
-        });
-
-        groupNameField.setCellFormatter(new CellFormatter() {
-            public String format(Object value, ListGridRecord listGridRecord, int i, int i1) {
-                Integer groupId = listGridRecord.getAttributeAsInt(BundleDestinationDataSource.FIELD_GROUP_ID);
-                return "<a href=\"" + LinkManager.getResourceGroupLink(groupId) + "\">"
-                        + StringUtility.escapeHtml(value.toString()) + "</a>";
-            }
-        });
-
-        bundleNameField.setCellFormatter(new CellFormatter() {
-            public String format(Object value, ListGridRecord listGridRecord, int i, int i1) {
-                Integer bid = listGridRecord.getAttributeAsInt(BundleDestinationDataSource.FIELD_BUNDLE_ID);
-                return "<a href=\"" + LinkManager.getBundleLink(bid) + "\">"
-                        + StringUtility.escapeHtml(value.toString()) + "</a>";
-            }
-        });
 
         HashMap<String, String> statusIcons = new HashMap<String, String>();
         statusIcons.put(BundleDeploymentStatus.PENDING.name(), "subsystems/bundle/install-loader.gif");
@@ -133,12 +132,18 @@ public class BundleDestinationListView extends Table<BundleDestinationDataSource
                 ListGrid listGrid = (ListGrid) event.getSource();
                 ListGridRecord[] selectedRows = listGrid.getSelection();
                 if (selectedRows != null && selectedRows.length == 1) {
-                    String selectedId = selectedRows[0].getAttribute(BundleDestinationDataSource.FIELD_BUNDLE_ID);
-                    String selectedDestId = selectedRows[0].getAttribute(BundleDestinationDataSource.FIELD_ID);
-                    CoreGUI.goToView(LinkManager.getBundleDestinationLink(Integer.valueOf(selectedId), Integer
-                        .valueOf(selectedDestId)));
+                    ListGridRecord selectedRecord = selectedRows[0];
+                    String viewPath = getBundleDestinationLink(selectedRecord);
+                    CoreGUI.goToView(viewPath);
                 }
             }
         });
     }
+
+    private static String getBundleDestinationLink(ListGridRecord record) {
+        Integer bundleId = record.getAttributeAsInt(BundleDestinationDataSource.FIELD_BUNDLE_ID);
+        Integer bundleDestId = record.getAttributeAsInt(BundleDestinationDataSource.FIELD_ID);
+        return LinkManager.getBundleDestinationLink(bundleId, bundleDestId);
+    }
+
 }

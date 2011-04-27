@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -41,7 +41,6 @@ import com.smartgwt.client.widgets.form.fields.LinkItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
-import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -67,13 +66,14 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ErrorMessageWindow;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
-import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.bundle.revert.BundleRevertWizard;
 import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
+import org.rhq.enterprise.gui.coregui.client.components.ViewLink;
 import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
+import org.rhq.enterprise.gui.coregui.client.components.table.ViewLinkField;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagEditorView;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagsChangedCallback;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
@@ -112,7 +112,7 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
         statusIcons.put(BundleDeploymentStatus.SUCCESS.name(), "subsystems/bundle/Ok_11.png");
     }
 
-    private void viewBundleDeployment(BundleDeployment bundleDeployment, ViewId current) {
+    private void viewBundleDeployment(BundleDeployment bundleDeployment) {
         // Whenever a new view request comes in, make sure to clean house to avoid ID conflicts for sub-widgets
         this.destroyMembers();
 
@@ -344,16 +344,15 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
         resourceIcon.setWidth(40);
 
         // resource field
-        ListGridField resource = new ListGridField("resource", MSG.common_title_platform());
+        ViewLinkField resource = new ViewLinkField("resource", MSG.common_title_platform()) {
+            protected ViewLink getViewLink(ListGrid grid, ListGridRecord record) {
+                String resourceUrl = LinkManager.getResourceLink(record.getAttributeAsInt("resourceId"));
+                String linkText = StringUtility.escapeHtml(record.getAttribute("resource"));
+                return new ViewLink(extendLocatorId("ViewLink"), linkText, resourceUrl);
+            }
+        };
         resource.setAutoFitWidth(true);
         resource.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
-        resource.setCellFormatter(new CellFormatter() {
-            public String format(Object value, ListGridRecord listGridRecord, int i, int i1) {
-                return "<a href=\"" + LinkManager.getResourceLink(listGridRecord.getAttributeAsInt("resourceId"))
-                    + "\">" + StringUtility.escapeHtml(String.valueOf(value)) + "</a>";
-
-            }
-        });
 
         // resource version field
         ListGridField resourceVersion = new ListGridField("resourceVersion", MSG.view_bundle_deploy_operatingSystem());
@@ -456,7 +455,7 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
 
                                 public void onSuccess(PageList<BundleResourceDeployment> result) {
                                     deployment.setResourceDeployments(result);
-                                    viewBundleDeployment(deployment, viewPath.getCurrent());
+                                    viewBundleDeployment(deployment);
                                 }
                             });
                     }

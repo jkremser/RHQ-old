@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -28,7 +28,6 @@ import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
-import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -39,10 +38,11 @@ import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ErrorMessageWindow;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
-import org.rhq.enterprise.gui.coregui.client.bundle.list.BundleVersionDataSource;
+import org.rhq.enterprise.gui.coregui.client.components.ViewLink;
 import org.rhq.enterprise.gui.coregui.client.components.table.EscapedHtmlCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
+import org.rhq.enterprise.gui.coregui.client.components.table.ViewLinkField;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 
 /**
@@ -62,12 +62,33 @@ public class BundleDeploymentListView extends Table<BundleDeploymentDataSource> 
     @Override
     protected void configureTable() {
         ListGridField idField = new ListGridField(BundleDeploymentDataSource.FIELD_ID, MSG.common_title_id());
-        ListGridField nameField = new ListGridField(BundleDeploymentDataSource.FIELD_NAME, MSG
+        ListGridField nameField;
+        // only users that are authorized can see deployments
+        if (canManageBundles) {
+            nameField = new ViewLinkField(BundleDeploymentDataSource.FIELD_NAME, MSG.view_bundle_deploy_name()) {
+                protected ViewLink getViewLink(ListGrid grid, ListGridRecord record) {
+                    String linkText = StringUtility.escapeHtml(record.getAttribute(BundleDeploymentDataSource.FIELD_NAME));
+                    String viewPath = getBundleDeploymentLink(record);
+                    return new ViewLink(extendLocatorId("ViewLink"), linkText, viewPath);
+                }
+            };
+        } else {
+            nameField = new ListGridField(BundleDeploymentDataSource.FIELD_NAME, MSG
             .view_bundle_deploy_name());
+            nameField.setCellFormatter(new EscapedHtmlCellFormatter());
+        }
         ListGridField descriptionField = new ListGridField(BundleDeploymentDataSource.FIELD_DESCRIPTION, MSG
             .common_title_description());
-        ListGridField bundleVersionField = new ListGridField(BundleDeploymentDataSource.FIELD_BUNDLE_VERSION_VERSION,
-            MSG.view_bundle_bundleVersion());
+        ViewLinkField bundleVersionField = new ViewLinkField(BundleDeploymentDataSource.FIELD_BUNDLE_VERSION_VERSION,
+            MSG.view_bundle_bundleVersion()) {
+            protected ViewLink getViewLink(ListGrid grid, ListGridRecord record) {
+                String linkText = record.getAttribute(BundleDeploymentDataSource.FIELD_BUNDLE_VERSION_VERSION);
+                String viewPath = LinkManager.getBundleVersionLink(record
+                        .getAttributeAsInt(BundleDeploymentDataSource.FIELD_BUNDLE_ID), record
+                        .getAttributeAsInt(BundleDeploymentDataSource.FIELD_BUNDLE_VERSION_ID));
+                return new ViewLink(extendLocatorId("ViewLink"), linkText, viewPath);
+            }
+        };
         ListGridField statusField = new ListGridField(BundleDeploymentDataSource.FIELD_STATUS, MSG
             .common_title_status());
         ListGridField deployTimeField = new ListGridField(BundleDeploymentDataSource.FIELD_DEPLOY_TIME, MSG
@@ -75,33 +96,7 @@ public class BundleDeploymentListView extends Table<BundleDeploymentDataSource> 
         TimestampCellFormatter.prepareDateField(deployTimeField);
         deployTimeField.setType(ListGridFieldType.DATE);
 
-        // only users that are authorized can see deployments
-        if (canManageBundles) {
-            nameField.setCellFormatter(new CellFormatter() {
-                public String format(Object value, ListGridRecord record, int i, int i1) {
-                    return "<a href=\""
-                        + LinkManager.getBundleDeploymentLink(record
-                            .getAttributeAsInt(BundleDeploymentDataSource.FIELD_BUNDLE_ID), record
-                            .getAttributeAsInt(BundleDeploymentDataSource.FIELD_ID)) + "\">"
-                        + StringUtility.escapeHtml(String.valueOf(value))
-                        + "</a>";
-                }
-            });
-        } else {
-            nameField.setCellFormatter(new EscapedHtmlCellFormatter());
-        }
-
         descriptionField.setCellFormatter(new EscapedHtmlCellFormatter());
-
-        bundleVersionField.setCellFormatter(new CellFormatter() {
-            public String format(Object o, ListGridRecord record, int i, int i1) {
-                return "<a href=\""
-                    + LinkManager.getBundleVersionLink(record
-                        .getAttributeAsInt(BundleDeploymentDataSource.FIELD_BUNDLE_ID), record
-                        .getAttributeAsInt(BundleDeploymentDataSource.FIELD_BUNDLE_VERSION_ID)) + "\">"
-                    + String.valueOf(o) + "</a>";
-            }
-        });
 
         HashMap<String, String> statusIcons = new HashMap<String, String>();
         statusIcons.put(BundleDeploymentStatus.PENDING.name(), "subsystems/bundle/install-loader.gif");
@@ -140,13 +135,19 @@ public class BundleDeploymentListView extends Table<BundleDeploymentDataSource> 
                     ListGrid listGrid = (ListGrid) event.getSource();
                     ListGridRecord[] selectedRows = listGrid.getSelection();
                     if (selectedRows != null && selectedRows.length == 1) {
-                        String selectedId = selectedRows[0].getAttribute(BundleVersionDataSource.FIELD_BUNDLE_ID);
-                        String selectedVersionId = selectedRows[0].getAttribute(BundleVersionDataSource.FIELD_ID);
-                        CoreGUI.goToView(LinkManager.getBundleDeploymentLink(Integer.valueOf(selectedId), Integer
-                            .valueOf(selectedVersionId)));
+                        ListGridRecord selectedRecord = selectedRows[0];
+                        String viewPath = getBundleDeploymentLink(selectedRecord);
+                        CoreGUI.goToView(viewPath);
                     }
                 }
             });
         }
     }
+
+    private static String getBundleDeploymentLink(ListGridRecord record) {
+        return LinkManager.getBundleDeploymentLink(record
+                .getAttributeAsInt(BundleDeploymentDataSource.FIELD_BUNDLE_ID), record
+                .getAttributeAsInt(BundleDeploymentDataSource.FIELD_ID));
+    }
+
 }

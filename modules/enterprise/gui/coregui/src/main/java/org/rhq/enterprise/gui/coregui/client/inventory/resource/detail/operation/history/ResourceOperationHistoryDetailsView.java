@@ -23,10 +23,13 @@ import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Label;
+import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 
+import com.smartgwt.client.widgets.layout.HLayout;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
 import org.rhq.core.domain.operation.GroupOperationHistory;
@@ -38,6 +41,7 @@ import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.components.ViewLink;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history.AbstractOperationHistoryDetailsView;
@@ -81,13 +85,17 @@ public class ResourceOperationHistoryDetailsView extends AbstractOperationHistor
 
         GroupOperationHistory groupOperationHistory = operationHistory.getGroupOperationHistory();
         if (groupOperationHistory != null) {
-            StaticTextItem groupOperationHistoryItem = new StaticTextItem(
+            CanvasItem groupOperationHistoryItem = new CanvasItem(
                 ResourceOperationHistoryDataSource.Field.GROUP_OPERATION_HISTORY, "Parent Group Execution");
+            HLayout hLayout = new HLayout();
             String groupOperationHistoryUrl = LinkManager.getGroupOperationHistoryLink(groupOperationHistory.getGroup()
                 .getId(), groupOperationHistory.getId());
-            String value = "<a href=\"" + groupOperationHistoryUrl + "\">" + groupOperationHistory.getId()
-                + "</a> (on group '" + groupOperationHistory.getGroup().getName() + "')";
-            groupOperationHistoryItem.setValue(value);
+            ViewLink viewLink = new ViewLink(extendLocatorId("ViewLink"), String.valueOf(groupOperationHistory.getId()),
+                    groupOperationHistoryUrl);
+            hLayout.addMember(viewLink);
+            HTMLFlow html = new HTMLFlow("(on group '" + groupOperationHistory.getGroup().getName() + "')");
+            hLayout.addMember(html);
+            groupOperationHistoryItem.setCanvas(hLayout);
             items.add(groupOperationHistoryItem);
         }
 

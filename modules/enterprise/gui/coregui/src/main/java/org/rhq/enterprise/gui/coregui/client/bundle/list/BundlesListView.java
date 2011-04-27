@@ -25,6 +25,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.ListGridFieldType;
+import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
 import com.smartgwt.client.widgets.grid.CellFormatter;
@@ -32,6 +33,7 @@ import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import com.smartgwt.client.widgets.layout.HLayout;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
@@ -41,7 +43,9 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.bundle.create.BundleCreateWizard;
 import org.rhq.enterprise.gui.coregui.client.bundle.deploy.BundleDeployWizard;
+import org.rhq.enterprise.gui.coregui.client.components.ViewLink;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
+import org.rhq.enterprise.gui.coregui.client.components.table.CanvasField;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
@@ -85,15 +89,18 @@ public class BundlesListView extends Table<BundlesWithLatestVersionDataSource> {
         idField.setType(ListGridFieldType.INTEGER);
         idField.setWidth("50");
 
-        ListGridField nameField = new ListGridField(BundlesWithLatestVersionDataSource.FIELD_NAME, MSG
-            .common_title_name());
-        nameField.setWidth("33%");
-        nameField.setCellFormatter(new CellFormatter() {
-            public String format(Object value, ListGridRecord record, int i, int i1) {
-                return "<a href=\"" + record.getAttribute(BundlesWithLatestVersionDataSource.FIELD_NAMELINK) + "\">"
-                    + StringUtility.escapeHtml(String.valueOf(value)) + "</a>";
+        CanvasField nameField = new CanvasField(BundlesWithLatestVersionDataSource.FIELD_NAME, MSG
+            .common_title_name()) {
+            protected Canvas createCanvas(ListGrid grid, ListGridRecord record) {
+                HLayout hLayout = createHLayout(grid);
+                String name = record.getAttribute(BundlesWithLatestVersionDataSource.FIELD_NAME);
+                String nameLink = record.getAttribute(BundlesWithLatestVersionDataSource.FIELD_NAMELINK);
+                ViewLink viewLink = new ViewLink(extendLocatorId("ViewLink"), StringUtility.escapeHtml(name), nameLink);
+                hLayout.addMember(viewLink);
+                return hLayout;
             }
-        });
+        };
+        nameField.setWidth("33%");
 
         ListGridField descField = new ListGridField(BundlesWithLatestVersionDataSource.FIELD_DESCRIPTION, MSG
             .common_title_description());

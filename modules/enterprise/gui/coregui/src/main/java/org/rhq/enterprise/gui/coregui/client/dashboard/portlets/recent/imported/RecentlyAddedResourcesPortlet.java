@@ -30,14 +30,18 @@ import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.events.SubmitValuesEvent;
 import com.smartgwt.client.widgets.form.events.SubmitValuesHandler;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
-import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.tree.TreeGrid;
 
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
+import org.rhq.enterprise.gui.coregui.client.components.ViewLink;
+import org.rhq.enterprise.gui.coregui.client.components.table.CanvasField;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortletUtil;
@@ -45,6 +49,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
+import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 public class RecentlyAddedResourcesPortlet extends LocatableVLayout implements CustomSettingsPortlet,
@@ -87,13 +92,18 @@ public class RecentlyAddedResourcesPortlet extends LocatableVLayout implements C
         treeGrid.setResizeFieldsInRealTime(true);
         treeGrid.setTreeFieldTitle("Resource Name");
 
-        ListGridField resourceNameField = new ListGridField("name", MSG.common_title_resource_name());
-
-        resourceNameField.setCellFormatter(new CellFormatter() {
-            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                return "<a href=\"#Resource/" + listGridRecord.getAttribute("id") + "\">" + String.valueOf(o) + "</a>";
+        CanvasField resourceNameField = new CanvasField("name", MSG.common_title_resource_name()) {
+            protected Canvas createCanvas(ListGrid grid, ListGridRecord record) {
+                HLayout hLayout = createHLayout(grid);
+                int resourceId = record.getAttributeAsInt("id");
+                String resourceName = record.getAttribute("name");
+                String resourceViewPath = LinkManager.getResourceLink(resourceId);
+                ViewLink viewLink = new ViewLink(extendLocatorId("ViewLink"), StringUtility.escapeHtml(resourceName),
+                        resourceViewPath);
+                hLayout.addMember(viewLink);
+                return hLayout;
             }
-        });
+        };
 
         ListGridField timestampField = new ListGridField("timestamp", MSG.common_title_timestamp());
         TimestampCellFormatter.prepareDateField(timestampField);

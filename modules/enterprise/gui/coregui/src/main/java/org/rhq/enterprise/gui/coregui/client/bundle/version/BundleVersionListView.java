@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,16 +24,19 @@ package org.rhq.enterprise.gui.coregui.client.bundle.version;
 
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.SelectionStyle;
+import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
-import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import com.smartgwt.client.widgets.layout.HLayout;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.bundle.list.BundleVersionDataSource;
+import org.rhq.enterprise.gui.coregui.client.components.ViewLink;
+import org.rhq.enterprise.gui.coregui.client.components.table.CanvasField;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 
 /**
@@ -60,15 +63,17 @@ public class BundleVersionListView extends Table<BundleVersionDataSource> {
     protected void configureTable() {
         ListGridField idField = new ListGridField(FIELD_ID, MSG.common_title_id());
 
-        ListGridField versionField = new ListGridField(BundleVersionDataSource.FIELD_VERSION, MSG
-            .common_title_version());
-        versionField.setCellFormatter(new CellFormatter() {
-            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                Integer _bundleId = listGridRecord.getAttributeAsInt("bundleId");
-                Integer _bvId = listGridRecord.getAttributeAsInt("id");
-                return "<a href=\"" + LinkManager.getBundleVersionLink(_bundleId, _bvId) + "\">" + o + "</a>";
+        CanvasField versionField = new CanvasField(BundleVersionDataSource.FIELD_VERSION, MSG
+            .common_title_version()) {
+            protected Canvas createCanvas(ListGrid grid, ListGridRecord record) {
+                HLayout hLayout = createHLayout(grid);
+                String viewPath = getBundleVersionViewPath(record);
+                ViewLink viewLink = new ViewLink(extendLocatorId("ViewLink"),
+                        record.getAttribute(BundleVersionDataSource.FIELD_VERSION), viewPath);
+                hLayout.addMember(viewLink);
+                return hLayout;
             }
-        });
+        };
 
         ListGridField nameField = new ListGridField(BundleVersionDataSource.FIELD_NAME, MSG.common_title_name());
 
@@ -92,12 +97,18 @@ public class BundleVersionListView extends Table<BundleVersionDataSource> {
                 ListGrid listGrid = (ListGrid) event.getSource();
                 ListGridRecord[] selectedRows = listGrid.getSelection();
                 if (selectedRows != null && selectedRows.length == 1) {
-                    String selectedId = selectedRows[0].getAttribute(BundleVersionDataSource.FIELD_BUNDLE_ID);
-                    String selectedVersionId = selectedRows[0].getAttribute(BundleVersionDataSource.FIELD_ID);
-                    CoreGUI.goToView(LinkManager.getBundleVersionLink(Integer.valueOf(selectedId), Integer
-                        .valueOf(selectedVersionId)));
+                    ListGridRecord selectedRecord = selectedRows[0];
+                    String viewPath = getBundleVersionViewPath(selectedRecord);
+                    CoreGUI.goToView(viewPath);
                 }
             }
         });
     }
+
+    private static String getBundleVersionViewPath(ListGridRecord record) {
+        Integer bundleId = record.getAttributeAsInt(BundleVersionDataSource.FIELD_BUNDLE_ID);
+        Integer bundleVersionId = record.getAttributeAsInt(BundleVersionDataSource.FIELD_ID);
+        return LinkManager.getBundleVersionLink(bundleId, bundleVersionId);
+    }
+
 }

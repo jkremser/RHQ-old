@@ -37,6 +37,7 @@ import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.Layout;
 import com.smartgwt.client.widgets.layout.VLayout;
 
@@ -48,8 +49,6 @@ import org.rhq.enterprise.gui.coregui.client.components.ViewLink;
 import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
@@ -142,11 +141,25 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
             ListGridField field = (grid != null) ? grid.getField(getDetailsLinkColumnName()) : null;
             if (field != null) {
                 //field.setCellFormatter(getDetailsLinkColumnCellFormatter());
-                field.setCellFormatter(new CellFormatter() {
-                    public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
-                        return "";
+
+                CanvasField canvasField = new CanvasField(field) {
+                    protected Canvas createCanvas(ListGrid grid, ListGridRecord record) {
+                        HLayout hLayout = createHLayout(grid);
+                        Integer recordId = getId(record);
+                        String detailsViewPath = getBasePath() + "/" + recordId;
+                        String recordValue = record.getAttribute(getDetailsLinkColumnName());
+                        String formattedValue = (escapeHtmlInDetailsLinkColumn) ? StringUtility.escapeHtml(recordValue.toString())
+                            : recordValue.toString();
+                        ViewLink viewLink = new ViewLink(extendLocatorId("ViewLink"), formattedValue, detailsViewPath);
+                        hLayout.addMember(viewLink);
+                        return hLayout;
                     }
-                });
+                };
+
+                int fieldIndex = grid.getFieldNum(field.getName());
+                ListGridField[] fields = grid.getFields();
+                fields[fieldIndex] = canvasField;
+                grid.setFields(fields);
             }
 
             setListGridDoubleClickHandler(new DoubleClickHandler() {
@@ -394,45 +407,6 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
             } else {
                 contents.animateShow(AnimationEffect.WIPE);
             }
-        }
-    }
-
-    @Override
-    protected LocatableListGrid createListGrid(String locatorId) {
-        return new TableSectionListGrid(locatorId);
-    }
-
-    class TableSectionListGrid extends LocatableListGrid {
-        public TableSectionListGrid(String locatorId) {
-            super(locatorId);
-
-            if (isDetailsEnabled() && getDetailsLinkColumnName() != null) {
-                setShowRecordComponents(true);
-                setShowRecordComponentsByCell(true);
-            }
-        }
-
-        @Override
-        protected Canvas createRecordComponent(ListGridRecord record, Integer colNum) {
-            Layout component;
-            String fieldName = this.getFieldName(colNum);
-            if (fieldName.equals(getDetailsLinkColumnName())) {
-                component = new LocatableHLayout(extendLocatorId(fieldName + getRecordIndex(record)));
-                component.setWidth100();
-                component.setHeight(25);
-                component.setMargin(getCellPadding());
-                component.setOverflow(Overflow.HIDDEN);
-                Integer recordId = getId(record);
-                String detailsViewPath = getBasePath() + "/" + recordId;
-                String recordValue = record.getAttribute(getDetailsLinkColumnName());
-                String formattedValue = (escapeHtmlInDetailsLinkColumn) ? StringUtility.escapeHtml(recordValue.toString())
-                    : recordValue.toString();
-                ViewLink viewLink = new ViewLink(extendLocatorId("ViewLink"), formattedValue, detailsViewPath);
-                component.addMember(viewLink);
-            } else {
-                component = null;
-            }
-            return component;
         }
     }
 

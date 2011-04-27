@@ -11,16 +11,18 @@ import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceTextField;
+import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.HTMLFlow;
+import com.smartgwt.client.widgets.events.ClickEvent;
+import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
-import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-import com.smartgwt.client.widgets.grid.events.RecordClickEvent;
-import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
 
+import com.smartgwt.client.widgets.layout.HLayout;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
@@ -31,6 +33,9 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.alert.definitions.AbstractAlertDefinitionsDataSource;
+import org.rhq.enterprise.gui.coregui.client.components.Link;
+import org.rhq.enterprise.gui.coregui.client.components.ViewLink;
+import org.rhq.enterprise.gui.coregui.client.components.table.CanvasField;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -38,7 +43,6 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.TypesLoadedCallback;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * A tabular report that shows alert definitions on all resources in inventory.
@@ -117,30 +121,103 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
 
             // hide the created/modified fields, we don't need to show them by default
             // add cell formatter on the name field so we can make it a link
-            for (ListGridField field : fields) {
+            for (int i = 0, fieldsSize = fields.size(); i < fieldsSize; i++) {
+                ListGridField field = fields.get(i);
                 String fieldName = field.getName();
                 if (fieldName.equals(FIELD_CTIME) || fieldName.equals(FIELD_MTIME)) {
                     field.setHidden(true);
                 } else if (fieldName.equals(FIELD_NAME)) {
-                    field.setCellFormatter(new CellFormatter() {
-                        @Override
-                        public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
+                    CanvasField canvasField = new CanvasField(field) {
+                        protected Canvas createCanvas(ListGrid grid, ListGridRecord record) {
+                            HLayout hLayout = createHLayout(grid);
                             AlertDefinition alertDef = copyValues(record);
                             int resourceId = alertDef.getResource().getId();
                             int alertDefId = alertDef.getId();
                             String link = LinkManager.getSubsystemAlertDefinitionLink(resourceId, alertDefId);
-                            return "<a href=\"" + link + "\">" + StringUtility.escapeHtml(alertDef.getName()) + "</a>";
+                            ViewLink viewLink = new ViewLink(extendLocatorId("ViewLink"),
+                                    StringUtility.escapeHtml(alertDef.getName()), link);
+                            hLayout.addMember(viewLink);
+                            return hLayout;
                         }
-                    });
+                    };
+                    fields.set(i, canvasField);
                 }
             }
 
             // add more columns
-            ListGridField parentField = new ListGridField(FIELD_PARENT, MSG.view_alerts_field_parent());
-            parentField.setWidth(100);
+            CanvasField parentField = new CanvasField(FIELD_PARENT, MSG.view_alerts_field_parent(), 100) {
+                protected Canvas createCanvas(ListGrid grid, final ListGridRecord record) {
+                    HLayout hLayout = createHLayout(grid);
+
+                    final AlertDefinition alertDef = copyValues(record);
+                    boolean hasParent;
+                    String linkText;
+                    if (alertDef.getParentId() != null && alertDef.getParentId() > 0) {
+                        // has a parent template alertdef
+                        hasParent = true;
+                        linkText = "Template Alert";
+                    } else if (alertDef.getGroupAlertDefinition() != null) {
+                        // has a parent group alertdef
+                        hasParent = true;
+                        linkText = "Group Alert";
+                    } else {
+                        hasParent = false;
+                        linkText = null;
+                    }
+                    if (hasParent) {
+                        // we only display a link if we really have a parent.
+                        // if we have a template parent, we have to get the resource's type and go to the template page for that type
+                        // if we have a group parent, we can directly go to the group's alert def page
+                        Link link = new Link("Link", linkText, new ClickHandler() {
+                            public void onClick(ClickEvent event) {
+                                if (alertDef.getParentId() != null && alertDef.getParentId() > 0) {
+                                    // has a parent template alertdef
+                                    final Integer templateId = alertDef.getParentId();
+                                    final Integer resourceId = alertDef.getResource().getId();
+
+                                    ResourceCriteria resCriteria = new ResourceCriteria();
+                                    resCriteria.addFilterId(resourceId);
+                                    resCriteria.fetchResourceType(true);
+
+                                    GWTServiceLookup.getResourceService().findResourcesByCriteria(resCriteria,
+                                        new AsyncCallback<PageList<Resource>>() {
+                                            @Override
+                                            public void onSuccess(PageList<Resource> result) {
+                                                if (result == null || result.size() != 1) {
+                                                    CoreGUI.getErrorHandler().handleError(
+                                                        MSG.view_reports_alertDefinitions_resTypeLoadError());
+                                                } else {
+                                                    int typeId = result.get(0).getResourceType().getId();
+                                                    CoreGUI.goToView(LinkManager.getAdminTemplatesLink() + "/Alert/" + typeId + "/"
+                                                        + templateId);
+                                                }
+                                            }
+
+                                            @Override
+                                            public void onFailure(Throwable caught) {
+                                                CoreGUI.getErrorHandler().handleError(
+                                                    MSG.view_reports_alertDefinitions_resTypeLoadError(), caught);
+                                            }
+                                        });
+
+                                } else if (alertDef.getGroupAlertDefinition() != null) {
+                                    // has a parent group alertdef
+                                    AlertDefinition groupAlertDef = alertDef.getGroupAlertDefinition();
+                                    CoreGUI.goToView(LinkManager.getResourceGroupLink(groupAlertDef.getResourceGroup().getId())
+                                        + "/Alerts/Definitions/" + groupAlertDef.getId());
+                                }
+                            }
+                        });
+                        hLayout.addMember(link);
+                    } else {
+                        hLayout.addMember(new HTMLFlow(MSG.common_val_na()));
+                    }
+
+                    return hLayout;
+                }
+            };
             parentField.setShowHover(true);
             parentField.setHoverCustomizer(new HoverCustomizer() {
-                @Override
                 public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
                     if (record.getAttribute(FIELD_PARENT) != null) {
                         return MSG.view_reports_alertDefinitions_parentHover();
@@ -148,59 +225,20 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
                     return MSG.common_val_na();
                 }
             });
-            parentField.addRecordClickHandler(new RecordClickHandler() {
-                @Override
-                public void onRecordClick(RecordClickEvent event) {
-                    // we only do something if we really have a parent.
-                    // if we have a template parent, we have to get the resource's type and go to the template page for that type
-                    // if we have a group parent, we can directly go to the group's alert def page
-                    Record record = event.getRecord();
-                    AlertDefinition alertDef = copyValues(record);
-                    if (alertDef.getParentId() != null && alertDef.getParentId().intValue() > 0) {
-                        final Integer templateId = alertDef.getParentId().intValue();
-                        final Integer resourceId = alertDef.getResource().getId();
-
-                        ResourceCriteria resCriteria = new ResourceCriteria();
-                        resCriteria.addFilterId(resourceId);
-                        resCriteria.fetchResourceType(true);
-
-                        GWTServiceLookup.getResourceService().findResourcesByCriteria(resCriteria,
-                            new AsyncCallback<PageList<Resource>>() {
-                                @Override
-                                public void onSuccess(PageList<Resource> result) {
-                                    if (result == null || result.size() != 1) {
-                                        CoreGUI.getErrorHandler().handleError(
-                                            MSG.view_reports_alertDefinitions_resTypeLoadError());
-                                    } else {
-                                        int typeId = result.get(0).getResourceType().getId();
-                                        CoreGUI.goToView(LinkManager.getAdminTemplatesLink() + "/Alert/" + typeId + "/"
-                                            + templateId);
-                                    }
-                                }
-
-                                @Override
-                                public void onFailure(Throwable caught) {
-                                    CoreGUI.getErrorHandler().handleError(
-                                        MSG.view_reports_alertDefinitions_resTypeLoadError(), caught);
-                                }
-                            });
-                    } else if (alertDef.getGroupAlertDefinition() != null) {
-                        AlertDefinition groupAlertDef = alertDef.getGroupAlertDefinition();
-                        CoreGUI.goToView(LinkManager.getResourceGroupLink(groupAlertDef.getResourceGroup().getId())
-                            + "/Alerts/Definitions/" + groupAlertDef.getId());
-                    }
-                }
-            });
             fields.add(parentField);
 
-            ListGridField resourceField = new ListGridField(FIELD_RESOURCE, MSG.common_title_resource());
-            resourceField.setCellFormatter(new CellFormatter() {
-                public String format(Object value, ListGridRecord listGridRecord, int i, int i1) {
-                    String url = LinkManager
-                        .getResourceLink(listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
-                    return SeleniumUtility.getLocatableHref(url, StringUtility.escapeHtml(value.toString()), null);
+            CanvasField resourceField = new CanvasField(FIELD_RESOURCE, MSG.common_title_resource()) {
+                protected Canvas createCanvas(ListGrid grid, ListGridRecord record) {
+                    HLayout hLayout = createHLayout(grid);
+                    Integer resourceId = record.getAttributeAsInt(AncestryUtil.RESOURCE_ID);
+                    String url = LinkManager.getResourceLink(resourceId);
+                    String resourceName = record.getAttribute(FIELD_RESOURCE);
+                    ViewLink viewLink = new ViewLink(extendLocatorId("ViewLink"),
+                                    StringUtility.escapeHtml(resourceName), url);
+                    hLayout.addMember(viewLink);
+                    return hLayout;
                 }
-            });
+            };
             resourceField.setShowHover(true);
             resourceField.setHoverCustomizer(new HoverCustomizer() {
                 public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {
@@ -258,7 +296,7 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
             DataSourceField resourceField = new DataSourceTextField(FIELD_RESOURCE);
             fields.add(resourceField);
 
-            DataSourceField parentField = new DataSourceTextField(FIELD_RESOURCE);
+            DataSourceField parentField = new DataSourceTextField(FIELD_PARENT);
             fields.add(parentField);
 
             return fields;

@@ -54,7 +54,6 @@ import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import com.smartgwt.client.widgets.form.fields.events.FormItemClickHandler;
 import com.smartgwt.client.widgets.form.fields.events.FormItemIconClickEvent;
-import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
@@ -73,8 +72,10 @@ import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
 import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.components.ViewLink;
 import org.rhq.enterprise.gui.coregui.client.components.table.EscapedHtmlCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
+import org.rhq.enterprise.gui.coregui.client.components.table.ViewLinkField;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupsDataSource;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.definitions.GroupDefinitionExpressionBuilder.AddExpressionHandler;
@@ -249,16 +250,14 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
             idField.setType(ListGridFieldType.INTEGER);
             idField.setWidth("50");
 
-            ListGridField nameField = new ListGridField(NAME.propertyName(), NAME.title());
-            nameField.setWidth("*");
-            nameField.setCellFormatter(new CellFormatter() {
-                @Override
-                public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
-                    String linkName = record.getAttributeAsString(NAME.propertyName());
+            ViewLinkField nameField = new ViewLinkField(NAME.propertyName(), NAME.title()) {
+                protected ViewLink getViewLink(ListGrid grid, ListGridRecord record) {
+                    String linkName = StringUtility.escapeHtml(record.getAttributeAsString(NAME.propertyName()));
                     String linkUrl = LinkManager.getResourceGroupLink(record.getAttributeAsInt("id"));
-                    return "<a href=\"" + linkUrl + "\">" + StringUtility.escapeHtml(linkName) + "</a>";
+                    return new ViewLink(extendLocatorId("ViewLink"), linkName, linkUrl);
                 }
-            });
+            };
+            nameField.setWidth("*");
 
             ListGridField descriptionField = new ListGridField(DESCRIPTION.propertyName(), DESCRIPTION.title());
             descriptionField.setWidth("300");

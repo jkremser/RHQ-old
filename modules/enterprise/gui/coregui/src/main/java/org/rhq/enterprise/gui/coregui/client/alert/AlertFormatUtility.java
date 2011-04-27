@@ -210,6 +210,7 @@ public class AlertFormatUtility {
         AlertDefinition recoveryAlertDefinition = alert.getRecoveryAlertDefinition();
         if (recoveryAlertDefinition != null && recoveryAlertDefinition.getId() != 0) {
             int resourceId = alert.getAlertDefinition().getResource().getId();
+            // TODO (ips, 04/27/11): Can the below URL be converted over to a coregui URL?
             String otherAlertDef = "<a href=\"/alerts/Config.do?mode=viewRoles&id=" + resourceId + "&ad="
                 + recoveryAlertDefinition.getId() + "\">" + recoveryAlertDefinition.getName() + "</a>";
             recoveryInfo = MSG.view_alert_common_tab_conditions_recovery_enabled(otherAlertDef);

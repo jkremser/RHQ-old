@@ -29,7 +29,7 @@ import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Img;
-import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.HLayout;
@@ -46,6 +46,8 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.components.ViewLink;
+import org.rhq.enterprise.gui.coregui.client.components.table.ViewLinkField;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
@@ -55,6 +57,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.MeasurementDataGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceTypeGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
+import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableListGrid;
 
 /**
@@ -119,15 +122,14 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
     }
 
     private void buildUI() {
-
-        ListGridField nameField = new ListGridField(ResourceDataSourceField.NAME.propertyName(), MSG
-            .common_title_name());
-        nameField.setCellFormatter(new CellFormatter() {
-            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                return "<a href=\"" + LinkManager.getResourceLink(listGridRecord.getAttributeAsInt("id")) + "\">" + o
-                    + "</a>";
+        ViewLinkField nameField = new ViewLinkField(ResourceDataSourceField.NAME.propertyName(), MSG
+            .common_title_name()) {
+            protected ViewLink getViewLink(ListGrid grid, ListGridRecord record) {
+                String resourceUrl = LinkManager.getResourceLink(record.getAttributeAsInt("id"));
+                String linkText = StringUtility.escapeHtml(record.getAttribute(ResourceDataSourceField.NAME.propertyName()));
+                return new ViewLink(extendLocatorId("ViewLink"), linkText, resourceUrl);
             }
-        });
+        };
         nameField.setWidth("20%");
         setFields(nameField);
 

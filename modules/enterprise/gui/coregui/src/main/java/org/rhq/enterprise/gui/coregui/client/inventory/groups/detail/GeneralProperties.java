@@ -24,6 +24,7 @@ import java.util.List;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.widgets.HTMLFlow;
+import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.layout.HLayout;
@@ -34,6 +35,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.components.ViewLink;
 import org.rhq.enterprise.gui.coregui.client.components.form.CheckboxEditableFormItem;
 import org.rhq.enterprise.gui.coregui.client.components.form.EditableFormItem;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm;
@@ -237,12 +239,13 @@ public class GeneralProperties extends LocatableVLayout {
         formItems.add(lastModifiedByItem);
 
         if (isDynaGroup) {
-            StaticTextItem groupDefinitionItem = new StaticTextItem("groupDefinition", MSG
+            CanvasItem groupDefinitionItem = new CanvasItem("groupDefinition", MSG
                 .view_group_summary_groupDefinition());
             GroupDefinition groupDefinition = group.getGroupDefinition();
             String groupDefinitionUrl = LinkManager.getGroupDefinitionLink(groupDefinition.getId());
             String groupDefinitionName = StringUtility.escapeHtml(groupDefinition.getName());
-            groupDefinitionItem.setValue("<a href=\"" + groupDefinitionUrl + "\">" + groupDefinitionName + "</a>");
+            ViewLink viewLink = new ViewLink(extendLocatorId("ViewLink"), groupDefinitionName, groupDefinitionUrl);
+            groupDefinitionItem.setCanvas(viewLink);
             formItems.add(groupDefinitionItem);
         }
 
