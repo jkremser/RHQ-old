@@ -36,7 +36,6 @@ import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.SortSpecifier;
-import com.smartgwt.client.types.Autofit;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.SelectionStyle;
@@ -253,7 +252,7 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
         listGrid.setSelectionType(getDefaultSelectionStyle());
 
         if (flexRowDisplay) {
-            listGrid.setAutoFitData(Autofit.HORIZONTAL);
+            //listGrid.setAutoFitData(Autofit.HORIZONTAL); // do NOT set this - smartgwt appears to have a problem that causes it to eat CPU
             listGrid.setWrapCells(true);
             listGrid.setFixedRecordHeights(false);
         }
