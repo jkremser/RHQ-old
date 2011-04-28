@@ -113,9 +113,9 @@ public class TagCloudView extends LocatableVLayout {
 
         // build the HTML block that contains all the tags with variable font sizes
         // where the font size represents the relative number of times the tag is used
+        // TODO (ips: 04/28/11): Replace raw HTML w/ SmartGWT widgets.
         StringBuilder buf = new StringBuilder();
         for (TagReportComposite tag : tags) {
-
             int font = (int) ((((double) tag.getTotal()) / (double) max) * (MAX_FONTSIZE - MIN_FONTSIZE))
                 + MIN_FONTSIZE;
 

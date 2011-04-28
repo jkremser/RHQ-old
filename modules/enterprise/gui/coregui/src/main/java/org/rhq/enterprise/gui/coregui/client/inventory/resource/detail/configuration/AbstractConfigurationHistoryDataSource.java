@@ -28,8 +28,10 @@ import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.HoverCustomizer;
+import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.RecordClickEvent;
@@ -42,6 +44,8 @@ import org.rhq.core.domain.criteria.AbstractResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.gui.coregui.client.ErrorMessageWindow;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.components.ViewLink;
+import org.rhq.enterprise.gui.coregui.client.components.table.CanvasField;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -195,19 +199,20 @@ public abstract class AbstractConfigurationHistoryDataSource<T extends AbstractR
         ListGridField subjectField = new ListGridField(Field.SUBJECT, MSG.common_title_user());
         fields.add(subjectField);
 
-        ListGridField updateTypeField = new ListGridField(Field.GROUP_CONFIG_UPDATE_ID, MSG
-            .dataSource_configurationHistory_updateType());
-        updateTypeField.setCellFormatter(new CellFormatter() {
-            @Override
-            public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
-                if (value == null) {
-                    return MSG.dataSource_configurationHistory_updateType_individual();
+        CanvasField updateTypeField = new CanvasField(Field.GROUP_CONFIG_UPDATE_ID, MSG
+            .dataSource_configurationHistory_updateType()) {
+            protected Canvas createCanvas(ListGrid grid, ListGridRecord record) {
+                Integer groupConfigUpdateId = record.getAttributeAsInt(Field.GROUP_CONFIG_UPDATE_ID);
+                if (groupConfigUpdateId == null) {
+                    return new HTMLFlow(MSG.dataSource_configurationHistory_updateType_individual());
+                } else {
+                    Integer groupId = record.getAttributeAsInt(Field.GROUP_ID);
+                    String link = getGroupConfigurationUpdateHistoryLink(groupId, groupConfigUpdateId);
+                    String linkText = MSG.dataSource_configurationHistory_updateType_group();
+                    return new ViewLink("GroupConfigUpdateLink" + groupConfigUpdateId, linkText, link);
                 }
-                Integer groupId = record.getAttributeAsInt(Field.GROUP_ID);
-                return "<a href=\"" + getGroupConfigurationUpdateHistoryLink(groupId, (Number) value) + "\">"
-                    + MSG.dataSource_configurationHistory_updateType_group() + "</a>";
             }
-        });
+        };
         fields.add(updateTypeField);
 
         // determine the widths of our columns

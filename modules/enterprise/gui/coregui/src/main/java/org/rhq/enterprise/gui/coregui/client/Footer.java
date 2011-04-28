@@ -195,6 +195,7 @@ public class Footer extends LocatableHLayout {
         }
 
         private void changeIcon(int alertCount) {
+            // TODO (ips, 04/28/11): Replace this raw HTML w/ SmartGWT widgets.
             if (alertCount == 0) {
                 setPrompt(MSG.view_core_noRecentAlerts());
                 setContents(imgHTML("subsystems/alert/Alerts_16.png", 16, 16)
