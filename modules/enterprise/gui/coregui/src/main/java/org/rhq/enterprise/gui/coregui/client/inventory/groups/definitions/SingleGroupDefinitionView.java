@@ -251,7 +251,7 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
             idField.setWidth("50");
 
             ViewLinkField nameField = new ViewLinkField(NAME.propertyName(), NAME.title()) {
-                protected ViewLink getViewLink(ListGrid grid, ListGridRecord record) {
+                protected ViewLink getViewLink(ListGrid grid, ListGridRecord record, Object value) {
                     String linkName = StringUtility.escapeHtml(record.getAttributeAsString(NAME.propertyName()));
                     String linkUrl = LinkManager.getResourceGroupLink(record.getAttributeAsInt("id"));
                     return new ViewLink(extendLocatorId("ViewLink"), linkName, linkUrl);

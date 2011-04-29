@@ -124,7 +124,7 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
     private void buildUI() {
         ViewLinkField nameField = new ViewLinkField(ResourceDataSourceField.NAME.propertyName(), MSG
             .common_title_name()) {
-            protected ViewLink getViewLink(ListGrid grid, ListGridRecord record) {
+            protected ViewLink getViewLink(ListGrid grid, ListGridRecord record, Object value) {
                 String resourceUrl = LinkManager.getResourceLink(record.getAttributeAsInt("id"));
                 String linkText = StringUtility.escapeHtml(record.getAttribute(ResourceDataSourceField.NAME.propertyName()));
                 return new ViewLink(extendLocatorId("ViewLink"), linkText, resourceUrl);

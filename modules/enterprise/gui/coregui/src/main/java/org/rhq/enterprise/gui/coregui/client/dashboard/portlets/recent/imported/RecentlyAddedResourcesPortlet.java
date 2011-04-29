@@ -34,6 +34,7 @@ import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.HLayout;
+import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.tree.TreeGrid;
 
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -93,15 +94,15 @@ public class RecentlyAddedResourcesPortlet extends LocatableVLayout implements C
         treeGrid.setTreeFieldTitle("Resource Name");
 
         CanvasField resourceNameField = new CanvasField("name", MSG.common_title_resource_name()) {
-            protected Canvas createCanvas(ListGrid grid, ListGridRecord record) {
-                HLayout hLayout = createHLayout(grid);
+            protected Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
+                VLayout vLayout = createVLayout(grid);
                 int resourceId = record.getAttributeAsInt("id");
                 String resourceName = record.getAttribute("name");
                 String resourceViewPath = LinkManager.getResourceLink(resourceId);
                 ViewLink viewLink = new ViewLink(extendLocatorId("ViewLink"), StringUtility.escapeHtml(resourceName),
                         resourceViewPath);
-                hLayout.addMember(viewLink);
-                return hLayout;
+                vLayout.addMember(viewLink);
+                return vLayout;
             }
         };
 

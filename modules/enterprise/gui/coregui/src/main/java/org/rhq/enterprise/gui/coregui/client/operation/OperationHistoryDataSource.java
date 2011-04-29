@@ -16,7 +16,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-
 package org.rhq.enterprise.gui.coregui.client.operation;
 
 import java.util.ArrayList;
@@ -32,11 +31,13 @@ import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
 import com.smartgwt.client.widgets.events.CloseClientEvent;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.HoverCustomizer;
+import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.RecordClickEvent;
@@ -54,7 +55,10 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.components.ViewLink;
+import org.rhq.enterprise.gui.coregui.client.components.table.CanvasField;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
+import org.rhq.enterprise.gui.coregui.client.components.table.ViewLinkField;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.OperationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
@@ -63,7 +67,6 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTyp
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Jay Shaughnessy
@@ -123,14 +126,13 @@ public class OperationHistoryDataSource extends
         fields.add(statusField);
 
         if (this.entityContext.type != EntityContext.Type.Resource) {
-            ListGridField resourceNameField = new ListGridField(AncestryUtil.RESOURCE_NAME, MSG.common_title_resource());
-            resourceNameField.setCellFormatter(new CellFormatter() {
-                public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+            ViewLinkField resourceNameField = new ViewLinkField(AncestryUtil.RESOURCE_NAME, MSG.common_title_resource()) {
+                protected ViewLink getViewLink(ListGrid grid, ListGridRecord record, Object value) {
                     String url = LinkManager
-                        .getResourceLink(listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
-                    return SeleniumUtility.getLocatableHref(url, o.toString(), null);
+                        .getResourceLink(record.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
+                    return new ViewLink(value.toString(), url);
                 }
-            });
+            };
             resourceNameField.setShowHover(true);
             resourceNameField.setHoverCustomizer(new HoverCustomizer() {
 
@@ -160,23 +162,22 @@ public class OperationHistoryDataSource extends
     }
 
     protected ListGridField createStartedTimeField() {
-        ListGridField startedTimeField = new ListGridField(Field.STARTED_TIME, MSG
-            .view_operationHistoryDetails_dateSubmitted());
-        startedTimeField.setAlign(Alignment.LEFT);
-        startedTimeField.setCellAlign(Alignment.LEFT);
-        startedTimeField.setCellFormatter(new TimestampCellFormatter() {
-            public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
+        CanvasField startedTimeField = new CanvasField(Field.STARTED_TIME, MSG
+            .view_operationHistoryDetails_dateSubmitted()) {
+            protected Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
                 if (value != null) {
-                    String timestamp = super.format(value, record, rowNum, colNum);
+                    String timestamp = TimestampCellFormatter.format(value);
                     Integer resourceId = record.getAttributeAsInt(AncestryUtil.RESOURCE_ID);
                     Integer opHistoryId = record.getAttributeAsInt("id");
                     String url = LinkManager.getSubsystemResourceOperationHistoryLink(resourceId, opHistoryId);
-                    return SeleniumUtility.getLocatableHref(url, timestamp, null);
+                    return new ViewLink(timestamp, url);
                 } else {
-                    return "<i>" + MSG.view_operationHistoryList_notYetStarted() + "</i>";
+                    return new HTMLFlow("<i>" + MSG.view_operationHistoryList_notYetStarted() + "</i>");
                 }
             }
-        });
+        };
+        startedTimeField.setAlign(Alignment.LEFT);
+        startedTimeField.setCellAlign(Alignment.LEFT);
         startedTimeField.setShowHover(true);
         startedTimeField.setHoverCustomizer(TimestampCellFormatter.getHoverCustomizer(Field.STARTED_TIME));
 
@@ -194,18 +195,18 @@ public class OperationHistoryDataSource extends
                 String statusStr = record.getAttribute(Field.STATUS);
                 OperationRequestStatus status = OperationRequestStatus.valueOf(statusStr);
                 switch (status) {
-                case SUCCESS: {
-                    return MSG.common_status_success();
-                }
-                case FAILURE: {
-                    return MSG.common_status_failed();
-                }
-                case INPROGRESS: {
-                    return MSG.common_status_inprogress();
-                }
-                case CANCELED: {
-                    return MSG.common_status_canceled();
-                }
+                    case SUCCESS: {
+                        return MSG.common_status_success();
+                    }
+                    case FAILURE: {
+                        return MSG.common_status_failed();
+                    }
+                    case INPROGRESS: {
+                        return MSG.common_status_inprogress();
+                    }
+                    case CANCELED: {
+                        return MSG.common_status_canceled();
+                    }
                 }
                 // should never get here
                 return MSG.common_status_unknown();
@@ -276,22 +277,22 @@ public class OperationHistoryDataSource extends
         final long start = System.currentTimeMillis();
 
         this.operationService.findResourceOperationHistoriesByCriteria(criteria,
-            new AsyncCallback<PageList<ResourceOperationHistory>>() {
+                new AsyncCallback<PageList<ResourceOperationHistory>>() {
 
-                public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler()
-                        .handleError(MSG.view_operationHistoryDetails_error_fetchFailure(), caught);
-                    response.setStatus(RPCResponse.STATUS_FAILURE);
-                    processResponse(request.getRequestId(), response);
-                }
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler()
+                                .handleError(MSG.view_operationHistoryDetails_error_fetchFailure(), caught);
+                        response.setStatus(RPCResponse.STATUS_FAILURE);
+                        processResponse(request.getRequestId(), response);
+                    }
 
-                public void onSuccess(PageList<ResourceOperationHistory> result) {
-                    long fetchTime = System.currentTimeMillis() - start;
-                    Log.info(result.size() + " operation histories fetched in: " + fetchTime + "ms");
+                    public void onSuccess(PageList<ResourceOperationHistory> result) {
+                        long fetchTime = System.currentTimeMillis() - start;
+                        Log.info(result.size() + " operation histories fetched in: " + fetchTime + "ms");
 
-                    dataRetrieved(result, response, request);
-                }
-            });
+                        dataRetrieved(result, response, request);
+                    }
+                });
     }
 
     /**

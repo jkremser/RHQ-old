@@ -34,11 +34,13 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.components.ViewLink;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricGraphView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
@@ -99,8 +101,7 @@ public class ResourceMetricGraphView extends AbstractMetricGraphView {
 
                             public void onTypesLoaded(Map<Integer, ResourceType> types) {
                                 String url = LinkManager.getResourceLink(resource.getId());
-                                resourceTitle = new HTMLFlow(SeleniumUtility.getLocatableHref(url, resource.getName(),
-                                    null));
+                                resourceTitle = new ViewLink(StringUtility.escapeHtml(resource.getName()), url);
                                 resourceTitle.setTooltip(AncestryUtil.getAncestryHoverHTMLForResource(resource, types,
                                     0));
 

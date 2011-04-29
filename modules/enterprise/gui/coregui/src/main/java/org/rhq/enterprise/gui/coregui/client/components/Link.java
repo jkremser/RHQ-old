@@ -33,48 +33,65 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHTMLFlow;
  */
 public class Link extends LocatableHTMLFlow {
 
-    private static final String DEFAULT_MOUSE_OUT_STYLE_NAME = "viewLink";
-    private static final String DEFAULT_MOUSE_OVER_STYLE_NAME = "viewLinkHover";
+    private static final String DEFAULT_MOUSE_OVER_STYLE_NAME = "linkHover";
+    private static final String DEFAULT_MOUSE_OUT_STYLE_NAME = "link";
 
     private String mouseOverStyleName;
     private String mouseOutStyleName;
 
+    public Link(String linkText, ClickHandler clickHandler) {
+        this(linkText, linkText, clickHandler);
+    }
+
     public Link(String locatorId, String linkText, ClickHandler clickHandler) {
         super(locatorId);
 
-        this.mouseOutStyleName = DEFAULT_MOUSE_OUT_STYLE_NAME;
         this.mouseOverStyleName = DEFAULT_MOUSE_OVER_STYLE_NAME;
+        this.mouseOutStyleName = DEFAULT_MOUSE_OUT_STYLE_NAME;
 
-	    setWidth100();
-        setHeight(25);
+        // TODO (ips, 04/28/11): This is lame - find a better way.
+	    int width = 0;
+        for (int i = 0; i < linkText.length(); i++) {
+            int charWidth = (Character.isUpperCase(linkText.charAt(i))) ? 8 : 6;
+            width += charWidth;
+        }
+        setWidth(width);
+        //setAutoWidth();
         setContents(linkText);
 
         addClickHandler(clickHandler);
-
-        addMouseOverHandler(new MouseOverHandler() {
-            public void onMouseOver(MouseOverEvent event) {
-                if (mouseOutStyleName != null && mouseOverStyleName != null) {
-                    setStyleName(mouseOverStyleName);
-                    markForRedraw();
-                }
-            }
-        });
-
-        addMouseOutHandler(new MouseOutHandler() {
-            public void onMouseOut(MouseOutEvent event) {
-                if (mouseOutStyleName != null && mouseOverStyleName != null) {
-                    setStyleName(mouseOutStyleName);
-                    markForRedraw();
-                }
-            }
-        });
     }
 
     @Override
     protected void onInit() {
         super.onInit();
 
-        setStyleName(getMouseOutStyleName());
+        if (this.mouseOverStyleName != null) {
+            addMouseOverHandler(new MouseOverHandler() {
+                public void onMouseOver(MouseOverEvent event) {
+                    handleMouseOverEvent();
+                }
+            });
+        }
+
+        if (this.mouseOutStyleName != null) {
+            setStyleName(this.mouseOutStyleName);
+            addMouseOutHandler(new MouseOutHandler() {
+                public void onMouseOut(MouseOutEvent event) {
+                    handleMouseOutEvent();
+                }
+            });
+        }
+    }
+
+    protected void handleMouseOverEvent() {
+        setStyleName(mouseOverStyleName);
+        markForRedraw();
+    }
+
+    protected void handleMouseOutEvent() {
+        setStyleName(mouseOutStyleName);
+        markForRedraw();
     }
 
     public String getMouseOverStyleName() {

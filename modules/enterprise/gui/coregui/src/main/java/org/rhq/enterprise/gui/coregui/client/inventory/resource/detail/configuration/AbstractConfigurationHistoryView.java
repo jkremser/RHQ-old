@@ -23,21 +23,25 @@ import java.util.List;
 
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.Img;
+import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import com.smartgwt.client.widgets.layout.HLayout;
+import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
 import org.rhq.core.domain.criteria.AbstractResourceConfigurationUpdateCriteria;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.components.ViewLink;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationComparisonView;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
+import org.rhq.enterprise.gui.coregui.client.components.table.CanvasField;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * The superclass to the main plugin/resource views that lists all configuration history items.
@@ -153,18 +157,24 @@ public abstract class AbstractConfigurationHistoryView<T extends AbstractConfigu
     }
 
     @Override
-    protected CellFormatter getDetailsLinkColumnCellFormatter() {
-        return new CellFormatter() {
-            public String format(Object value, ListGridRecord record, int i, int i1) {
-                Integer recordId = getId(record);
-                String detailsUrl = "#" + getBasePath() + "/" + recordId;
-                String cellHtml = SeleniumUtility.getLocatableHref(detailsUrl, value.toString(), null);
+    protected CanvasField createDetailsLinkField(ListGridField field) {
+        return new CanvasField(field) {
+            protected Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
+                VLayout vLayout = createVLayout(grid);
+                HLayout hLayout = new HLayout();
+
                 String isCurrentConfig = record
                     .getAttribute(AbstractConfigurationHistoryDataSource.Field.CURRENT_CONFIG);
                 if (Boolean.parseBoolean(isCurrentConfig)) {
-                    cellHtml = Canvas.imgHTML(ImageManager.getApproveIcon()) + cellHtml;
+                    Img approveIcon = new Img(ImageManager.getApproveIcon());
+                    hLayout.addMember(approveIcon);
                 }
-                return cellHtml;
+
+                ViewLink detailsViewLink = createDetailsViewLink(record, value);
+                hLayout.addMember(detailsViewLink);
+
+                vLayout.addMember(hLayout);
+                return vLayout;
             }
         };
     }

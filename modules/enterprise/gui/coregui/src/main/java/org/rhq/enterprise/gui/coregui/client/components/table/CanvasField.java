@@ -20,12 +20,12 @@
 package org.rhq.enterprise.gui.coregui.client.components.table;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.smartgwt.client.types.Overflow;
+import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-import com.smartgwt.client.widgets.layout.HLayout;
+import com.smartgwt.client.widgets.layout.VLayout;
 
 /**
  * Formats a cell value as a SmartGWT canvas.
@@ -59,7 +59,7 @@ public abstract class CanvasField extends ListGridField {
         super(field.getName(), field.getTitle());
 
         setWidth(field.getWidth());
-        // TODO: clone other commonly used fields
+        // TODO (ips, 04/27/11): clone other commonly used fields
     }
 
     /**
@@ -67,23 +67,46 @@ public abstract class CanvasField extends ListGridField {
      *
      * @param grid
      * @param record
+     * @param value
+     *
      * @return
      */
-    protected abstract Canvas createCanvas(ListGrid grid, ListGridRecord record);
+    protected abstract Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value);
 
-    protected HLayout createHLayout(ListGrid grid) {
-        HLayout component = new HLayout();
-        component.setWidth100();
-        // TODO: is this the best way to deal w/ height?
-        component.setHeight(25);
-        component.setMargin(grid.getCellPadding());
-        component.setOverflow(Overflow.HIDDEN);
-        return component;
+    protected VLayout createVLayout(ListGrid grid) {
+        VLayout vLayout = new CanvasFieldVLayout(grid);
+        /*vLayout.setWidth(grid.getFieldWidth(getName()));
+        vLayout.setHeight100();
+        //vLayout.setOverflow(Overflow.VISIBLE);
+        //vLayout.setAutoHeight();
+        vLayout.setMargin(grid.getCellPadding());
+        vLayout.setAlign(VerticalAlignment.CENTER);*/
+        return vLayout;
     }
 
     @Override
     public String toString() {
         return getClass().getName() + "[name=" + getName() + ", title=" + getTitle() + "]";
+    }
+
+    class CanvasFieldVLayout extends VLayout {
+        private ListGrid grid;
+
+        CanvasFieldVLayout(ListGrid grid) {
+            this.grid = grid;
+            setWidth(grid.getFieldWidth(getName()));
+            setHeight100();
+            //setOverflow(Overflow.VISIBLE);
+            //setAutoHeight();
+            setMargin(grid.getCellPadding());
+            setAlign(VerticalAlignment.CENTER);
+        }
+
+        @Override
+        public void redraw() {
+            setWidth(this.grid.getFieldWidth(getName()));
+            super.redraw();
+        }
     }
 
 }

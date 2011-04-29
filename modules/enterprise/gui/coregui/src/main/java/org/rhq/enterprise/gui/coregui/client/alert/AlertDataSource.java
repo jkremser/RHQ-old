@@ -36,6 +36,7 @@ import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.HoverCustomizer;
+import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
@@ -53,7 +54,9 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.components.ViewLink;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
+import org.rhq.enterprise.gui.coregui.client.components.table.ViewLinkField;
 import org.rhq.enterprise.gui.coregui.client.gwt.AlertGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
@@ -61,7 +64,6 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTyp
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.TypesLoadedCallback;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Ian Springer
@@ -107,15 +109,14 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
         ctimeField.setHoverCustomizer(TimestampCellFormatter.getHoverCustomizer(AlertCriteria.SORT_FIELD_CTIME));
         fields.add(ctimeField);
 
-        ListGridField nameField = new ListGridField("name", MSG.view_alerts_field_name());
-        nameField.setCellFormatter(new CellFormatter() {
-            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                Integer resourceId = listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID);
-                Integer defId = listGridRecord.getAttributeAsInt("definitionId");
+        ViewLinkField nameField = new ViewLinkField("name", MSG.view_alerts_field_name()) {
+            protected ViewLink getViewLink(ListGrid grid, ListGridRecord record, Object value) {
+                Integer resourceId = record.getAttributeAsInt(AncestryUtil.RESOURCE_ID);
+                Integer defId = record.getAttributeAsInt("definitionId");
                 String url = LinkManager.getSubsystemAlertDefinitionLink(resourceId, defId);
-                return SeleniumUtility.getLocatableHref(url, o.toString(), null);
+                return new ViewLink(value.toString(), url);
             }
-        });
+        };
         fields.add(nameField);
 
         ListGridField conditionField = new ListGridField("conditionText", MSG.view_alerts_field_condition_text());
@@ -175,14 +176,13 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
         fields.add(statusField);
 
         if (this.entityContext.type != EntityContext.Type.Resource) {
-            ListGridField resourceNameField = new ListGridField(AncestryUtil.RESOURCE_NAME, MSG.common_title_resource());
-            resourceNameField.setCellFormatter(new CellFormatter() {
-                public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+            ViewLinkField resourceNameField = new ViewLinkField(AncestryUtil.RESOURCE_NAME, MSG.common_title_resource()) {
+                protected ViewLink getViewLink(ListGrid grid, ListGridRecord record, Object value) {
                     String url = LinkManager
-                        .getResourceLink(listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
-                    return SeleniumUtility.getLocatableHref(url, o.toString(), null);
+                        .getResourceLink(record.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
+                    return new ViewLink(value.toString(), url);
                 }
-            });
+            };
             resourceNameField.setShowHover(true);
             resourceNameField.setHoverCustomizer(new HoverCustomizer() {
 

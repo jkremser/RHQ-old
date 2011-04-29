@@ -13,6 +13,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.components.table.ViewLinkField;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history.AbstractOperationHistoryDataSource;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history.AbstractOperationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
@@ -44,14 +45,8 @@ public class GroupMemberResourceOperationHistoryListView extends
         idField.setWidth(38);
         fields.add(idField);
 
-        ListGridField resourceField = createResourceField();
+        ViewLinkField resourceField = createResourceField();
         resourceField.setWidth("25%");
-        resourceField.setCellFormatter(new CellFormatter() {
-            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                String url = LinkManager.getResourceLink(listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
-                return SeleniumUtility.getLocatableHref(url, o.toString(), null);
-            }
-        });
         resourceField.setShowHover(true);
         resourceField.setHoverCustomizer(new HoverCustomizer() {
             public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {

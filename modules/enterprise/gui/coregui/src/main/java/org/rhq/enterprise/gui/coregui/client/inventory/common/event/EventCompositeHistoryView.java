@@ -44,6 +44,7 @@ import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.components.ViewLink;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnumSelectItem;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
@@ -212,14 +213,11 @@ public class EventCompositeHistoryView extends TableSection<EventCompositeDataso
         return "timestamp";
     }
 
-    protected CellFormatter getDetailsLinkColumnCellFormatter() {
-        return new CellFormatter() {
-            public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
-                Integer recordId = getId(record);
-                String detailsUrl = "#" + getBasePath() + "/" + recordId;
-                return SeleniumUtility.getLocatableHref(detailsUrl, TimestampCellFormatter.format(value), null);
-            }
-        };
+    @Override
+    protected ViewLink createDetailsViewLink(ListGridRecord record, Object value) {
+        Integer recordId = getId(record);
+        String detailsUrl = getBasePath() + "/" + recordId;
+        return new ViewLink(TimestampCellFormatter.format(value), detailsUrl);
     }
 
     private void setupTableInteractions() {

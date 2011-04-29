@@ -46,10 +46,12 @@ import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.components.ViewLink;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.AuthorizedTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
+import org.rhq.enterprise.gui.coregui.client.components.table.ViewLinkField;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.wizard.GroupCreateWizard;
@@ -136,16 +138,14 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
             }
         });
 
-        ListGridField nameField = new ListGridField(NAME.propertyName(), NAME.title());
-        nameField.setWidth("40%");
-
-        nameField.setCellFormatter(new CellFormatter() {
-            public String format(Object value, ListGridRecord record, int i, int i1) {
+        ViewLinkField nameField = new ViewLinkField(NAME.propertyName(), NAME.title()) {
+            protected ViewLink getViewLink(ListGrid grid, ListGridRecord record, Object value) {
                 String groupId = record.getAttribute("id");
                 String groupUrl = LinkManager.getResourceGroupLink(Integer.valueOf(groupId));
-                return SeleniumUtility.getLocatableHref(groupUrl, value.toString(), null);
+                return new ViewLink(value.toString(), groupUrl);
             }
-        });
+        };
+        nameField.setWidth("40%");
 
         ListGridField descriptionField = new ListGridField(DESCRIPTION.propertyName(), DESCRIPTION.title());
         descriptionField.setWidth("30%");

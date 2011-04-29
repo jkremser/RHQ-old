@@ -155,9 +155,8 @@ public class MenuBarView extends LocatableVLayout {
                 viewLinkContainer.setAlign(VerticalAlignment.CENTER);
                 ViewLink viewLink = new ViewLink(extendLocatorId(sectionName.getName()), sectionName.getTitle(),
                         sectionName.getName());
-                viewLink.setStyleName(null);
-                viewLink.setMouseOutStyleName(null);
-                viewLink.setMouseOverStyleName(null);
+                viewLink.setMouseOutStyleName("menuBarLink");
+                viewLink.setMouseOverStyleName("menuBarLinkHover");
                 this.sectionNameToViewLinkMap.put(sectionName.getName(), viewLinkContainer);
                 viewLinkContainer.addMember(viewLink);
                 updateViewLinkStyle(sectionName.getName());

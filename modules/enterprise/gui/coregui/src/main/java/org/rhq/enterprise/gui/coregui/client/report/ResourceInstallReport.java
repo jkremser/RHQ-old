@@ -18,7 +18,7 @@ import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
-import com.smartgwt.client.widgets.layout.HLayout;
+import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.composite.ResourceInstallCount;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
@@ -34,7 +34,6 @@ import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
@@ -119,18 +118,18 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
         @Override
         protected void configureTable() {
             CanvasField fieldTypeName = new CanvasField(DataSource.Field.TYPENAME, MSG.common_title_resource_type()) {
-                protected Canvas createCanvas(ListGrid grid, ListGridRecord record) {
-                    HLayout hLayout = createHLayout(grid);
+                protected Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
+                    VLayout vLayout = createVLayout(grid);
                     String typeName = record.getAttribute(DataSource.Field.TYPENAME);
                     String url = getResourceTypeTableUrl(record);
                     if (url != null) {
                         ViewLink viewLink = new ViewLink(extendLocatorId("ViewLink"), typeName, url);
-                        hLayout.addMember(viewLink);
+                        vLayout.addMember(viewLink);
                     } else {
                         HTMLFlow html = new HTMLFlow(typeName);
-                        hLayout.addMember(html);
+                        vLayout.addMember(html);
                     }
-                    return hLayout;
+                    return vLayout;
                 }
             };
             ListGridField fieldPlugin = new ListGridField(DataSource.Field.TYPEPLUGIN, MSG.common_title_plugin());

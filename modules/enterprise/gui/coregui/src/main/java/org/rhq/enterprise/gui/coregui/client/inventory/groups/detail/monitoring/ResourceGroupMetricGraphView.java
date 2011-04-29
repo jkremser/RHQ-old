@@ -32,11 +32,12 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.components.ViewLink;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricGraphView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
+import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 
 /**
  * @author Greg Hinkle
@@ -44,7 +45,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  */
 public class ResourceGroupMetricGraphView extends AbstractMetricGraphView {
 
-    private HTMLFlow resourceGroupTitle;
+    private ViewLink resourceGroupTitle;
 
     public ResourceGroupMetricGraphView(String locatorId) {
         super(locatorId);
@@ -84,7 +85,7 @@ public class ResourceGroupMetricGraphView extends AbstractMetricGraphView {
 
                     final ResourceGroup group = result.get(0);
                     String url = LinkManager.getResourceGroupLink(group.getId());
-                    resourceGroupTitle = new HTMLFlow(SeleniumUtility.getLocatableHref(url, group.getName(), null));
+                    resourceGroupTitle = new ViewLink(StringUtility.escapeHtml(group.getName()), url);
 
                     ResourceTypeRepository.Cache.getInstance().getResourceTypes(group.getResourceType().getId(),
                         EnumSet.of(ResourceTypeRepository.MetadataType.measurements),

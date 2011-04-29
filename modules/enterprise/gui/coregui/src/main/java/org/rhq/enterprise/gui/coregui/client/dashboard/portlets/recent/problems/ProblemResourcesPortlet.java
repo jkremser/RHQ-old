@@ -47,9 +47,11 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.components.ViewLink;
 import org.rhq.enterprise.gui.coregui.client.components.table.IconField;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableWidget;
+import org.rhq.enterprise.gui.coregui.client.components.table.ViewLinkField;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortletUtil;
 import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
@@ -120,13 +122,13 @@ public class ProblemResourcesPortlet extends Table<ProblemResourcesDataSource> i
             addExtraWidget(new TimeRange(extendLocatorId("TimeRange"), this), false);
         }
 
-        ListGridField resourceField = new ListGridField(RESOURCE.propertyName(), RESOURCE.title());
-        resourceField.setCellFormatter(new CellFormatter() {
-            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                String url = LinkManager.getResourceLink(listGridRecord.getAttributeAsInt("id"));
-                return SeleniumUtility.getLocatableHref(url, o.toString(), null);
+        ViewLinkField resourceField = new ViewLinkField(RESOURCE.propertyName(), RESOURCE.title()) {
+            @Override
+            protected ViewLink getViewLink(ListGrid grid, ListGridRecord record, Object value) {
+                String url = LinkManager.getResourceLink(record.getAttributeAsInt("id"));
+                return new ViewLink(value.toString(), url);
             }
-        });
+        };
         resourceField.setShowHover(true);
         resourceField.setHoverCustomizer(new HoverCustomizer() {
             public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {

@@ -5,10 +5,12 @@ import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-import com.smartgwt.client.widgets.layout.HLayout;
+import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.enterprise.gui.coregui.client.components.ViewLink;
 
 /**
+ * A list grid field that is displayed as a link to another CoreGUI view.
+ *
  * @author Ian Springer
  */
 public abstract class ViewLinkField extends CanvasField {
@@ -38,14 +40,14 @@ public abstract class ViewLinkField extends CanvasField {
     }
 
     @Override
-    protected Canvas createCanvas(ListGrid grid, ListGridRecord record) {
-        HLayout hLayout = createHLayout(grid);
-        ViewLink viewLink = getViewLink(grid, record);
-        hLayout.addMember(viewLink);
-        return hLayout;
+    protected Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
+        VLayout vLayout = createVLayout(grid);
+        ViewLink viewLink = getViewLink(grid, record, value);
+        vLayout.addMember(viewLink);
+        return vLayout;
     }
 
-    protected abstract ViewLink getViewLink(ListGrid grid, ListGridRecord record);
+    protected abstract ViewLink getViewLink(ListGrid grid, ListGridRecord record, Object value);
 
     protected ViewLinkField(ListGridField field) {
         super(field);

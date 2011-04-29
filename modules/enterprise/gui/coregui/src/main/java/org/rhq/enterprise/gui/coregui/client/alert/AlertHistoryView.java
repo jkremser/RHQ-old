@@ -41,8 +41,10 @@ import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.components.ViewLink;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnumSelectItem;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
+import org.rhq.enterprise.gui.coregui.client.components.table.CanvasField;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
@@ -151,16 +153,12 @@ public class AlertHistoryView extends TableSection<AlertDataSource> {
     }
 
     @Override
-    protected CellFormatter getDetailsLinkColumnCellFormatter() {
-        return new CellFormatter() {
-            public String format(Object value, ListGridRecord record, int i, int i1) {
-                Integer resourceId = record.getAttributeAsInt(AncestryUtil.RESOURCE_ID);
-                Integer alertHistoryId = getId(record);
-                String url = LinkManager.getSubsystemAlertHistoryLink(resourceId, alertHistoryId);
-                String formattedValue = TimestampCellFormatter.format(value);
-                return SeleniumUtility.getLocatableHref(url, formattedValue, null);
-            }
-        };
+    protected ViewLink createDetailsViewLink(ListGridRecord record, Object value) {
+        Integer resourceId = record.getAttributeAsInt(AncestryUtil.RESOURCE_ID);
+        Integer alertHistoryId = getId(record);
+        String url = LinkManager.getSubsystemAlertHistoryLink(resourceId, alertHistoryId);
+        String formattedValue = TimestampCellFormatter.format(value);
+        return new ViewLink(formattedValue, url);
     }
 
     protected void setupTableInteractions(final boolean hasWriteAccess) {

@@ -31,6 +31,7 @@ import com.smartgwt.client.widgets.form.fields.events.ChangeEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangeHandler;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.HoverCustomizer;
+import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.VStack;
@@ -41,7 +42,10 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.components.ViewLink;
+import org.rhq.enterprise.gui.coregui.client.components.table.CanvasField;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
+import org.rhq.enterprise.gui.coregui.client.components.table.ViewLinkField;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortletUtil;
 import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
@@ -118,21 +122,20 @@ public class OperationSchedulePortlet extends LocatableVLayout implements Custom
     protected void onDraw() {
         super.onDraw();
 
-        ListGridField timeNext = new ListGridField(ScheduledOperationsDataSource.Field.TIME.propertyName(),
-            ScheduledOperationsDataSource.Field.TIME.title(), WIDTH_SCHEDULED_TIME);
-        timeNext.setCellFormatter(new TimestampCellFormatter() {
-            public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
+        CanvasField timeNext = new CanvasField(ScheduledOperationsDataSource.Field.TIME.propertyName(),
+            ScheduledOperationsDataSource.Field.TIME.title(), WIDTH_SCHEDULED_TIME) {
+            protected Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
                 if (value != null) {
-                    String timestamp = super.format(value, record, rowNum, colNum);
+                    String timestamp = TimestampCellFormatter.format(value);
                     Integer resourceId = record.getAttributeAsInt(AncestryUtil.RESOURCE_ID);
                     Integer opScheduleId = record.getAttributeAsInt("id");
                     String url = LinkManager.getSubsystemResourceOperationScheduleLink(resourceId, opScheduleId);
-                    return SeleniumUtility.getLocatableHref(url, timestamp, null);
+                    return new ViewLink(timestamp, url);
                 } else {
-                    return "<i>" + MSG.common_label_none() + "</i>";
+                    return new HTMLFlow("<i>" + MSG.common_label_none() + "</i>");
                 }
             }
-        });
+        };
         timeNext.setShowHover(true);
         timeNext.setHoverCustomizer(TimestampCellFormatter.getHoverCustomizer(ScheduledOperationsDataSource.Field.TIME
             .propertyName()));
@@ -140,14 +143,13 @@ public class OperationSchedulePortlet extends LocatableVLayout implements Custom
         ListGridField operationNext = new ListGridField(ScheduledOperationsDataSource.Field.OPERATION.propertyName(),
             ScheduledOperationsDataSource.Field.OPERATION.title());
 
-        ListGridField resourceNext = new ListGridField(ScheduledOperationsDataSource.Field.RESOURCE.propertyName(),
-            ScheduledOperationsDataSource.Field.RESOURCE.title());
-        resourceNext.setCellFormatter(new CellFormatter() {
-            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                String url = LinkManager.getResourceLink(listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
-                return SeleniumUtility.getLocatableHref(url, o.toString(), null);
+        ViewLinkField resourceNext = new ViewLinkField(ScheduledOperationsDataSource.Field.RESOURCE.propertyName(),
+            ScheduledOperationsDataSource.Field.RESOURCE.title()) {
+            protected ViewLink getViewLink(ListGrid grid, ListGridRecord record, Object value) {
+                String url = LinkManager.getResourceLink(record.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
+                return new ViewLink(value.toString(), url);
             }
-        });
+        };
         resourceNext.setShowHover(true);
         resourceNext.setHoverCustomizer(new HoverCustomizer() {
             public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {

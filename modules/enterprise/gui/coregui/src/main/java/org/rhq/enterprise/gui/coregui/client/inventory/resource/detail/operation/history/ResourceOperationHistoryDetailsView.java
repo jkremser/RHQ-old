@@ -27,7 +27,6 @@ import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
-import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 
 import com.smartgwt.client.widgets.layout.HLayout;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
@@ -45,15 +44,14 @@ import org.rhq.enterprise.gui.coregui.client.components.ViewLink;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.operation.history.AbstractOperationHistoryDetailsView;
+import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
  * @author Ian Springer
  */
 public class ResourceOperationHistoryDetailsView extends AbstractOperationHistoryDetailsView<ResourceOperationHistory> {
 
-    private String disambiguatedResourceName;
     private boolean showResourceField;
     private ResourceComposite resourceComposite;
 
@@ -77,9 +75,11 @@ public class ResourceOperationHistoryDetailsView extends AbstractOperationHistor
         List<FormItem> items = super.createFields(operationHistory);
 
         if (this.showResourceField) {
-            StaticTextItem resourceItem = new StaticTextItem(ResourceOperationHistoryDataSource.Field.RESOURCE,
-                "Resource");
-            resourceItem.setValue(this.disambiguatedResourceName);
+            CanvasItem resourceItem = new CanvasItem(ResourceOperationHistoryDataSource.Field.RESOURCE, "Resource");
+            Resource resource = resourceComposite.getResource();
+            String url = LinkManager.getResourceLink(resource.getId());
+            ViewLink viewLink = new ViewLink(StringUtility.escapeHtml(resource.getName()), url);
+            resourceItem.setCanvas(viewLink);
             items.add(1, resourceItem);
         }
 
@@ -120,14 +120,6 @@ public class ResourceOperationHistoryDetailsView extends AbstractOperationHistor
 
                 public void onSuccess(PageList<ResourceOperationHistory> result) {
                     ResourceOperationHistory resourceOperationHistory = result.get(0);
-
-                    if (showResourceField) {
-                        Resource resource = resourceOperationHistory.getResource();
-                        String url = LinkManager.getResourceLink(resource.getId());
-                        disambiguatedResourceName = SeleniumUtility.getLocatableHref(url, resource.getName(), String
-                            .valueOf(resource.getId()));
-                    }
-
                     displayDetails(resourceOperationHistory);
                 }
             });

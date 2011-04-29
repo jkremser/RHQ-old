@@ -29,6 +29,8 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.components.ViewLink;
+import org.rhq.enterprise.gui.coregui.client.components.table.ViewLinkField;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMeasurementDataTraitListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
@@ -54,13 +56,12 @@ public class TraitsView extends AbstractMeasurementDataTraitListView {
         listGrid.setGroupStartOpen(GroupStartOpen.ALL);
         listGrid.groupBy(MeasurementDataTraitCriteria.SORT_FIELD_DISPLAY_NAME);
 
-        ListGridField resourceNameField = listGrid.getField(MeasurementDataTraitCriteria.SORT_FIELD_RESOURCE_NAME);
-        resourceNameField.setCellFormatter(new CellFormatter() {
-            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                String url = LinkManager.getResourceLink(listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
-                return SeleniumUtility.getLocatableHref(url, o.toString(), null);
+        ViewLinkField resourceNameField = new ViewLinkField(listGrid.getField(MeasurementDataTraitCriteria.SORT_FIELD_RESOURCE_NAME)) {
+            protected ViewLink getViewLink(ListGrid grid, ListGridRecord record, Object value) {
+                String url = LinkManager.getResourceLink(record.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
+                return new ViewLink(value.toString(), url);
             }
-        });
+        };
         resourceNameField.setShowHover(true);
         resourceNameField.setHoverCustomizer(new HoverCustomizer() {
             public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {

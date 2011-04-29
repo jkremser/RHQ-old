@@ -75,7 +75,8 @@ public class SeleniumUtility {
     }
 
     /**
-     * A utility for assigning an ID to a gwt uiobject.  For a smartgwt widget use {@link setId(BaseWidget)}.
+     * A utility for assigning an ID to a gwt uiobject.  For a smartgwt widget, use
+     * {@link #setID(com.smartgwt.client.widgets.BaseWidget, String)}.
      * Any current ID will be overwritten.  The algorithm is:
      * <pre>
      * If    the unsafeId parameter is non-empty, the ID is set to the unsafeId, with spaces removed.

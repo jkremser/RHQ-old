@@ -22,7 +22,7 @@ import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
-import com.smartgwt.client.widgets.layout.HLayout;
+import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
@@ -37,6 +37,7 @@ import org.rhq.enterprise.gui.coregui.client.components.Link;
 import org.rhq.enterprise.gui.coregui.client.components.ViewLink;
 import org.rhq.enterprise.gui.coregui.client.components.table.CanvasField;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
+import org.rhq.enterprise.gui.coregui.client.components.table.ViewLinkField;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
@@ -127,27 +128,24 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
                 if (fieldName.equals(FIELD_CTIME) || fieldName.equals(FIELD_MTIME)) {
                     field.setHidden(true);
                 } else if (fieldName.equals(FIELD_NAME)) {
-                    CanvasField canvasField = new CanvasField(field) {
-                        protected Canvas createCanvas(ListGrid grid, ListGridRecord record) {
-                            HLayout hLayout = createHLayout(grid);
+                    ViewLinkField nameField = new ViewLinkField(field) {
+                        protected ViewLink getViewLink(ListGrid grid, ListGridRecord record, Object value) {
                             AlertDefinition alertDef = copyValues(record);
                             int resourceId = alertDef.getResource().getId();
                             int alertDefId = alertDef.getId();
                             String link = LinkManager.getSubsystemAlertDefinitionLink(resourceId, alertDefId);
-                            ViewLink viewLink = new ViewLink(extendLocatorId("ViewLink"),
-                                    StringUtility.escapeHtml(alertDef.getName()), link);
-                            hLayout.addMember(viewLink);
-                            return hLayout;
+                            String linkText = StringUtility.escapeHtml(alertDef.getName());
+                            return new ViewLink(linkText, link);
                         }
                     };
-                    fields.set(i, canvasField);
+                    fields.set(i, nameField);
                 }
             }
 
             // add more columns
             CanvasField parentField = new CanvasField(FIELD_PARENT, MSG.view_alerts_field_parent(), 100) {
-                protected Canvas createCanvas(ListGrid grid, final ListGridRecord record) {
-                    HLayout hLayout = createHLayout(grid);
+                protected Canvas createCanvas(ListGrid grid, final ListGridRecord record, Object value) {
+                    VLayout vLayout = createVLayout(grid);
 
                     final AlertDefinition alertDef = copyValues(record);
                     boolean hasParent;
@@ -208,12 +206,12 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
                                 }
                             }
                         });
-                        hLayout.addMember(link);
+                        vLayout.addMember(link);
                     } else {
-                        hLayout.addMember(new HTMLFlow(MSG.common_val_na()));
+                        vLayout.addMember(new HTMLFlow(MSG.common_val_na()));
                     }
 
-                    return hLayout;
+                    return vLayout;
                 }
             };
             parentField.setShowHover(true);
@@ -228,15 +226,15 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
             fields.add(parentField);
 
             CanvasField resourceField = new CanvasField(FIELD_RESOURCE, MSG.common_title_resource()) {
-                protected Canvas createCanvas(ListGrid grid, ListGridRecord record) {
-                    HLayout hLayout = createHLayout(grid);
+                protected Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
+                    VLayout vLayout = createVLayout(grid);
                     Integer resourceId = record.getAttributeAsInt(AncestryUtil.RESOURCE_ID);
                     String url = LinkManager.getResourceLink(resourceId);
                     String resourceName = record.getAttribute(FIELD_RESOURCE);
                     ViewLink viewLink = new ViewLink(extendLocatorId("ViewLink"),
                                     StringUtility.escapeHtml(resourceName), url);
-                    hLayout.addMember(viewLink);
-                    return hLayout;
+                    vLayout.addMember(viewLink);
+                    return vLayout;
                 }
             };
             resourceField.setShowHover(true);
@@ -303,10 +301,7 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
         }
 
         /**
-         * Additional processing to support a cross-resource view)
-         * @param result
-         * @param response
-         * @param request
+         * Additional processing to support a cross-resource view.
          */
         protected void dataRetrieved(final PageList<AlertDefinition> result, final DSResponse response,
             final DSRequest request) {

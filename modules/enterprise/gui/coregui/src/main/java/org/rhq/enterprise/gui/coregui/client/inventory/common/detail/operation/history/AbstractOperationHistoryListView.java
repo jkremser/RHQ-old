@@ -35,6 +35,7 @@ import com.smartgwt.client.widgets.events.CloseClickHandler;
 import com.smartgwt.client.widgets.events.CloseClientEvent;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.HoverCustomizer;
+import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.RecordClickEvent;
@@ -46,9 +47,11 @@ import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.components.ViewLink;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
+import org.rhq.enterprise.gui.coregui.client.components.table.ViewLinkField;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.operation.OperationHistoryDataSource;
@@ -246,19 +249,17 @@ public abstract class AbstractOperationHistoryListView<T extends AbstractOperati
         return statusField;
     }
 
-    protected ListGridField createResourceField() {
-        ListGridField resourceField = new ListGridField(AncestryUtil.RESOURCE_NAME, MSG.common_title_resource());
+    protected ViewLinkField createResourceField() {
+        ViewLinkField resourceField = new ViewLinkField(AncestryUtil.RESOURCE_NAME, MSG.common_title_resource()) {
+            protected ViewLink getViewLink(ListGrid grid, ListGridRecord record, Object value) {
+                String url = LinkManager.getResourceLink(record.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
+                return new ViewLink(value.toString(), url);
+            }
+        };
         resourceField.setAlign(Alignment.LEFT);
         resourceField.setCellAlign(Alignment.LEFT);
-        resourceField.setCellFormatter(new CellFormatter() {
-            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                String url = LinkManager.getResourceLink(listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
-                return SeleniumUtility.getLocatableHref(url, o.toString(), null);
-            }
-        });
         resourceField.setShowHover(true);
         resourceField.setHoverCustomizer(new HoverCustomizer() {
-
             public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {
                 return AncestryUtil.getResourceHoverHTML(listGridRecord, 0);
             }

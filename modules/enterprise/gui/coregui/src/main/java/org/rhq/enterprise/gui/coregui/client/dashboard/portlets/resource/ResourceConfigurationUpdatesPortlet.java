@@ -41,6 +41,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.components.ViewLink;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent.Constant;
@@ -168,18 +169,11 @@ public class ResourceConfigurationUpdatesPortlet extends GroupConfigurationUpdat
             }
         }
 
-        /**
-         * Override if you don't want the detailsLinkColumn to have the default link wrapper.
-         * @return the desired CellFormatter.
-         */
-        protected CellFormatter getDetailsLinkColumnCellFormatter() {
-            return new CellFormatter() {
-                public String format(Object value, ListGridRecord record, int i, int i1) {
-                    Integer recordId = getId(record);
-                    String detailsUrl = "#" + getBasePath() + "/" + recordId;
-                    return SeleniumUtility.getLocatableHref(detailsUrl, value.toString(), null);
-                }
-            };
+        @Override
+        protected ViewLink createDetailsViewLink(ListGridRecord record, Object value) {
+            Integer recordId = getId(record);
+            String detailsUrl = getBasePath() + "/" + recordId;
+            return new ViewLink(value.toString(), detailsUrl);
         }
 
         @Override

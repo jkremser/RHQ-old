@@ -47,6 +47,7 @@ import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.ViewLink;
 import org.rhq.enterprise.gui.coregui.client.components.table.CanvasField;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
+import org.rhq.enterprise.gui.coregui.client.components.table.ViewLinkField;
 import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
@@ -201,7 +202,7 @@ public abstract class AbstractConfigurationHistoryDataSource<T extends AbstractR
 
         CanvasField updateTypeField = new CanvasField(Field.GROUP_CONFIG_UPDATE_ID, MSG
             .dataSource_configurationHistory_updateType()) {
-            protected Canvas createCanvas(ListGrid grid, ListGridRecord record) {
+            protected Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
                 Integer groupConfigUpdateId = record.getAttributeAsInt(Field.GROUP_CONFIG_UPDATE_ID);
                 if (groupConfigUpdateId == null) {
                     return new HTMLFlow(MSG.dataSource_configurationHistory_updateType_individual());
@@ -217,17 +218,15 @@ public abstract class AbstractConfigurationHistoryDataSource<T extends AbstractR
 
         // determine the widths of our columns
         if (includeResourceFields) {
-            ListGridField resourceNameField = new ListGridField(AncestryUtil.RESOURCE_NAME, MSG.common_title_resource());
-            resourceNameField.setCellFormatter(new CellFormatter() {
-                public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+            ViewLinkField resourceNameField = new ViewLinkField(AncestryUtil.RESOURCE_NAME, MSG.common_title_resource()) {
+                protected ViewLink getViewLink(ListGrid grid, ListGridRecord record, Object value) {
                     String url = LinkManager
-                        .getResourceLink(listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
-                    return SeleniumUtility.getLocatableHref(url, o.toString(), null);
+                        .getResourceLink(record.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
+                    return new ViewLink(value.toString(), url);
                 }
-            });
+            };
             resourceNameField.setShowHover(true);
             resourceNameField.setHoverCustomizer(new HoverCustomizer() {
-
                 public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {
                     return AncestryUtil.getResourceHoverHTML(listGridRecord, 0);
                 }

@@ -32,6 +32,7 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import com.smartgwt.client.widgets.layout.HLayout;
+import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.bundle.list.BundleVersionDataSource;
@@ -65,13 +66,13 @@ public class BundleVersionListView extends Table<BundleVersionDataSource> {
 
         CanvasField versionField = new CanvasField(BundleVersionDataSource.FIELD_VERSION, MSG
             .common_title_version()) {
-            protected Canvas createCanvas(ListGrid grid, ListGridRecord record) {
-                HLayout hLayout = createHLayout(grid);
+            protected Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
+                VLayout vLayout = createVLayout(grid);
                 String viewPath = getBundleVersionViewPath(record);
                 ViewLink viewLink = new ViewLink(extendLocatorId("ViewLink"),
                         record.getAttribute(BundleVersionDataSource.FIELD_VERSION), viewPath);
-                hLayout.addMember(viewLink);
-                return hLayout;
+                vLayout.addMember(viewLink);
+                return vLayout;
             }
         };
 

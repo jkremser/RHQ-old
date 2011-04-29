@@ -27,18 +27,14 @@ import com.google.gwt.user.client.History;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.AnimationEffect;
-import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.AnimationCallback;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
-import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-import com.smartgwt.client.widgets.layout.HLayout;
-import com.smartgwt.client.widgets.layout.Layout;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
@@ -122,8 +118,8 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
     }
 
     /**
-     * The default implementation wraps the {@link #getDetailsLinkColumnCellFormatter()} column with the
-     * {@link #getDetailsLinkColumnCellFormatter()}. This is typically the 'name' column linking to the detail
+     * The default implementation renders each cell in the {@link #getDetailsLinkColumnName()} column as a hyperlink
+     * to the details for the corresponding row. This is typically the 'name' column linking to the detail
      * view, given the 'id'. Also, establishes a double click handler for the row which invokes
      * {@link #showDetails(com.smartgwt.client.widgets.grid.ListGridRecord)}</br>
      * </br>
@@ -137,28 +133,14 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
 
             ListGrid grid = getListGrid();
 
-            // Make the value of some specific field a link to the details view for the corresponding record.
+            // Make the value of some specific field (typically the 'name' field) a link to the details view for the
+            // corresponding record.
             ListGridField field = (grid != null) ? grid.getField(getDetailsLinkColumnName()) : null;
             if (field != null) {
-                //field.setCellFormatter(getDetailsLinkColumnCellFormatter());
-
-                CanvasField canvasField = new CanvasField(field) {
-                    protected Canvas createCanvas(ListGrid grid, ListGridRecord record) {
-                        HLayout hLayout = createHLayout(grid);
-                        Integer recordId = getId(record);
-                        String detailsViewPath = getBasePath() + "/" + recordId;
-                        String recordValue = record.getAttribute(getDetailsLinkColumnName());
-                        String formattedValue = (escapeHtmlInDetailsLinkColumn) ? StringUtility.escapeHtml(recordValue.toString())
-                            : recordValue.toString();
-                        ViewLink viewLink = new ViewLink(extendLocatorId("ViewLink"), formattedValue, detailsViewPath);
-                        hLayout.addMember(viewLink);
-                        return hLayout;
-                    }
-                };
-
+                CanvasField detailsViewLinkField = createDetailsLinkField(field);
                 int fieldIndex = grid.getFieldNum(field.getName());
                 ListGridField[] fields = grid.getFields();
-                fields[fieldIndex] = canvasField;
+                fields[fieldIndex] = detailsViewLinkField;
                 grid.setFields(fields);
             }
 
@@ -175,6 +157,22 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
         }
     }
 
+    protected CanvasField createDetailsLinkField(final ListGridField field) {
+        return new ViewLinkField(field) {
+            protected ViewLink getViewLink(ListGrid grid, ListGridRecord record, Object value) {
+                return createDetailsViewLink(record, value);
+            }
+        };
+    }
+
+    protected ViewLink createDetailsViewLink(ListGridRecord record, Object value) {
+        Integer recordId = getId(record);
+        String detailsViewPath = getBasePath() + "/" + recordId;
+        String formattedValue = (this.escapeHtmlInDetailsLinkColumn) ? StringUtility.escapeHtml(value.toString())
+            : value.toString();
+        return new ViewLink(formattedValue, detailsViewPath);
+    }
+
     protected boolean isDetailsEnabled() {
         return true;
     }
@@ -189,25 +187,6 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
      */
     protected String getDetailsLinkColumnName() {
         return FIELD_NAME;
-    }
-
-    /**
-     * Override if you don't want the detailsLinkColumn to have the default link wrapper.
-     * @return the desired CellFormatter. 
-     */
-    protected CellFormatter getDetailsLinkColumnCellFormatter() {
-        return new CellFormatter() {
-            public String format(Object value, ListGridRecord record, int i, int i1) {
-                if (value == null) {
-                    return "";
-                }
-                Integer recordId = getId(record);
-                String detailsUrl = "#" + getBasePath() + "/" + recordId;
-                String formattedValue = (escapeHtmlInDetailsLinkColumn) ? StringUtility.escapeHtml(value.toString())
-                    : value.toString();
-                return SeleniumUtility.getLocatableHref(detailsUrl, formattedValue, null);
-            }
-        };
     }
 
     /**

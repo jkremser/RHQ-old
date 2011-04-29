@@ -60,7 +60,7 @@ public class BundleDestinationListView extends Table<BundleDestinationDataSource
     protected void configureTable() {
         ListGridField idField = new ListGridField(BundleDestinationDataSource.FIELD_ID, MSG.common_title_id());
         ViewLinkField nameField = new ViewLinkField(BundleDestinationDataSource.FIELD_NAME, MSG.common_title_name()) {
-            protected ViewLink getViewLink(ListGrid grid, ListGridRecord record) {
+            protected ViewLink getViewLink(ListGrid grid, ListGridRecord record, Object value) {
                 String bundleName = record.getAttribute(BundleDestinationDataSource.FIELD_NAME);
                 String linkText = StringUtility.escapeHtml(bundleName);
                 String viewPath = getBundleDestinationLink(record);
@@ -71,7 +71,7 @@ public class BundleDestinationListView extends Table<BundleDestinationDataSource
             .common_title_description());
         ViewLinkField bundleNameField = new ViewLinkField(BundleDestinationDataSource.FIELD_BUNDLE_NAME, MSG
             .view_bundle_bundle()) {
-            protected ViewLink getViewLink(ListGrid grid, ListGridRecord record) {
+            protected ViewLink getViewLink(ListGrid grid, ListGridRecord record, Object value) {
                 String bundleName = record.getAttribute(BundleDestinationDataSource.FIELD_BUNDLE_NAME);
                 String linkText = StringUtility.escapeHtml(bundleName);
                 Integer bundleId = record.getAttributeAsInt(BundleDestinationDataSource.FIELD_BUNDLE_ID);
@@ -81,7 +81,7 @@ public class BundleDestinationListView extends Table<BundleDestinationDataSource
         };
         ViewLinkField groupNameField = new ViewLinkField(BundleDestinationDataSource.FIELD_GROUP_NAME, MSG
             .view_bundle_dest_group()) {
-            protected ViewLink getViewLink(ListGrid grid, ListGridRecord record) {
+            protected ViewLink getViewLink(ListGrid grid, ListGridRecord record, Object value) {
                 String groupName = record.getAttribute(BundleDestinationDataSource.FIELD_GROUP_NAME);
                 String linkText = StringUtility.escapeHtml(groupName);
                 Integer groupId = record.getAttributeAsInt(BundleDestinationDataSource.FIELD_GROUP_ID);

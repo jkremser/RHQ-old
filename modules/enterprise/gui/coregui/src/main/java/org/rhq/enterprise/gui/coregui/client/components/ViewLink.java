@@ -19,14 +19,10 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components;
 
+import com.google.gwt.user.client.Window;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
-import com.smartgwt.client.widgets.events.MouseOutEvent;
-import com.smartgwt.client.widgets.events.MouseOutHandler;
-import com.smartgwt.client.widgets.events.MouseOverEvent;
-import com.smartgwt.client.widgets.events.MouseOverHandler;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableHTMLFlow;
 
 /**
  * A link to another view within coregui.war. Clicking on the link will navigate to the view via the GWT history API
@@ -38,6 +34,10 @@ public class ViewLink extends Link {
 
     private String viewPath;
 
+    public ViewLink(String linkText, final String viewPath) {
+        this(linkText, linkText, viewPath);
+    }
+
     public ViewLink(String locatorId, String linkText, final String viewPath) {
         super(locatorId, linkText, new ClickHandler() {
             public void onClick(ClickEvent event) {
@@ -45,7 +45,20 @@ public class ViewLink extends Link {
             }
         });
 
-        this.viewPath = viewPath;
+        this.viewPath = (viewPath.charAt(0) == '#') ? viewPath.substring(1) : viewPath;
+    }
+
+    @Override
+    protected void handleMouseOverEvent() {
+        super.handleMouseOverEvent();
+        // NOTE: This doesn't work on Firefox  :-(
+        Window.setStatus('#' + this.viewPath);
+    }
+
+    @Override
+    protected void handleMouseOutEvent() {
+        super.handleMouseOutEvent();
+        Window.setStatus("");
     }
 
     @Override

@@ -19,6 +19,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components.table;
 
+import com.google.gwt.core.client.JavaScriptObject;
+import com.smartgwt.client.util.JSOHelper;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridField;
@@ -73,10 +75,19 @@ public class EnhancedListGrid extends LocatableListGrid {
         }
 
         ListGridField field = getField(colNum);
-        ListGridField originalField = this.originalFields.get(field.getName());
+        String fieldName = field.getName();
+        ListGridField originalField = this.originalFields.get(fieldName);
         if (originalField instanceof CanvasField) {
             CanvasField canvasField = (CanvasField)originalField;
-            return canvasField.createCanvas(this, record);
+            Object value;
+            try {
+                Object rawValue = record.getAttributeAsObject(fieldName);
+                value = (rawValue instanceof JavaScriptObject) ?
+                        JSOHelper.convertToJava((JavaScriptObject) rawValue) : rawValue;
+            } catch (RuntimeException e) {
+                value = record.getAttribute(fieldName);
+            }
+            return canvasField.createCanvas(this, record, value);
         } else {
             return null;
         }

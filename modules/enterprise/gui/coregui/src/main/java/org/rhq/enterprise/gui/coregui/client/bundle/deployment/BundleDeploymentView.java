@@ -345,7 +345,7 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
 
         // resource field
         ViewLinkField resource = new ViewLinkField("resource", MSG.common_title_platform()) {
-            protected ViewLink getViewLink(ListGrid grid, ListGridRecord record) {
+            protected ViewLink getViewLink(ListGrid grid, ListGridRecord record, Object value) {
                 String resourceUrl = LinkManager.getResourceLink(record.getAttributeAsInt("resourceId"));
                 String linkText = StringUtility.escapeHtml(record.getAttribute("resource"));
                 return new ViewLink(extendLocatorId("ViewLink"), linkText, resourceUrl);

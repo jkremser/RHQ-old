@@ -34,6 +34,7 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import com.smartgwt.client.widgets.layout.HLayout;
+import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
@@ -91,13 +92,13 @@ public class BundlesListView extends Table<BundlesWithLatestVersionDataSource> {
 
         CanvasField nameField = new CanvasField(BundlesWithLatestVersionDataSource.FIELD_NAME, MSG
             .common_title_name()) {
-            protected Canvas createCanvas(ListGrid grid, ListGridRecord record) {
-                HLayout hLayout = createHLayout(grid);
+            protected Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
+                VLayout vLayout = createVLayout(grid);
                 String name = record.getAttribute(BundlesWithLatestVersionDataSource.FIELD_NAME);
                 String nameLink = record.getAttribute(BundlesWithLatestVersionDataSource.FIELD_NAMELINK);
                 ViewLink viewLink = new ViewLink(extendLocatorId("ViewLink"), StringUtility.escapeHtml(name), nameLink);
-                hLayout.addMember(viewLink);
-                return hLayout;
+                vLayout.addMember(viewLink);
+                return vLayout;
             }
         };
         nameField.setWidth("33%");

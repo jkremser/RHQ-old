@@ -22,13 +22,19 @@ hr {
     width: 100%;
 }
 
-a, a:link, a:visited, a:hover, .viewLink, .viewLinkHover {
-    color: #4A5D75 !important;
+a, a:link, a:visited, a:hover, .link, .linkHover, .menuBarLink, .menuBarLinkHover {
     font-weight: bold !important;
+}
+
+a, a:link, a:visited, a:hover, .link, .linkHover {
+    color: #4A5D75 !important;
+}
+
+a, a:link, a:visited, .link, .menuBarLink {
     text-decoration: none !important;
 }
 
-a:hover, .viewLinkHover {
+a:hover, .linkHover, .menuBarLinkHover {
     text-decoration: underline !important;
 }
 

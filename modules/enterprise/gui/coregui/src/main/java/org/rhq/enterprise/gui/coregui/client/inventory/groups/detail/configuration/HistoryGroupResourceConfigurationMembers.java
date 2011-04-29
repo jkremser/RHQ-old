@@ -50,9 +50,11 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ErrorMessageWindow;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.components.ViewLink;
 import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
+import org.rhq.enterprise.gui.coregui.client.components.table.ViewLinkField;
 import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
@@ -103,17 +105,15 @@ public class HistoryGroupResourceConfigurationMembers extends LocatableVLayout {
 
         @Override
         protected void configureTable() {
-            ListGridField fieldResource = new ListGridField(AncestryUtil.RESOURCE_NAME, MSG.common_title_resource());
-            fieldResource.setCellFormatter(new CellFormatter() {
-                public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+            ViewLinkField fieldResource = new ViewLinkField(AncestryUtil.RESOURCE_NAME, MSG.common_title_resource()) {
+                protected ViewLink getViewLink(ListGrid grid, ListGridRecord record, Object value) {
                     String url = LinkManager
-                        .getResourceLink(listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
-                    return SeleniumUtility.getLocatableHref(url, o.toString(), null);
+                        .getResourceLink(record.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
+                    return new ViewLink(value.toString(), url);
                 }
-            });
+            };
             fieldResource.setShowHover(true);
             fieldResource.setHoverCustomizer(new HoverCustomizer() {
-
                 public String hoverHTML(Object value, ListGridRecord listGridRecord, int rowNum, int colNum) {
                     return AncestryUtil.getResourceHoverHTML(listGridRecord, 0);
                 }
