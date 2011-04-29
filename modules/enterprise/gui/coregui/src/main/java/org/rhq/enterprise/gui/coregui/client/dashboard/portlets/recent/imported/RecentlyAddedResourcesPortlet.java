@@ -33,8 +33,6 @@ import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-import com.smartgwt.client.widgets.layout.HLayout;
-import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.tree.TreeGrid;
 
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -42,8 +40,8 @@ import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
 import org.rhq.enterprise.gui.coregui.client.components.ViewLink;
-import org.rhq.enterprise.gui.coregui.client.components.table.CanvasField;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
+import org.rhq.enterprise.gui.coregui.client.components.table.ViewLinkField;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortletUtil;
 import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
@@ -93,16 +91,13 @@ public class RecentlyAddedResourcesPortlet extends LocatableVLayout implements C
         treeGrid.setResizeFieldsInRealTime(true);
         treeGrid.setTreeFieldTitle("Resource Name");
 
-        CanvasField resourceNameField = new CanvasField("name", MSG.common_title_resource_name()) {
-            protected Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
-                VLayout vLayout = createVLayout(grid);
+        ViewLinkField resourceNameField = new ViewLinkField("name", MSG.common_title_resource_name()) {
+            protected ViewLink getViewLink(ListGrid grid, ListGridRecord record, Object value) {
                 int resourceId = record.getAttributeAsInt("id");
                 String resourceName = record.getAttribute("name");
                 String resourceViewPath = LinkManager.getResourceLink(resourceId);
-                ViewLink viewLink = new ViewLink(extendLocatorId("ViewLink"), StringUtility.escapeHtml(resourceName),
+                return new ViewLink(extendLocatorId("ViewLink"), StringUtility.escapeHtml(resourceName),
                         resourceViewPath);
-                vLayout.addMember(viewLink);
-                return vLayout;
             }
         };
 

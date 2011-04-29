@@ -25,7 +25,6 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.ListGridFieldType;
-import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
 import com.smartgwt.client.widgets.grid.CellFormatter;
@@ -33,8 +32,6 @@ import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
-import com.smartgwt.client.widgets.layout.HLayout;
-import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
@@ -46,9 +43,9 @@ import org.rhq.enterprise.gui.coregui.client.bundle.create.BundleCreateWizard;
 import org.rhq.enterprise.gui.coregui.client.bundle.deploy.BundleDeployWizard;
 import org.rhq.enterprise.gui.coregui.client.components.ViewLink;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
-import org.rhq.enterprise.gui.coregui.client.components.table.CanvasField;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
+import org.rhq.enterprise.gui.coregui.client.components.table.ViewLinkField;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.ErrorHandler;
@@ -90,15 +87,11 @@ public class BundlesListView extends Table<BundlesWithLatestVersionDataSource> {
         idField.setType(ListGridFieldType.INTEGER);
         idField.setWidth("50");
 
-        CanvasField nameField = new CanvasField(BundlesWithLatestVersionDataSource.FIELD_NAME, MSG
+        ViewLinkField nameField = new ViewLinkField(BundlesWithLatestVersionDataSource.FIELD_NAME, MSG
             .common_title_name()) {
-            protected Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
-                VLayout vLayout = createVLayout(grid);
-                String name = record.getAttribute(BundlesWithLatestVersionDataSource.FIELD_NAME);
+            protected ViewLink getViewLink(ListGrid grid, ListGridRecord record, Object value) {
                 String nameLink = record.getAttribute(BundlesWithLatestVersionDataSource.FIELD_NAMELINK);
-                ViewLink viewLink = new ViewLink(extendLocatorId("ViewLink"), StringUtility.escapeHtml(name), nameLink);
-                vLayout.addMember(viewLink);
-                return vLayout;
+                return new ViewLink(extendLocatorId("ViewLink"), StringUtility.escapeHtml(value.toString()), nameLink);
             }
         };
         nameField.setWidth("33%");
@@ -196,7 +189,7 @@ public class BundlesListView extends Table<BundlesWithLatestVersionDataSource> {
                         return;
                     }
 
-                    BundlesWithLatestVersionDataSource ds = (BundlesWithLatestVersionDataSource) getDataSource();
+                    BundlesWithLatestVersionDataSource ds = getDataSource();
                     final BundleWithLatestVersionComposite object = ds.copyValues(selection[0]);
                     BundleCriteria bc = new BundleCriteria();
                     bc.addFilterId(object.getBundleId());
@@ -222,4 +215,5 @@ public class BundlesListView extends Table<BundlesWithLatestVersionDataSource> {
         }
 
     }
+
 }

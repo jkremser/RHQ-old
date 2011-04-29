@@ -5,11 +5,11 @@ import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.enterprise.gui.coregui.client.components.ViewLink;
 
 /**
  * A list grid field that is displayed as a link to another CoreGUI view.
+ * TODO: Get rid of this class, since it no longer provides anything beyond what CanvasField does.
  *
  * @author Ian Springer
  */
@@ -39,18 +39,15 @@ public abstract class ViewLinkField extends CanvasField {
         super(name, title, width);
     }
 
-    @Override
-    protected Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
-        VLayout vLayout = createVLayout(grid);
-        ViewLink viewLink = getViewLink(grid, record, value);
-        vLayout.addMember(viewLink);
-        return vLayout;
-    }
-
-    protected abstract ViewLink getViewLink(ListGrid grid, ListGridRecord record, Object value);
-
     protected ViewLinkField(ListGridField field) {
         super(field);
     }
+
+    @Override
+    protected Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
+        return getViewLink(grid, record, value);
+    }
+
+    protected abstract ViewLink getViewLink(ListGrid grid, ListGridRecord record, Object value);
 
 }

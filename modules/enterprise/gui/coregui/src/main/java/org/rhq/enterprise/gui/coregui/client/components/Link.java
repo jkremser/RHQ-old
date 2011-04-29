@@ -49,17 +49,21 @@ public class Link extends LocatableHTMLFlow {
         this.mouseOverStyleName = DEFAULT_MOUSE_OVER_STYLE_NAME;
         this.mouseOutStyleName = DEFAULT_MOUSE_OUT_STYLE_NAME;
 
-        // TODO (ips, 04/28/11): This is lame - find a better way.
-	    int width = 0;
-        for (int i = 0; i < linkText.length(); i++) {
-            int charWidth = (Character.isUpperCase(linkText.charAt(i))) ? 8 : 6;
+        // TODO (ips, 04/28/11): This is hacky - try to find a better way.
+        int width = calculateWidth(linkText);
+        setWidth(width);
+        setContents(linkText);
+        addClickHandler(clickHandler);
+    }
+
+    private int calculateWidth(String string) {
+        float width = 0;
+        for (int i = 0; i < string.length(); i++) {
+            float charWidth = (Character.isUpperCase(string.charAt(i))) ? 10.5F : 5.5F;
             width += charWidth;
         }
-        setWidth(width);
-        //setAutoWidth();
-        setContents(linkText);
-
-        addClickHandler(clickHandler);
+        width +=1;
+        return (int)width;
     }
 
     @Override

@@ -70,7 +70,7 @@ public class EnhancedListGrid extends LocatableListGrid {
      */
     @Override
     protected Canvas createRecordComponent(ListGridRecord record, Integer colNum) {
-        if (getShowRecordComponents() != null && !getShowRecordComponents()) {
+        if (getShowRecordComponents() == null || !getShowRecordComponents()) {
             return null;
         }
 
@@ -87,7 +87,7 @@ public class EnhancedListGrid extends LocatableListGrid {
             } catch (RuntimeException e) {
                 value = record.getAttribute(fieldName);
             }
-            return canvasField.createCanvas(this, record, value);
+            return canvasField.createCellComponent(this, record, value);
         } else {
             return null;
         }

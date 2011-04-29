@@ -20,6 +20,7 @@
 package org.rhq.enterprise.gui.coregui.client.components.table;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.ListGrid;
@@ -28,7 +29,10 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 /**
- * Formats a cell value as a SmartGWT canvas.
+ * A special field, when used in conjunction with an {@link EnhancedListGrid}, whose values will be formatted as a
+ * custom SmartGWT canvases. The ListGrid equivalent of a DynamicForm CanvasItem.
+ *
+ * @author Ian Springer
  */
 public abstract class CanvasField extends ListGridField {
 
@@ -58,55 +62,65 @@ public abstract class CanvasField extends ListGridField {
     protected CanvasField(ListGridField field) {
         super(field.getName(), field.getTitle());
 
+        setAlign(field.getAlign());
         setWidth(field.getWidth());
         // TODO (ips, 04/27/11): clone other commonly used fields
     }
 
     /**
-     * TODO
+     * Take care when overriding this method. Generally, always call the super impl and don't mess with the
+     * properties it has explicitly set (width, height, overflow. etc.).
      *
-     * @param grid
-     * @param record
-     * @param value
+     * @param grid the grid containing this field
+     * @param record the record containing the data for the row containing the cell being rendered
+     * @param value the value of this field in the above record
      *
      * @return
      */
-    protected abstract Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value);
+    protected Canvas createCellComponent(ListGrid grid, ListGridRecord record, Object value) {
+        VLayout vLayout = new VLayout();
 
-    protected VLayout createVLayout(ListGrid grid) {
-        VLayout vLayout = new CanvasFieldVLayout(grid);
-        /*vLayout.setWidth(grid.getFieldWidth(getName()));
+        vLayout.setWidth100();
         vLayout.setHeight100();
-        //vLayout.setOverflow(Overflow.VISIBLE);
-        //vLayout.setAutoHeight();
+
+        // Chop off stuff that doesn't fit, which is as ListGrid does for other cells.
+        vLayout.setOverflow(Overflow.HIDDEN);
+
+        // Use the grid-specified cell-padding as the margin (not 100% sure this is necessary).
         vLayout.setMargin(grid.getCellPadding());
-        vLayout.setAlign(VerticalAlignment.CENTER);*/
+
+        // We want center vertical alignment, since that's what ListGrid uses for other cells.
+        vLayout.setAlign(VerticalAlignment.CENTER);
+
+        // The below incantations are needed in order for this canvas to resize when the corresponding grid column is
+        // resized. I figured these out by reading the Javadoc for ListGrid.addEmbeddedComponent().
+        vLayout.setCanDragResize(true);
+        vLayout.setSnapToGrid(true);
+
+        // Call the abstract createCanvas() method which creates the Canvas containing the actual content.
+        Canvas canvas = createCanvas(grid, record, value);
+        if (canvas != null) {
+            vLayout.addMember(canvas);
+        }
+
         return vLayout;
     }
+
+    /**
+     * TODO
+     *
+     * @param grid the grid containing this field
+     * @param record the record containing the data for the row containing the cell being rendered
+     * @param value the value of this field in the above record
+     *
+     * @return the canvas containing content representing this field in the passed-in record, or null if the cell
+     *         should be empty
+     */
+    protected abstract Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value);
 
     @Override
     public String toString() {
         return getClass().getName() + "[name=" + getName() + ", title=" + getTitle() + "]";
-    }
-
-    class CanvasFieldVLayout extends VLayout {
-        private ListGrid grid;
-
-        CanvasFieldVLayout(ListGrid grid) {
-            this.grid = grid;
-            setWidth(grid.getFieldWidth(getName()));
-            setHeight100();
-            //setOverflow(Overflow.VISIBLE);
-            //setAutoHeight();
-            setMargin(grid.getCellPadding());
-            setAlign(VerticalAlignment.CENTER);
-        }
-
-        @Override
-        public void redraw() {
-            setWidth(this.grid.getFieldWidth(getName()));
-            super.redraw();
-        }
     }
 
 }

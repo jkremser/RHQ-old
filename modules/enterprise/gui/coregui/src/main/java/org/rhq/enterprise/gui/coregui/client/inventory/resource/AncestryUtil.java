@@ -23,7 +23,6 @@ import java.util.HashSet;
 import java.util.Map;
 
 import com.smartgwt.client.data.Record;
-import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
@@ -34,7 +33,6 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import com.smartgwt.client.widgets.layout.HStack;
-import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -73,48 +71,10 @@ public abstract class AncestryUtil {
         CanvasField ancestryField = new CanvasField(AncestryUtil.RESOURCE_ANCESTRY,
                 CoreGUI.getMessages().common_title_ancestry()) {
             protected Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
-                VLayout vLayout = createVLayout(grid);
-
-                if (value == null) {
-                    // no ancestry - render a blank cell
-                    return vLayout;
-                }
-
-                HStack hStack = new HStack();
-                hStack.setMembersMargin(4);
-                hStack.setOverflow(Overflow.AUTO);
-                Integer resourceId = getResourceId(record);
-                String[] ancestryEntries = value.toString().split(Resource.ANCESTRY_DELIM);
-                for (int i = 0; i < ancestryEntries.length; ++i) {
-                    String[] entryTokens = ancestryEntries[i].split(Resource.ANCESTRY_ENTRY_DELIM);
-                    int ancestorResourceId = Integer.valueOf(entryTokens[1]);
-                    String ancestorName = StringUtility.escapeHtml(entryTokens[2]);
-
-                    if (i > 0) {
-                        HTMLFlow html = new HTMLFlow("&lt;");
-                        html.setAutoWidth();
-                        hStack.addMember(html);
-                    }
-                    boolean generateLinks = true; // TODO
-                    if (generateLinks) {
-                        String url = LinkManager.getResourceLink(ancestorResourceId);
-                        String suffix = resourceId + "_" + entryTokens[1];
-                        ViewLink viewLink = new ViewLink(ancestorName + suffix, ancestorName, url);
-                        hStack.addMember(viewLink);
-                    } else {
-                        HTMLFlow html = new HTMLFlow(ancestorName);
-                        html.setAutoWidth();
-                        hStack.addMember(html);
-                    }
-                }
-
-                vLayout.addMember(hStack);
-                return vLayout;
+                return createCellCanvasForAncestryValue(record, value);
             }
         };
 
-        ancestryField.setAlign(Alignment.LEFT);
-        ancestryField.setCellAlign(Alignment.LEFT);
         setupAncestryListGridFieldHover(ancestryField);
 
         return ancestryField;
@@ -127,12 +87,55 @@ public abstract class AncestryUtil {
      * @return ancestry field
      */
     public static ListGridField setupAncestryListGridField(ListGrid listGrid) {
-        ListGridField ancestryField = listGrid.getField(AncestryUtil.RESOURCE_ANCESTRY);
-        ancestryField.setAlign(Alignment.LEFT);
-        ancestryField.setCellAlign(Alignment.LEFT);
-        setupAncestryListGridFieldCellFormatter(ancestryField);
+        ListGridField ancestryField = new CanvasField(listGrid.getField(AncestryUtil.RESOURCE_ANCESTRY)) {
+            protected Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
+                return createCellCanvasForAncestryValue(record, value);
+            }
+        };
+
         setupAncestryListGridFieldHover(ancestryField);
+
         return ancestryField;
+    }
+
+    private static Canvas createCellCanvasForAncestryValue(ListGridRecord record, Object value) {
+        if (value == null) {
+            // no ancestry - return null to tell the EnhancedListGrid to render a blank cell
+            return null;
+        }
+
+        HStack hStack = new HStack();
+        hStack.setMembersMargin(4);
+        hStack.setOverflow(Overflow.HIDDEN);
+        Integer resourceId = getResourceId(record);
+        String[] ancestryEntries = value.toString().split(Resource.ANCESTRY_DELIM);
+        for (int i = 0; i < ancestryEntries.length; ++i) {
+            String[] entryTokens = ancestryEntries[i].split(Resource.ANCESTRY_ENTRY_DELIM);
+            int ancestorResourceId = Integer.valueOf(entryTokens[1]);
+            String ancestorName = StringUtility.escapeHtml(entryTokens[2]);
+
+            if (i > 0) {
+                HTMLFlow html = new HTMLFlow("&lt;");
+                html.setOverflow(Overflow.VISIBLE);
+                html.setAutoWidth();
+                hStack.addMember(html);
+            }
+            boolean generateLinks = true; // TODO
+            if (generateLinks) {
+                String url = LinkManager.getResourceLink(ancestorResourceId);
+                String suffix = resourceId + "_" + entryTokens[1];
+                ViewLink viewLink = new ViewLink(ancestorName + suffix, ancestorName, url);
+                //viewLink.setOverflow(Overflow.VISIBLE);
+                //viewLink.setAutoWidth();
+                hStack.addMember(viewLink);
+            } else {
+                HTMLFlow html = new HTMLFlow(ancestorName);
+                html.setAutoWidth();
+                hStack.addMember(html);
+            }
+        }
+
+        return hStack;
     }
 
     public static void setupAncestryListGridFieldHover(ListGridField ancestryField) {

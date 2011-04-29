@@ -18,7 +18,6 @@ import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
-import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.composite.ResourceInstallCount;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
@@ -119,17 +118,16 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
         protected void configureTable() {
             CanvasField fieldTypeName = new CanvasField(DataSource.Field.TYPENAME, MSG.common_title_resource_type()) {
                 protected Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
-                    VLayout vLayout = createVLayout(grid);
                     String typeName = record.getAttribute(DataSource.Field.TYPENAME);
                     String url = getResourceTypeTableUrl(record);
+                    Canvas canvas;
                     if (url != null) {
                         ViewLink viewLink = new ViewLink(extendLocatorId("ViewLink"), typeName, url);
-                        vLayout.addMember(viewLink);
+                        canvas = viewLink;
                     } else {
-                        HTMLFlow html = new HTMLFlow(typeName);
-                        vLayout.addMember(html);
+                        canvas = new HTMLFlow(typeName);
                     }
-                    return vLayout;
+                    return canvas;
                 }
             };
             ListGridField fieldPlugin = new ListGridField(DataSource.Field.TYPEPLUGIN, MSG.common_title_plugin());

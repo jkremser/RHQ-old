@@ -22,7 +22,6 @@ import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
-import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
@@ -145,8 +144,6 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
             // add more columns
             CanvasField parentField = new CanvasField(FIELD_PARENT, MSG.view_alerts_field_parent(), 100) {
                 protected Canvas createCanvas(ListGrid grid, final ListGridRecord record, Object value) {
-                    VLayout vLayout = createVLayout(grid);
-
                     final AlertDefinition alertDef = copyValues(record);
                     boolean hasParent;
                     String linkText;
@@ -162,11 +159,12 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
                         hasParent = false;
                         linkText = null;
                     }
+                    Canvas canvas;
                     if (hasParent) {
                         // we only display a link if we really have a parent.
                         // if we have a template parent, we have to get the resource's type and go to the template page for that type
                         // if we have a group parent, we can directly go to the group's alert def page
-                        Link link = new Link("Link", linkText, new ClickHandler() {
+                        canvas = new Link("Link", linkText, new ClickHandler() {
                             public void onClick(ClickEvent event) {
                                 if (alertDef.getParentId() != null && alertDef.getParentId() > 0) {
                                     // has a parent template alertdef
@@ -206,12 +204,11 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
                                 }
                             }
                         });
-                        vLayout.addMember(link);
                     } else {
-                        vLayout.addMember(new HTMLFlow(MSG.common_val_na()));
+                        canvas = new HTMLFlow(MSG.common_val_na());
                     }
 
-                    return vLayout;
+                    return canvas;
                 }
             };
             parentField.setShowHover(true);
@@ -227,14 +224,10 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
 
             CanvasField resourceField = new CanvasField(FIELD_RESOURCE, MSG.common_title_resource()) {
                 protected Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
-                    VLayout vLayout = createVLayout(grid);
                     Integer resourceId = record.getAttributeAsInt(AncestryUtil.RESOURCE_ID);
                     String url = LinkManager.getResourceLink(resourceId);
                     String resourceName = record.getAttribute(FIELD_RESOURCE);
-                    ViewLink viewLink = new ViewLink(extendLocatorId("ViewLink"),
-                                    StringUtility.escapeHtml(resourceName), url);
-                    vLayout.addMember(viewLink);
-                    return vLayout;
+                    return new ViewLink(StringUtility.escapeHtml(resourceName), url);
                 }
             };
             resourceField.setShowHover(true);

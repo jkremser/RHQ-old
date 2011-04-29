@@ -29,7 +29,6 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import com.smartgwt.client.widgets.layout.HLayout;
-import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
 import org.rhq.core.domain.criteria.AbstractResourceConfigurationUpdateCriteria;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -160,7 +159,6 @@ public abstract class AbstractConfigurationHistoryView<T extends AbstractConfigu
     protected CanvasField createDetailsLinkField(ListGridField field) {
         return new CanvasField(field) {
             protected Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
-                VLayout vLayout = createVLayout(grid);
                 HLayout hLayout = new HLayout();
 
                 String isCurrentConfig = record
@@ -173,8 +171,7 @@ public abstract class AbstractConfigurationHistoryView<T extends AbstractConfigu
                 ViewLink detailsViewLink = createDetailsViewLink(record, value);
                 hLayout.addMember(detailsViewLink);
 
-                vLayout.addMember(hLayout);
-                return vLayout;
+                return hLayout;
             }
         };
     }

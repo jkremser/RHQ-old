@@ -31,7 +31,6 @@ import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
-import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
@@ -39,6 +38,7 @@ import org.rhq.enterprise.gui.coregui.client.bundle.list.BundleVersionDataSource
 import org.rhq.enterprise.gui.coregui.client.components.ViewLink;
 import org.rhq.enterprise.gui.coregui.client.components.table.CanvasField;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
+import org.rhq.enterprise.gui.coregui.client.components.table.ViewLinkField;
 
 /**
  * @author Greg Hinkle
@@ -64,15 +64,11 @@ public class BundleVersionListView extends Table<BundleVersionDataSource> {
     protected void configureTable() {
         ListGridField idField = new ListGridField(FIELD_ID, MSG.common_title_id());
 
-        CanvasField versionField = new CanvasField(BundleVersionDataSource.FIELD_VERSION, MSG
+        ViewLinkField versionField = new ViewLinkField(BundleVersionDataSource.FIELD_VERSION, MSG
             .common_title_version()) {
-            protected Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
-                VLayout vLayout = createVLayout(grid);
+            protected ViewLink getViewLink(ListGrid grid, ListGridRecord record, Object value) {
                 String viewPath = getBundleVersionViewPath(record);
-                ViewLink viewLink = new ViewLink(extendLocatorId("ViewLink"),
-                        record.getAttribute(BundleVersionDataSource.FIELD_VERSION), viewPath);
-                vLayout.addMember(viewLink);
-                return vLayout;
+                return new ViewLink(value.toString(), viewPath);
             }
         };
 
