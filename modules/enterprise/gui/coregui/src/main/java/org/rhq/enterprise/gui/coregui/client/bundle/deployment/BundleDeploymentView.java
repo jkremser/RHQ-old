@@ -73,7 +73,7 @@ import org.rhq.enterprise.gui.coregui.client.components.ViewLink;
 import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
-import org.rhq.enterprise.gui.coregui.client.components.table.ViewLinkField;
+import org.rhq.enterprise.gui.coregui.client.components.table.CanvasField;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagEditorView;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagsChangedCallback;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
@@ -344,8 +344,8 @@ public class BundleDeploymentView extends LocatableVLayout implements Bookmarkab
         resourceIcon.setWidth(40);
 
         // resource field
-        ViewLinkField resource = new ViewLinkField("resource", MSG.common_title_platform()) {
-            protected ViewLink getViewLink(ListGrid grid, ListGridRecord record, Object value) {
+        CanvasField resource = new CanvasField("resource", MSG.common_title_platform()) {
+            protected com.smartgwt.client.widgets.Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
                 String resourceUrl = LinkManager.getResourceLink(record.getAttributeAsInt("resourceId"));
                 String linkText = StringUtility.escapeHtml(record.getAttribute("resource"));
                 return new ViewLink(extendLocatorId("ViewLink"), linkText, resourceUrl);

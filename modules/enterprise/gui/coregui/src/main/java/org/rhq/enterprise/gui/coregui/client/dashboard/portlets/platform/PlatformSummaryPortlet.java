@@ -47,7 +47,7 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.ViewLink;
-import org.rhq.enterprise.gui.coregui.client.components.table.ViewLinkField;
+import org.rhq.enterprise.gui.coregui.client.components.table.CanvasField;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
@@ -122,9 +122,9 @@ public class PlatformSummaryPortlet extends LocatableListGrid implements Portlet
     }
 
     private void buildUI() {
-        ViewLinkField nameField = new ViewLinkField(ResourceDataSourceField.NAME.propertyName(), MSG
+        CanvasField nameField = new CanvasField(ResourceDataSourceField.NAME.propertyName(), MSG
             .common_title_name()) {
-            protected ViewLink getViewLink(ListGrid grid, ListGridRecord record, Object value) {
+            protected com.smartgwt.client.widgets.Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
                 String resourceUrl = LinkManager.getResourceLink(record.getAttributeAsInt("id"));
                 String linkText = StringUtility.escapeHtml(record.getAttribute(ResourceDataSourceField.NAME.propertyName()));
                 return new ViewLink(extendLocatorId("ViewLink"), linkText, resourceUrl);

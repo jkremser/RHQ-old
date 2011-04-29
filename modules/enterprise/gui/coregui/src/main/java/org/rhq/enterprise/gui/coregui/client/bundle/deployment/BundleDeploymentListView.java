@@ -42,7 +42,7 @@ import org.rhq.enterprise.gui.coregui.client.components.ViewLink;
 import org.rhq.enterprise.gui.coregui.client.components.table.EscapedHtmlCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
-import org.rhq.enterprise.gui.coregui.client.components.table.ViewLinkField;
+import org.rhq.enterprise.gui.coregui.client.components.table.CanvasField;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 
 /**
@@ -65,8 +65,8 @@ public class BundleDeploymentListView extends Table<BundleDeploymentDataSource> 
         ListGridField nameField;
         // only users that are authorized can see deployments
         if (canManageBundles) {
-            nameField = new ViewLinkField(BundleDeploymentDataSource.FIELD_NAME, MSG.view_bundle_deploy_name()) {
-                protected ViewLink getViewLink(ListGrid grid, ListGridRecord record, Object value) {
+            nameField = new CanvasField(BundleDeploymentDataSource.FIELD_NAME, MSG.view_bundle_deploy_name()) {
+                protected com.smartgwt.client.widgets.Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
                     String linkText = StringUtility.escapeHtml(record.getAttribute(BundleDeploymentDataSource.FIELD_NAME));
                     String viewPath = getBundleDeploymentLink(record);
                     return new ViewLink(extendLocatorId("ViewLink"), linkText, viewPath);
@@ -79,9 +79,9 @@ public class BundleDeploymentListView extends Table<BundleDeploymentDataSource> 
         }
         ListGridField descriptionField = new ListGridField(BundleDeploymentDataSource.FIELD_DESCRIPTION, MSG
             .common_title_description());
-        ViewLinkField bundleVersionField = new ViewLinkField(BundleDeploymentDataSource.FIELD_BUNDLE_VERSION_VERSION,
+        CanvasField bundleVersionField = new CanvasField(BundleDeploymentDataSource.FIELD_BUNDLE_VERSION_VERSION,
             MSG.view_bundle_bundleVersion()) {
-            protected ViewLink getViewLink(ListGrid grid, ListGridRecord record, Object value) {
+            protected com.smartgwt.client.widgets.Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
                 String linkText = record.getAttribute(BundleDeploymentDataSource.FIELD_BUNDLE_VERSION_VERSION);
                 String viewPath = LinkManager.getBundleVersionLink(record
                         .getAttributeAsInt(BundleDeploymentDataSource.FIELD_BUNDLE_ID), record

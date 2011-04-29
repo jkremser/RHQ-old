@@ -26,7 +26,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.ViewLink;
-import org.rhq.enterprise.gui.coregui.client.components.table.ViewLinkField;
+import org.rhq.enterprise.gui.coregui.client.components.table.CanvasField;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMeasurementDataTraitListDetailView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 
@@ -46,8 +46,8 @@ public class TraitsDetailView extends AbstractMeasurementDataTraitListDetailView
 
         ListGrid listGrid = getListGrid();
 
-        ViewLinkField resourceNameField = new ViewLinkField(listGrid.getField(MeasurementDataTraitCriteria.SORT_FIELD_RESOURCE_NAME)) {
-            protected ViewLink getViewLink(ListGrid grid, ListGridRecord record, Object value) {
+        CanvasField resourceNameField = new CanvasField(listGrid.getField(MeasurementDataTraitCriteria.SORT_FIELD_RESOURCE_NAME)) {
+            protected com.smartgwt.client.widgets.Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
                 String url = LinkManager.getResourceLink(record.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
                 return new ViewLink(value.toString(), url);
             }

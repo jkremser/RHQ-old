@@ -29,7 +29,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 /**
- * A special field, when used in conjunction with an {@link EnhancedListGrid}, whose values will be formatted as a
+ * A special LisGrid field, when used in conjunction with an {@link EnhancedListGrid}, whose values will be formatted as
  * custom SmartGWT canvases. The ListGrid equivalent of a DynamicForm CanvasItem.
  *
  * @author Ian Springer
@@ -63,8 +63,8 @@ public abstract class CanvasField extends ListGridField {
         super(field.getName(), field.getTitle());
 
         setAlign(field.getAlign());
+        setCellAlign(field.getCellAlign());
         setWidth(field.getWidth());
-        // TODO (ips, 04/27/11): clone other commonly used fields
     }
 
     /**
@@ -116,7 +116,7 @@ public abstract class CanvasField extends ListGridField {
      * @return the canvas containing content representing this field in the passed-in record, or null if the cell
      *         should be empty
      */
-    protected abstract Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value);
+    protected abstract com.smartgwt.client.widgets.Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value);
 
     @Override
     public String toString() {

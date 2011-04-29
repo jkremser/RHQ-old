@@ -38,7 +38,7 @@ import org.rhq.enterprise.gui.coregui.client.bundle.list.BundleVersionDataSource
 import org.rhq.enterprise.gui.coregui.client.components.ViewLink;
 import org.rhq.enterprise.gui.coregui.client.components.table.CanvasField;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
-import org.rhq.enterprise.gui.coregui.client.components.table.ViewLinkField;
+import org.rhq.enterprise.gui.coregui.client.components.table.CanvasField;
 
 /**
  * @author Greg Hinkle
@@ -64,9 +64,9 @@ public class BundleVersionListView extends Table<BundleVersionDataSource> {
     protected void configureTable() {
         ListGridField idField = new ListGridField(FIELD_ID, MSG.common_title_id());
 
-        ViewLinkField versionField = new ViewLinkField(BundleVersionDataSource.FIELD_VERSION, MSG
+        CanvasField versionField = new CanvasField(BundleVersionDataSource.FIELD_VERSION, MSG
             .common_title_version()) {
-            protected ViewLink getViewLink(ListGrid grid, ListGridRecord record, Object value) {
+            protected com.smartgwt.client.widgets.Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
                 String viewPath = getBundleVersionViewPath(record);
                 return new ViewLink(value.toString(), viewPath);
             }

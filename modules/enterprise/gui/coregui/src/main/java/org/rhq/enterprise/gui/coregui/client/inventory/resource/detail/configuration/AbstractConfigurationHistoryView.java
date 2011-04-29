@@ -158,7 +158,7 @@ public abstract class AbstractConfigurationHistoryView<T extends AbstractConfigu
     @Override
     protected CanvasField createDetailsLinkField(ListGridField field) {
         return new CanvasField(field) {
-            protected Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
+            protected com.smartgwt.client.widgets.Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
                 HLayout hLayout = new HLayout();
 
                 String isCurrentConfig = record

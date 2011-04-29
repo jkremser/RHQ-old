@@ -51,7 +51,7 @@ import org.rhq.enterprise.gui.coregui.client.components.ViewLink;
 import org.rhq.enterprise.gui.coregui.client.components.table.IconField;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableWidget;
-import org.rhq.enterprise.gui.coregui.client.components.table.ViewLinkField;
+import org.rhq.enterprise.gui.coregui.client.components.table.CanvasField;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortletUtil;
 import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
@@ -122,9 +122,9 @@ public class ProblemResourcesPortlet extends Table<ProblemResourcesDataSource> i
             addExtraWidget(new TimeRange(extendLocatorId("TimeRange"), this), false);
         }
 
-        ViewLinkField resourceField = new ViewLinkField(RESOURCE.propertyName(), RESOURCE.title()) {
+        CanvasField resourceField = new CanvasField(RESOURCE.propertyName(), RESOURCE.title()) {
             @Override
-            protected ViewLink getViewLink(ListGrid grid, ListGridRecord record, Object value) {
+            protected com.smartgwt.client.widgets.Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
                 String url = LinkManager.getResourceLink(record.getAttributeAsInt("id"));
                 return new ViewLink(value.toString(), url);
             }

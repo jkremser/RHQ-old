@@ -51,7 +51,7 @@ import org.rhq.enterprise.gui.coregui.client.components.ViewLink;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
-import org.rhq.enterprise.gui.coregui.client.components.table.ViewLinkField;
+import org.rhq.enterprise.gui.coregui.client.components.table.CanvasField;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.operation.OperationHistoryDataSource;
@@ -249,9 +249,9 @@ public abstract class AbstractOperationHistoryListView<T extends AbstractOperati
         return statusField;
     }
 
-    protected ViewLinkField createResourceField() {
-        ViewLinkField resourceField = new ViewLinkField(AncestryUtil.RESOURCE_NAME, MSG.common_title_resource()) {
-            protected ViewLink getViewLink(ListGrid grid, ListGridRecord record, Object value) {
+    protected CanvasField createResourceField() {
+        CanvasField resourceField = new CanvasField(AncestryUtil.RESOURCE_NAME, MSG.common_title_resource()) {
+            protected com.smartgwt.client.widgets.Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
                 String url = LinkManager.getResourceLink(record.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
                 return new ViewLink(value.toString(), url);
             }

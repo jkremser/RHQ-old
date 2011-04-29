@@ -36,7 +36,7 @@ import org.rhq.enterprise.gui.coregui.client.components.Link;
 import org.rhq.enterprise.gui.coregui.client.components.ViewLink;
 import org.rhq.enterprise.gui.coregui.client.components.table.CanvasField;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
-import org.rhq.enterprise.gui.coregui.client.components.table.ViewLinkField;
+import org.rhq.enterprise.gui.coregui.client.components.table.CanvasField;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
@@ -127,8 +127,8 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
                 if (fieldName.equals(FIELD_CTIME) || fieldName.equals(FIELD_MTIME)) {
                     field.setHidden(true);
                 } else if (fieldName.equals(FIELD_NAME)) {
-                    ViewLinkField nameField = new ViewLinkField(field) {
-                        protected ViewLink getViewLink(ListGrid grid, ListGridRecord record, Object value) {
+                    CanvasField nameField = new CanvasField(field) {
+                        protected com.smartgwt.client.widgets.Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
                             AlertDefinition alertDef = copyValues(record);
                             int resourceId = alertDef.getResource().getId();
                             int alertDefId = alertDef.getId();
@@ -143,7 +143,7 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
 
             // add more columns
             CanvasField parentField = new CanvasField(FIELD_PARENT, MSG.view_alerts_field_parent(), 100) {
-                protected Canvas createCanvas(ListGrid grid, final ListGridRecord record, Object value) {
+                protected com.smartgwt.client.widgets.Canvas createCanvas(ListGrid grid, final ListGridRecord record, Object value) {
                     final AlertDefinition alertDef = copyValues(record);
                     boolean hasParent;
                     String linkText;
@@ -223,7 +223,7 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
             fields.add(parentField);
 
             CanvasField resourceField = new CanvasField(FIELD_RESOURCE, MSG.common_title_resource()) {
-                protected Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
+                protected com.smartgwt.client.widgets.Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
                     Integer resourceId = record.getAttributeAsInt(AncestryUtil.RESOURCE_ID);
                     String url = LinkManager.getResourceLink(resourceId);
                     String resourceName = record.getAttribute(FIELD_RESOURCE);

@@ -38,7 +38,7 @@ import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.ViewLink;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
-import org.rhq.enterprise.gui.coregui.client.components.table.ViewLinkField;
+import org.rhq.enterprise.gui.coregui.client.components.table.CanvasField;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 
 /**
@@ -59,8 +59,8 @@ public class BundleDestinationListView extends Table<BundleDestinationDataSource
     @Override
     protected void configureTable() {
         ListGridField idField = new ListGridField(BundleDestinationDataSource.FIELD_ID, MSG.common_title_id());
-        ViewLinkField nameField = new ViewLinkField(BundleDestinationDataSource.FIELD_NAME, MSG.common_title_name()) {
-            protected ViewLink getViewLink(ListGrid grid, ListGridRecord record, Object value) {
+        CanvasField nameField = new CanvasField(BundleDestinationDataSource.FIELD_NAME, MSG.common_title_name()) {
+            protected com.smartgwt.client.widgets.Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
                 String bundleName = record.getAttribute(BundleDestinationDataSource.FIELD_NAME);
                 String linkText = StringUtility.escapeHtml(bundleName);
                 String viewPath = getBundleDestinationLink(record);
@@ -69,9 +69,9 @@ public class BundleDestinationListView extends Table<BundleDestinationDataSource
         };
         ListGridField descriptionField = new ListGridField(BundleDestinationDataSource.FIELD_DESCRIPTION, MSG
             .common_title_description());
-        ViewLinkField bundleNameField = new ViewLinkField(BundleDestinationDataSource.FIELD_BUNDLE_NAME, MSG
+        CanvasField bundleNameField = new CanvasField(BundleDestinationDataSource.FIELD_BUNDLE_NAME, MSG
             .view_bundle_bundle()) {
-            protected ViewLink getViewLink(ListGrid grid, ListGridRecord record, Object value) {
+            protected com.smartgwt.client.widgets.Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
                 String bundleName = record.getAttribute(BundleDestinationDataSource.FIELD_BUNDLE_NAME);
                 String linkText = StringUtility.escapeHtml(bundleName);
                 Integer bundleId = record.getAttributeAsInt(BundleDestinationDataSource.FIELD_BUNDLE_ID);
@@ -79,9 +79,9 @@ public class BundleDestinationListView extends Table<BundleDestinationDataSource
                 return new ViewLink(extendLocatorId("ViewLink"), linkText, viewPath);
             }
         };
-        ViewLinkField groupNameField = new ViewLinkField(BundleDestinationDataSource.FIELD_GROUP_NAME, MSG
+        CanvasField groupNameField = new CanvasField(BundleDestinationDataSource.FIELD_GROUP_NAME, MSG
             .view_bundle_dest_group()) {
-            protected ViewLink getViewLink(ListGrid grid, ListGridRecord record, Object value) {
+            protected com.smartgwt.client.widgets.Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
                 String groupName = record.getAttribute(BundleDestinationDataSource.FIELD_GROUP_NAME);
                 String linkText = StringUtility.escapeHtml(groupName);
                 Integer groupId = record.getAttributeAsInt(BundleDestinationDataSource.FIELD_GROUP_ID);

@@ -45,7 +45,7 @@ import org.rhq.enterprise.gui.coregui.client.components.ViewLink;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
-import org.rhq.enterprise.gui.coregui.client.components.table.ViewLinkField;
+import org.rhq.enterprise.gui.coregui.client.components.table.CanvasField;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.ErrorHandler;
@@ -87,9 +87,9 @@ public class BundlesListView extends Table<BundlesWithLatestVersionDataSource> {
         idField.setType(ListGridFieldType.INTEGER);
         idField.setWidth("50");
 
-        ViewLinkField nameField = new ViewLinkField(BundlesWithLatestVersionDataSource.FIELD_NAME, MSG
+        CanvasField nameField = new CanvasField(BundlesWithLatestVersionDataSource.FIELD_NAME, MSG
             .common_title_name()) {
-            protected ViewLink getViewLink(ListGrid grid, ListGridRecord record, Object value) {
+            protected com.smartgwt.client.widgets.Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
                 String nameLink = record.getAttribute(BundlesWithLatestVersionDataSource.FIELD_NAMELINK);
                 return new ViewLink(extendLocatorId("ViewLink"), StringUtility.escapeHtml(value.toString()), nameLink);
             }

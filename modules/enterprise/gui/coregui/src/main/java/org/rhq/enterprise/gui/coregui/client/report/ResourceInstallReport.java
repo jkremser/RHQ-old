@@ -117,7 +117,7 @@ public class ResourceInstallReport extends LocatableVLayout implements Bookmarka
         @Override
         protected void configureTable() {
             CanvasField fieldTypeName = new CanvasField(DataSource.Field.TYPENAME, MSG.common_title_resource_type()) {
-                protected Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
+                protected com.smartgwt.client.widgets.Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
                     String typeName = record.getAttribute(DataSource.Field.TYPENAME);
                     String url = getResourceTypeTableUrl(record);
                     Canvas canvas;

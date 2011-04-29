@@ -75,7 +75,7 @@ import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.ViewLink;
 import org.rhq.enterprise.gui.coregui.client.components.table.EscapedHtmlCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
-import org.rhq.enterprise.gui.coregui.client.components.table.ViewLinkField;
+import org.rhq.enterprise.gui.coregui.client.components.table.CanvasField;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupsDataSource;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.definitions.GroupDefinitionExpressionBuilder.AddExpressionHandler;
@@ -250,8 +250,8 @@ public class SingleGroupDefinitionView extends LocatableVLayout implements Bookm
             idField.setType(ListGridFieldType.INTEGER);
             idField.setWidth("50");
 
-            ViewLinkField nameField = new ViewLinkField(NAME.propertyName(), NAME.title()) {
-                protected ViewLink getViewLink(ListGrid grid, ListGridRecord record, Object value) {
+            CanvasField nameField = new CanvasField(NAME.propertyName(), NAME.title()) {
+                protected com.smartgwt.client.widgets.Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
                     String linkName = StringUtility.escapeHtml(record.getAttributeAsString(NAME.propertyName()));
                     String linkUrl = LinkManager.getResourceGroupLink(record.getAttributeAsInt("id"));
                     return new ViewLink(extendLocatorId("ViewLink"), linkName, linkUrl);

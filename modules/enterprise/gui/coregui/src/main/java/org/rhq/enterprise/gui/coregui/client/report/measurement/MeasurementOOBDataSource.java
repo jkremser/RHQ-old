@@ -49,7 +49,7 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.ViewLink;
-import org.rhq.enterprise.gui.coregui.client.components.table.ViewLinkField;
+import org.rhq.enterprise.gui.coregui.client.components.table.CanvasField;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
@@ -79,8 +79,8 @@ public class MeasurementOOBDataSource extends RPCDataSource<MeasurementOOBCompos
     public ArrayList<ListGridField> getListGridFields() {
         ArrayList<ListGridField> fields = new ArrayList<ListGridField>();
 
-        ViewLinkField resourceNameField = new ViewLinkField(AncestryUtil.RESOURCE_NAME, MSG.common_title_resource()) {
-            protected ViewLink getViewLink(ListGrid grid, ListGridRecord record, Object value) {
+        CanvasField resourceNameField = new CanvasField(AncestryUtil.RESOURCE_NAME, MSG.common_title_resource()) {
+            protected com.smartgwt.client.widgets.Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
                 String url = LinkManager.getResourceLink(record.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
                 return new ViewLink(value.toString(), url);
             }

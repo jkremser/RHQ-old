@@ -47,7 +47,7 @@ import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.ViewLink;
 import org.rhq.enterprise.gui.coregui.client.components.table.CanvasField;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
-import org.rhq.enterprise.gui.coregui.client.components.table.ViewLinkField;
+import org.rhq.enterprise.gui.coregui.client.components.table.CanvasField;
 import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
@@ -202,7 +202,7 @@ public abstract class AbstractConfigurationHistoryDataSource<T extends AbstractR
 
         CanvasField updateTypeField = new CanvasField(Field.GROUP_CONFIG_UPDATE_ID, MSG
             .dataSource_configurationHistory_updateType()) {
-            protected Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
+            protected com.smartgwt.client.widgets.Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
                 Integer groupConfigUpdateId = record.getAttributeAsInt(Field.GROUP_CONFIG_UPDATE_ID);
                 if (groupConfigUpdateId == null) {
                     return new HTMLFlow(MSG.dataSource_configurationHistory_updateType_individual());
@@ -218,8 +218,8 @@ public abstract class AbstractConfigurationHistoryDataSource<T extends AbstractR
 
         // determine the widths of our columns
         if (includeResourceFields) {
-            ViewLinkField resourceNameField = new ViewLinkField(AncestryUtil.RESOURCE_NAME, MSG.common_title_resource()) {
-                protected ViewLink getViewLink(ListGrid grid, ListGridRecord record, Object value) {
+            CanvasField resourceNameField = new CanvasField(AncestryUtil.RESOURCE_NAME, MSG.common_title_resource()) {
+                protected com.smartgwt.client.widgets.Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
                     String url = LinkManager
                         .getResourceLink(record.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
                     return new ViewLink(value.toString(), url);

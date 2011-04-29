@@ -137,10 +137,10 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
             // corresponding record.
             ListGridField field = (grid != null) ? grid.getField(getDetailsLinkColumnName()) : null;
             if (field != null) {
-                CanvasField detailsViewLinkField = createDetailsLinkField(field);
+                CanvasField detailsCanvasField = createDetailsLinkField(field);
                 int fieldIndex = grid.getFieldNum(field.getName());
                 ListGridField[] fields = grid.getFields();
-                fields[fieldIndex] = detailsViewLinkField;
+                fields[fieldIndex] = detailsCanvasField;
                 grid.setFields(fields);
             }
 
@@ -158,8 +158,8 @@ public abstract class TableSection<DS extends RPCDataSource> extends Table<DS> i
     }
 
     protected CanvasField createDetailsLinkField(final ListGridField field) {
-        return new ViewLinkField(field) {
-            protected ViewLink getViewLink(ListGrid grid, ListGridRecord record, Object value) {
+        return new CanvasField(field) {
+            protected com.smartgwt.client.widgets.Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
                 return createDetailsViewLink(record, value);
             }
         };

@@ -45,7 +45,7 @@ import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.ViewLink;
 import org.rhq.enterprise.gui.coregui.client.components.table.CanvasField;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
-import org.rhq.enterprise.gui.coregui.client.components.table.ViewLinkField;
+import org.rhq.enterprise.gui.coregui.client.components.table.CanvasField;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortletUtil;
 import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
@@ -124,7 +124,7 @@ public class OperationSchedulePortlet extends LocatableVLayout implements Custom
 
         CanvasField timeNext = new CanvasField(ScheduledOperationsDataSource.Field.TIME.propertyName(),
             ScheduledOperationsDataSource.Field.TIME.title(), WIDTH_SCHEDULED_TIME) {
-            protected Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
+            protected com.smartgwt.client.widgets.Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
                 if (value != null) {
                     String timestamp = TimestampCellFormatter.format(value);
                     Integer resourceId = record.getAttributeAsInt(AncestryUtil.RESOURCE_ID);
@@ -143,9 +143,9 @@ public class OperationSchedulePortlet extends LocatableVLayout implements Custom
         ListGridField operationNext = new ListGridField(ScheduledOperationsDataSource.Field.OPERATION.propertyName(),
             ScheduledOperationsDataSource.Field.OPERATION.title());
 
-        ViewLinkField resourceNext = new ViewLinkField(ScheduledOperationsDataSource.Field.RESOURCE.propertyName(),
+        CanvasField resourceNext = new CanvasField(ScheduledOperationsDataSource.Field.RESOURCE.propertyName(),
             ScheduledOperationsDataSource.Field.RESOURCE.title()) {
-            protected ViewLink getViewLink(ListGrid grid, ListGridRecord record, Object value) {
+            protected com.smartgwt.client.widgets.Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
                 String url = LinkManager.getResourceLink(record.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
                 return new ViewLink(value.toString(), url);
             }

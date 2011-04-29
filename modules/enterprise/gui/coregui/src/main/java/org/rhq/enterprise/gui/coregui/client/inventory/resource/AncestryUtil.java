@@ -70,7 +70,7 @@ public abstract class AncestryUtil {
     public static ListGridField setupAncestryListGridField() {
         CanvasField ancestryField = new CanvasField(AncestryUtil.RESOURCE_ANCESTRY,
                 CoreGUI.getMessages().common_title_ancestry()) {
-            protected Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
+            protected com.smartgwt.client.widgets.Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
                 return createCellCanvasForAncestryValue(record, value);
             }
         };
@@ -88,7 +88,7 @@ public abstract class AncestryUtil {
      */
     public static ListGridField setupAncestryListGridField(ListGrid listGrid) {
         ListGridField ancestryField = new CanvasField(listGrid.getField(AncestryUtil.RESOURCE_ANCESTRY)) {
-            protected Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
+            protected com.smartgwt.client.widgets.Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
                 return createCellCanvasForAncestryValue(record, value);
             }
         };
@@ -410,6 +410,13 @@ public abstract class AncestryUtil {
         String result = sb.toString();
         record.setAttribute(RESOURCE_HOVER, result);
         return result;
+    }
+
+    public static void setAncestryRecordAttributes(Record record, Resource resource) {
+        record.setAttribute(AncestryUtil.RESOURCE_ID, resource.getId());
+        record.setAttribute(AncestryUtil.RESOURCE_NAME, resource.getName());
+        record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY, resource.getAncestry());
+        record.setAttribute(AncestryUtil.RESOURCE_TYPE_ID, resource.getResourceType().getId());
     }
 
     private static Integer getResourceId(Record record) {

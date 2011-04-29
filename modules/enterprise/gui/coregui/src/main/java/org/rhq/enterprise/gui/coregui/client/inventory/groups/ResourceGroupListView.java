@@ -51,7 +51,7 @@ import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableActio
 import org.rhq.enterprise.gui.coregui.client.components.table.AuthorizedTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
-import org.rhq.enterprise.gui.coregui.client.components.table.ViewLinkField;
+import org.rhq.enterprise.gui.coregui.client.components.table.CanvasField;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.wizard.GroupCreateWizard;
@@ -138,8 +138,8 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
             }
         });
 
-        ViewLinkField nameField = new ViewLinkField(NAME.propertyName(), NAME.title()) {
-            protected ViewLink getViewLink(ListGrid grid, ListGridRecord record, Object value) {
+        CanvasField nameField = new CanvasField(NAME.propertyName(), NAME.title()) {
+            protected com.smartgwt.client.widgets.Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
                 String groupId = record.getAttribute("id");
                 String groupUrl = LinkManager.getResourceGroupLink(Integer.valueOf(groupId));
                 return new ViewLink(value.toString(), groupUrl);

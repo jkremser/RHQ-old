@@ -28,6 +28,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.SortSpecifier;
+import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
 import com.smartgwt.client.widgets.grid.HoverCustomizer;
@@ -51,7 +52,7 @@ import org.rhq.enterprise.gui.coregui.client.components.table.ResourceCategoryCe
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
-import org.rhq.enterprise.gui.coregui.client.components.table.ViewLinkField;
+import org.rhq.enterprise.gui.coregui.client.components.table.CanvasField;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
@@ -193,8 +194,8 @@ public class ResourceSearchView extends Table {
         });
         fields.add(iconField);
 
-        ViewLinkField nameField = new ViewLinkField(NAME.propertyName(), NAME.title(), 250) {
-            protected ViewLink getViewLink(ListGrid grid, ListGridRecord record, Object value) {
+        CanvasField nameField = new CanvasField(NAME.propertyName(), NAME.title(), 250) {
+            protected com.smartgwt.client.widgets.Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
                 String url = LinkManager.getResourceLink(record.getAttributeAsInt("id"));
                 String name = StringUtility.escapeHtml(value.toString());
                 return new ViewLink(name, url);

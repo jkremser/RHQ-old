@@ -41,7 +41,7 @@ import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
 import org.rhq.enterprise.gui.coregui.client.components.ViewLink;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
-import org.rhq.enterprise.gui.coregui.client.components.table.ViewLinkField;
+import org.rhq.enterprise.gui.coregui.client.components.table.CanvasField;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortletUtil;
 import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
@@ -91,8 +91,8 @@ public class RecentlyAddedResourcesPortlet extends LocatableVLayout implements C
         treeGrid.setResizeFieldsInRealTime(true);
         treeGrid.setTreeFieldTitle("Resource Name");
 
-        ViewLinkField resourceNameField = new ViewLinkField("name", MSG.common_title_resource_name()) {
-            protected ViewLink getViewLink(ListGrid grid, ListGridRecord record, Object value) {
+        CanvasField resourceNameField = new CanvasField("name", MSG.common_title_resource_name()) {
+            protected com.smartgwt.client.widgets.Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
                 int resourceId = record.getAttributeAsInt("id");
                 String resourceName = record.getAttribute("name");
                 String resourceViewPath = LinkManager.getResourceLink(resourceId);

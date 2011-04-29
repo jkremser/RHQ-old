@@ -34,6 +34,7 @@ import com.smartgwt.client.data.Record;
 import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.ListGridFieldType;
+import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGrid;
@@ -56,7 +57,7 @@ import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.ViewLink;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
-import org.rhq.enterprise.gui.coregui.client.components.table.ViewLinkField;
+import org.rhq.enterprise.gui.coregui.client.components.table.CanvasField;
 import org.rhq.enterprise.gui.coregui.client.gwt.AlertGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
@@ -109,8 +110,8 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
         ctimeField.setHoverCustomizer(TimestampCellFormatter.getHoverCustomizer(AlertCriteria.SORT_FIELD_CTIME));
         fields.add(ctimeField);
 
-        ViewLinkField nameField = new ViewLinkField("name", MSG.view_alerts_field_name()) {
-            protected ViewLink getViewLink(ListGrid grid, ListGridRecord record, Object value) {
+        CanvasField nameField = new CanvasField("name", MSG.view_alerts_field_name()) {
+            protected com.smartgwt.client.widgets.Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
                 Integer resourceId = record.getAttributeAsInt(AncestryUtil.RESOURCE_ID);
                 Integer defId = record.getAttributeAsInt("definitionId");
                 String url = LinkManager.getSubsystemAlertDefinitionLink(resourceId, defId);
@@ -176,8 +177,8 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
         fields.add(statusField);
 
         if (this.entityContext.type != EntityContext.Type.Resource) {
-            ViewLinkField resourceNameField = new ViewLinkField(AncestryUtil.RESOURCE_NAME, MSG.common_title_resource()) {
-                protected ViewLink getViewLink(ListGrid grid, ListGridRecord record, Object value) {
+            CanvasField resourceNameField = new CanvasField(AncestryUtil.RESOURCE_NAME, MSG.common_title_resource()) {
+                protected com.smartgwt.client.widgets.Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
                     String url = LinkManager
                         .getResourceLink(record.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
                     return new ViewLink(value.toString(), url);
@@ -243,7 +244,7 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
     }
 
     /**
-     * Additional processing to support entity-specific or cross-resource views, and something that can be overidden.
+     * Additional processing to support entity-specific or cross-resource views, and something that can be overridden.
      */
     protected void dataRetrieved(final PageList<Alert> result, final DSResponse response, final DSRequest request) {
         switch (entityContext.type) {
@@ -356,11 +357,7 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
         record.setAttribute("description", alertDefinition.getDescription());
         record.setAttribute("priority", ImageManager.getAlertIcon(alertDefinition.getPriority()));
 
-        // for ancestry handling       
-        record.setAttribute(AncestryUtil.RESOURCE_ID, resource.getId());
-        record.setAttribute(AncestryUtil.RESOURCE_NAME, resource.getName());
-        record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY, resource.getAncestry());
-        record.setAttribute(AncestryUtil.RESOURCE_TYPE_ID, resource.getResourceType().getId());
+        AncestryUtil.setAncestryRecordAttributes(record, resource);
 
         Set<AlertConditionLog> conditionLogs = from.getConditionLogs();
         String conditionText;
