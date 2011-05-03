@@ -34,7 +34,6 @@ import com.smartgwt.client.data.Record;
 import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.ListGridFieldType;
-import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGrid;
@@ -56,8 +55,8 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.ViewLink;
-import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.table.CanvasField;
+import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.AlertGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
@@ -178,9 +177,9 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
 
         if (this.entityContext.type != EntityContext.Type.Resource) {
             CanvasField resourceNameField = new CanvasField(AncestryUtil.RESOURCE_NAME, MSG.common_title_resource()) {
-                protected com.smartgwt.client.widgets.Canvas createCanvas(ListGrid grid, ListGridRecord record, Object value) {
-                    String url = LinkManager
-                        .getResourceLink(record.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
+                protected com.smartgwt.client.widgets.Canvas createCanvas(ListGrid grid, ListGridRecord record,
+                    Object value) {
+                    String url = LinkManager.getResourceLink(record.getAttributeAsInt(AncestryUtil.RESOURCE_ID));
                     return new ViewLink(value.toString(), url);
                 }
             };
@@ -371,8 +370,13 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
             conditionText = AlertFormatUtility.formatAlertConditionForDisplay(condition);
             conditionValue = conditionLog.getValue();
             if (condition.getMeasurementDefinition() != null) {
-                conditionValue = MeasurementConverterClient.format(Double.valueOf(conditionLog.getValue()), condition
-                    .getMeasurementDefinition().getUnits(), true);
+                try {
+                    conditionValue = MeasurementConverterClient.format(Double.valueOf(conditionLog.getValue()),
+                        condition.getMeasurementDefinition().getUnits(), true);
+                } catch (Exception e) {
+                    // the condition log value was probably not a number (most likely a trait). Ignore this exception.
+                    // even if any other errors occur trying to format the value, ignore this and just use the raw value string
+                }
             }
         } else {
             conditionText = MSG.view_alerts_field_condition_text_none();
@@ -390,8 +394,14 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
             dc.setAttribute("text", AlertFormatUtility.formatAlertConditionForDisplay(condition));
             String value = log.getValue();
             if (condition.getMeasurementDefinition() != null) {
-                value = MeasurementConverterClient.format(Double.valueOf(log.getValue()), condition
-                    .getMeasurementDefinition().getUnits(), true);
+                try {
+                    value = MeasurementConverterClient.format(Double.valueOf(log.getValue()), condition
+                        .getMeasurementDefinition().getUnits(), true);
+                } catch (Exception e) {
+                    // the condition log value was probably not a number (most likely a trait). Ignore this exception.
+                    // even if any other errors occur trying to format the value, ignore this and just use the raw value string
+                }
+
             }
             dc.setAttribute("value", value);
             conditions[i++] = dc;
