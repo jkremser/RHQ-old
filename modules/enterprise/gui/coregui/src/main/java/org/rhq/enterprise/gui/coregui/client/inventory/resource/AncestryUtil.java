@@ -26,6 +26,8 @@ import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
+import com.smartgwt.client.widgets.events.HoverEvent;
+import com.smartgwt.client.widgets.events.HoverHandler;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGrid;
@@ -107,6 +109,7 @@ public abstract class AncestryUtil {
         HStack hStack = new HStack();
         hStack.setMembersMargin(4);
         hStack.setOverflow(Overflow.HIDDEN);
+        hStack.setHo
         Integer resourceId = getResourceId(record);
         String[] ancestryEntries = value.toString().split(Resource.ANCESTRY_DELIM);
         for (int i = 0; i < ancestryEntries.length; ++i) {
@@ -125,6 +128,8 @@ public abstract class AncestryUtil {
                 String url = LinkManager.getResourceLink(ancestorResourceId);
                 String suffix = resourceId + "_" + entryTokens[1];
                 ViewLink viewLink = new ViewLink(ancestorName + suffix, ancestorName, url);
+                viewLink.setMouseOverStyleName(null);
+                viewLink.setMouseOutStyleName(null);
                 //viewLink.setOverflow(Overflow.VISIBLE);
                 //viewLink.setAutoWidth();
                 hStack.addMember(viewLink);

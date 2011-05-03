@@ -62,8 +62,6 @@ public abstract class CanvasField extends ListGridField {
     protected CanvasField(ListGridField field) {
         super(field.getName(), field.getTitle());
 
-        setAlign(field.getAlign());
-        setCellAlign(field.getCellAlign());
         setWidth(field.getWidth());
     }
 
@@ -75,7 +73,8 @@ public abstract class CanvasField extends ListGridField {
      * @param record the record containing the data for the row containing the cell being rendered
      * @param value the value of this field in the above record
      *
-     * @return
+     * @return returns a canvas, which is the representation of the specified record value, to become the content
+     *         of the corresponding grid cell
      */
     protected Canvas createCellComponent(ListGrid grid, ListGridRecord record, Object value) {
         VLayout vLayout = new VLayout();
