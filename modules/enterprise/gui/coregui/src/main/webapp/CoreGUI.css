@@ -32,10 +32,12 @@ a, a:link, a:visited, a:hover, .link, .linkHover {
 
 a, a:link, a:visited, .link, .menuBarLink {
     text-decoration: none !important;
+    cursor: default !important;
 }
 
 a:hover, .linkHover, .menuBarLinkHover {
     text-decoration: underline !important;
+    cursor: hand !important;
 }
 
 
