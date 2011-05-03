@@ -125,10 +125,6 @@ public abstract class AncestryUtil {
                 String url = LinkManager.getResourceLink(ancestorResourceId);
                 String suffix = resourceId + "_" + entryTokens[1];
                 ViewLink viewLink = new ViewLink(ancestorName + suffix, ancestorName, url);
-                viewLink.setMouseOverStyleName(null);
-                viewLink.setMouseOutStyleName(null);
-                //viewLink.setOverflow(Overflow.VISIBLE);
-                //viewLink.setAutoWidth();
                 hStack.addMember(viewLink);
             } else {
                 HTMLFlow html = new HTMLFlow(ancestorName);

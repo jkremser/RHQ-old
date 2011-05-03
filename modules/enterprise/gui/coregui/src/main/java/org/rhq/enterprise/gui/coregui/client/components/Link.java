@@ -50,8 +50,11 @@ public class Link extends LocatableHTMLFlow {
         this.mouseOutStyleName = DEFAULT_MOUSE_OUT_STYLE_NAME;
 
         // TODO (ips, 04/28/11): This is hacky - try to find a better way.
-        int width = calculateWidth(linkText);
-        setWidth(width);
+        //int width = calculateWidth(linkText);
+        //setWidth(width);
+        setAutoWidth();
+        // Convert spaces to non-breaking spaces to prevent breaks within the link.
+        linkText = linkText.replace(" ", "&nbsp;");
         setContents(linkText);
         addClickHandler(clickHandler);
     }
