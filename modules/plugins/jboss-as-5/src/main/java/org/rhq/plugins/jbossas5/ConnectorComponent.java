@@ -79,8 +79,18 @@ public class ConnectorComponent extends ManagedComponentComponent
             {
                 if (metricName.startsWith(THREAD_POOL_METRIC_PREFIX))
                 {
+                    log.debug("Trying to collect metric: " + metricName);
+                    log.debug("The component name to obtain metrics from: " + webThreadPoolComponentName);
+                    log.debug("The component type is: " + webThreadPoolComponentType);
+                    log.debug("The component obtained from the management view: " + webThreadPoolComponent);
+                    
                     Object value = getSimpleValue(webThreadPoolComponent, request);
+
+                    log.debug("Retrieved a value for the metric: " + value);
+
                     addValueToMeasurementReport(report, request, value);
+
+                    log.debug("Metric collected.");
                 }
                 else
                 {

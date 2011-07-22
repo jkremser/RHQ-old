@@ -310,10 +310,19 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
         String compositePropName = (pipeIndex == -1) ? metricName : metricName.substring(pipeIndex + 1);
         int dotIndex = compositePropName.indexOf('.');
         String metricPropName = (dotIndex == -1) ? compositePropName : compositePropName.substring(0, dotIndex);
+        
+        log.debug("Getting a property '" + metricPropName + "' from managed component " + managedComponent);
+        
         ManagedProperty metricProp = managedComponent.getProperty(metricPropName);
+        
         if (metricProp == null) {
+            log.debug("The component returned a null property.");
             return null;
         }
+        
+        log.debug("Obtained a property: " + metricProp);
+        log.debug("The metatype of the property is: " + metricProp.getMetaType().getTypeName());
+        
         MetaValue metaValue;
         if (dotIndex == -1) {
             metaValue = metricProp.getValue();
@@ -322,6 +331,9 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
             String key = compositePropName.substring(dotIndex + 1);
             metaValue = compositeValue.get(key);
         }
+        
+        log.debug("Obtained a metaValue from the property: " + metaValue);
+        
         return getInnerValue(metaValue);
     }
 
@@ -351,7 +363,7 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
     // TODO: Move this to a utility class.
     @Nullable
     private static Object getInnerValue(MetaValue metaValue) {
-        if (metaValue == null) {
+        if (metaValue == null) {        	
             return null;
         }
         Object value;
@@ -380,16 +392,21 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
     protected void addValueToMeasurementReport(MeasurementReport report, MeasurementScheduleRequest request,
         Object value) {
         if (value == null) {
+            log.debug("Not adding a null value to a measurement report.");
             return;
         }
         String stringValue = toString(value);
-
+        
+        log.debug("String representation of the value: " + stringValue);
+        
         DataType dataType = request.getDataType();
         switch (dataType) {
         case MEASUREMENT:
             try {
                 MeasurementDataNumeric dataNumeric = new MeasurementDataNumeric(request, Double.valueOf(stringValue));
                 report.addData(dataNumeric);
+                
+                log.debug("Value added to the measurement report: " + dataNumeric);
             } catch (NumberFormatException e) {
                 log.error("Profile service did not return a numeric value as expected for metric [" + request.getName()
                     + "] - value returned was " + value + ".", e);
@@ -398,6 +415,8 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
         case TRAIT:
             MeasurementDataTrait dataTrait = new MeasurementDataTrait(request, stringValue);
             report.addData(dataTrait);
+            
+            log.debug("Value added to the measurement report: " + dataTrait);
             break;
         default:
             throw new IllegalStateException("Unsupported measurement data type: " + dataType);
