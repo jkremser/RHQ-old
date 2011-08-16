@@ -74,7 +74,7 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
             String psName = psr.getProcessScan().getName();
             String description = discoveryContext.getResourceType().getDescription();
             String homeDir = getHomeDirFromCommandLine(commandLine);
-            String version = null;
+            String version = determineServerVersionFromHomeDir(homeDir);
 
             //retrieve specific boot log file. Override for Standalone as server.log is more appropriate
             String bootLogFile = getLogFileFromCommandLine(commandLine);
