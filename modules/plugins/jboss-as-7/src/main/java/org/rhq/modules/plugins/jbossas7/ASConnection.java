@@ -234,6 +234,9 @@ public class ASConnection {
 
         if (node==null) {
             log.warn("Operation [" + op + "] returned null");
+            Result failure = new Result();
+            failure.setFailureDescription("Operation [" + op + "] returned null");
+            return failure;
         }
         try {
             Result res;
