@@ -85,7 +85,7 @@ public interface JPADriftServerLocal {
      * @param data
      * @throws Exception
      */
-    void persistDriftFileData(JPADriftFile driftFile, InputStream data) throws Exception;
+    void persistDriftFileData(JPADriftFile driftFile, InputStream data, long numBytes) throws Exception;
 
     /**
      * This method stores the provided change-set file for the resource. The version will be incremented based
@@ -108,4 +108,23 @@ public interface JPADriftServerLocal {
      */
     void storeFiles(Subject subject, File filesZip) throws Exception;
 
+    /**
+     * SUPPORTS JPA DRIFT SERVER PLUGIN
+     * This is for internal use only - do not call it unless you know what you are doing.
+     * This purges all drift entities and changeset entities associated with the drift config.
+     */
+    void purgeByDriftConfigurationName(Subject subject, int resourceId, String driftConfigName) throws Exception;
+
+    /**
+     * SUPPORTS JPA DRIFT SERVER PLUGIN
+     * This will remove all drift files that are no longer referenced by drift entries. This is a maintenance method
+     * to help reclaim space on the backend.
+     * 
+     * @param subject
+     * @param purgeMillis 
+     * @return number of orphaned drife files that were removed
+     */
+    int purgeOrphanedDriftFiles(Subject subject, long purgeMillis);
+
+    String getDriftFileBits(String hash);
 }

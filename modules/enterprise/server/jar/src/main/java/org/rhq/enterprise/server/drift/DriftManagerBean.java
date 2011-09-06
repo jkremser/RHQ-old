@@ -18,18 +18,15 @@
  */
 package org.rhq.enterprise.server.drift;
 
-import static javax.ejb.TransactionAttributeType.NOT_SUPPORTED;
-import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
-
 import java.io.File;
 import java.io.InputStream;
-import java.util.Iterator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
 import javax.jms.MessageProducer;
@@ -50,14 +47,19 @@ import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
 import org.rhq.core.domain.criteria.DriftConfigurationCriteria;
 import org.rhq.core.domain.criteria.DriftCriteria;
-import org.rhq.core.domain.criteria.JPADriftCriteria;
+import org.rhq.core.domain.criteria.GenericDriftChangeSetCriteria;
+import org.rhq.core.domain.criteria.GenericDriftCriteria;
 import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.drift.DriftConfigurationComparator;
+import org.rhq.core.domain.drift.DriftConfigurationComparator.CompareMode;
+import org.rhq.core.domain.drift.DriftConfigurationDefinition;
+import org.rhq.core.domain.drift.DriftDetails;
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftSnapshot;
-import org.rhq.core.domain.drift.JPADrift;
+import org.rhq.core.domain.drift.FileDiffReport;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.RHQConstants;
@@ -71,6 +73,13 @@ import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginManager;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.util.LookupUtil;
+
+import difflib.DiffUtils;
+import difflib.Patch;
+
+import static java.util.Arrays.asList;
+import static javax.ejb.TransactionAttributeType.NOT_SUPPORTED;
+import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
 
 /**
  * The SLSB supporting Drift management to clients.  
@@ -86,7 +95,49 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author Jay Shaughnessy
  */
 @Stateless
-public class DriftManagerBean implements DriftManagerLocal {
+public class DriftManagerBean implements DriftManagerLocal, DriftManagerRemote {
+
+    private static Set<String> binaryFileTypes = new HashSet<String>();
+
+    static {
+        binaryFileTypes.add("jar");
+        binaryFileTypes.add("war");
+        binaryFileTypes.add("ear");
+        binaryFileTypes.add("sar");    // jboss service
+        binaryFileTypes.add("har");    // hibernate archive
+        binaryFileTypes.add("rar");   // resource adapter
+        binaryFileTypes.add("wsr");   // jboss web service archive
+        binaryFileTypes.add("zip");
+        binaryFileTypes.add("tar");
+        binaryFileTypes.add("bz2");
+        binaryFileTypes.add("gz");
+        binaryFileTypes.add("rpm");
+        binaryFileTypes.add("so");
+        binaryFileTypes.add("dll");
+        binaryFileTypes.add("exe");
+        binaryFileTypes.add("jpg");
+        binaryFileTypes.add("png");
+        binaryFileTypes.add("jpeg");
+        binaryFileTypes.add("gif");
+        binaryFileTypes.add("pdf");
+        binaryFileTypes.add("swf");
+        binaryFileTypes.add("bpm");
+        binaryFileTypes.add("tiff");
+        binaryFileTypes.add("svg");
+        binaryFileTypes.add("doc");
+        binaryFileTypes.add("mp3");
+        binaryFileTypes.add("wav");
+        binaryFileTypes.add("m4a");
+        binaryFileTypes.add("mov");
+        binaryFileTypes.add("mpeg");
+        binaryFileTypes.add("avi");
+        binaryFileTypes.add("mp4");
+        binaryFileTypes.add("wmv");
+        binaryFileTypes.add("deb");
+        binaryFileTypes.add("sit");
+        binaryFileTypes.add("iso");
+        binaryFileTypes.add("dmg");
+    }
 
     // TODO Should security checks be handled here instead of delegating to the drift plugin?
     // Currently any security checks that need to be performed are delegated to the plugin.
@@ -113,7 +164,7 @@ public class DriftManagerBean implements DriftManagerLocal {
     private AgentManagerLocal agentManager;
 
     @EJB
-    private DriftManagerLocal driftManager;
+    private DriftManagerLocal driftManager; // ourself
 
     @EJB
     private SubjectManagerLocal subjectManager;
@@ -183,99 +234,67 @@ public class DriftManagerBean implements DriftManagerLocal {
     }
 
     @Override
-    public int deleteDrifts(Subject subject, String[] driftIds) {
-        // avoid big transactions by doing this one at a time. if this is too slow we can chunk in bigger increments.
-        int result = 0;
-
-        for (String driftId : driftIds) {
-            result += driftManager.deleteDriftsInNewTransaction(subject, driftId);
-        }
-
-        return result;
-    }
-
-    @Override
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public int deleteDriftsInNewTransaction(Subject subject, String... driftIds) {
-        int result = 0;
-
-        for (String driftId : driftIds) {
-            Drift<?, ?> doomed = entityManager.find(JPADrift.class, driftId);
-            if (null != doomed) {
-                entityManager.remove(doomed);
-                ++result;
-            }
-        }
-
-        return result;
-    }
-
-    @Override
-    public int deleteDriftsByContext(Subject subject, EntityContext entityContext) throws RuntimeException {
-        int result = 0;
-        JPADriftCriteria criteria = new JPADriftCriteria();
-
-        switch (entityContext.getType()) {
-        case Resource:
-            criteria.addFilterResourceIds(entityContext.getResourceId());
-            break;
-
-        case SubsystemView:
-            // delete them all
-            break;
-
-        default:
-            throw new IllegalArgumentException("Entity Context Type not supported [" + entityContext + "]");
-        }
-
-        List<? extends Drift<?, ?>> drifts = driftManager.findDriftsByCriteria(subject, criteria);
-        if (!drifts.isEmpty()) {
-            String[] driftIds = new String[drifts.size()];
-            int i = 0;
-            for (Drift<?, ?> drift : drifts) {
-                driftIds[i++] = drift.getId();
-            }
-
-            result = driftManager.deleteDrifts(subject, driftIds);
-        }
-
-        return result;
-    }
-
-    @Override
+    @TransactionAttribute(NOT_SUPPORTED)
     public void deleteDriftConfiguration(Subject subject, EntityContext entityContext, String driftConfigName) {
 
         switch (entityContext.getType()) {
         case Resource:
             int resourceId = entityContext.getResourceId();
-            Resource resource = entityManager.find(Resource.class, resourceId);
-            if (null == resource) {
-                throw new IllegalArgumentException("Entity not found [" + entityContext + "]");
+            DriftConfigurationCriteria criteria = new DriftConfigurationCriteria();
+            criteria.addFilterName(driftConfigName);
+            criteria.addFilterResourceIds(resourceId);
+            criteria.setStrict(true);
+            PageList<DriftConfiguration> results = driftManager.findDriftConfigurationsByCriteria(subject, criteria);
+            DriftConfiguration doomedDriftConfig = null;
+            if (results != null && results.size() == 1) {
+                doomedDriftConfig = results.get(0);
             }
 
-            for (Iterator<DriftConfiguration> i = resource.getDriftConfigurations().iterator(); i.hasNext();) {
-                DriftConfiguration dc = i.next();
-                if (dc.getName().equals(driftConfigName)) {
-                    i.remove();
-                    entityManager.merge(resource);
+            if (doomedDriftConfig != null) {
 
+                // TODO security check!
+
+                // tell the agent first - we don't want the agent reporting on the drift config after we delete it
+                boolean unscheduledOnAgent = false;
+                try {
                     AgentClient agentClient = agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);
                     DriftAgentService service = agentClient.getDriftAgentService();
-                    try {
-                        service.unscheduleDriftDetection(resourceId, dc);
-                    } catch (Exception e) {
-                        log.warn(" Unable to inform agent of unscheduled drift detection  [" + dc + "]", e);
-                    }
-
-                    break;
+                    service.unscheduleDriftDetection(resourceId, doomedDriftConfig);
+                    unscheduledOnAgent = true;
+                } catch (Exception e) {
+                    log.warn(" Unable to inform agent of unscheduled drift detection  [" + doomedDriftConfig + "]", e);
                 }
-            }
 
+                // purge all data related to this drift configuration
+                try {
+                    driftManager.purgeByDriftConfigurationName(subject, resourceId, doomedDriftConfig.getName());
+                } catch (Exception e) {
+                    String warnMessage = "Failed to purge data for drift configuration [" + driftConfigName
+                        + "] for resource [" + resourceId + "].";
+                    if (unscheduledOnAgent) {
+                        warnMessage += " The agent was told to stop detecting drift for that configuration.";
+                    }
+                    log.warn(warnMessage, e);
+                }
+
+                // now purge the drift config itself
+                driftManager.deleteResourceDriftConfiguration(subject, resourceId, doomedDriftConfig.getId());
+            } else {
+                throw new IllegalArgumentException("Resource does not have drift config named [" + driftConfigName
+                    + "]");
+            }
             break;
 
         default:
             throw new IllegalArgumentException("Entity Context Type not supported [" + entityContext + "]");
         }
+    }
+
+    @Override
+    public void deleteResourceDriftConfiguration(Subject subject, int resourceId, int driftConfigId) {
+        DriftConfiguration doomed = entityManager.getReference(DriftConfiguration.class, driftConfigId);
+        entityManager.remove(doomed);
+        return;
     }
 
     @Override
@@ -348,8 +367,75 @@ public class DriftManagerBean implements DriftManagerLocal {
         driftServerPlugin.saveChangeSetFiles(subject, changeSetFilesZip);
     }
 
+    /**
+     * This purges the persisted data related to drift configuration, but it does NOT talk to the agent to tell the agent
+     * about this nor does it actually delete the drift config itself.
+     * 
+     * If you want to delete a drift configuration and all that that entails, you must use
+     * {@link #deleteDriftConfiguration(Subject, EntityContext, String)} instead.
+     * 
+     * This method is really for internal use only.
+     */
+    @Override
+    @TransactionAttribute(NOT_SUPPORTED)
+    public void purgeByDriftConfigurationName(Subject subject, int resourceId, String driftConfigName) throws Exception {
+        DriftServerPluginFacet driftServerPlugin = getServerPlugin();
+        driftServerPlugin.purgeByDriftConfigurationName(subject, resourceId, driftConfigName);
+    }
+
+    @Override
+    @TransactionAttribute(NOT_SUPPORTED)
+    public int purgeOrphanedDriftFiles(Subject subject, long purgeMillis) {
+        DriftServerPluginFacet driftServerPlugin = getServerPlugin();
+        return driftServerPlugin.purgeOrphanedDriftFiles(subject, purgeMillis);
+    }
+
+    @Override
+    @TransactionAttribute(NOT_SUPPORTED)
+    public String getDriftFileBits(String hash) {
+        log.debug("Retrieving drift file content for " + hash);
+        DriftServerPluginFacet driftServerPlugin = getServerPlugin();
+        return driftServerPlugin.getDriftFileBits(hash);
+    }
+
+    @Override
+    public FileDiffReport generateUnifiedDiff(Drift drift) {
+        log.debug("Generating diff for " + drift);
+        String oldContent = getDriftFileBits(drift.getOldDriftFile().getHashId());
+        List<String> oldList = asList(oldContent.split("\\n"));
+        String newContent = getDriftFileBits(drift.getNewDriftFile().getHashId());
+        List<String> newList = asList(newContent.split("\\n"));
+
+        Patch patch = DiffUtils.diff(oldList, newList);
+        List<String> deltas = DiffUtils.generateUnifiedDiff(drift.getPath(), drift.getPath(), oldList, patch, 10);
+
+        return new FileDiffReport(patch.getDeltas().size(), deltas);
+    }
+
+    @Override
+    public FileDiffReport generateUnifiedDiff(Drift drift1, Drift drift2) {
+        String content1 = getDriftFileBits(drift1.getNewDriftFile().getHashId());
+        List<String> content1List = asList(content1.split("\\n"));
+
+        String content2 = getDriftFileBits(drift2.getNewDriftFile().getHashId());
+        List<String> content2List = asList(content2.split("\\n"));
+
+        Patch patch = DiffUtils.diff(content1List, content2List);
+        List<String> deltas = DiffUtils.generateUnifiedDiff(drift1.getPath(), drift2.getPath(), content1List, patch,
+            10);
+
+        return new FileDiffReport(patch.getDeltas().size(), deltas);
+    }
+
     @Override
     public void updateDriftConfiguration(Subject subject, EntityContext entityContext, DriftConfiguration driftConfig) {
+
+        // before we do anything, make sure the drift config name is valid
+        if (!driftConfig.getName().matches(DriftConfigurationDefinition.PROP_NAME_REGEX_PATTERN)) {
+            throw new IllegalArgumentException("Drift configuration name contains invalid characters: "
+                + driftConfig.getName());
+        }
+
         switch (entityContext.getType()) {
         case Resource:
             int resourceId = entityContext.getResourceId();
@@ -359,13 +445,22 @@ public class DriftManagerBean implements DriftManagerLocal {
             }
 
             // Update or add the driftConfig as necessary
+            DriftConfigurationComparator comparator = new DriftConfigurationComparator(
+                CompareMode.ONLY_DIRECTORY_SPECIFICATIONS);
             boolean isUpdated = false;
-            for (Iterator<DriftConfiguration> i = resource.getDriftConfigurations().iterator(); i.hasNext();) {
-                DriftConfiguration dc = i.next();
+            for (DriftConfiguration dc : resource.getDriftConfigurations()) {
                 if (dc.getName().equals(driftConfig.getName())) {
-                    dc.setConfiguration(driftConfig.getConfiguration());
-                    isUpdated = true;
-                    break;
+                    // compare the directory specs (basedir/includes-excludes filters only - if they are different, abort.
+                    // you cannot update drift config that changes basedir/includes/excludes from the original.
+                    // the user must delete the drift config and create a new one, as opposed to trying to update the existing one.
+                    if (comparator.compare(driftConfig, dc) == 0) {
+                        dc.setConfiguration(driftConfig.getConfiguration());
+                        isUpdated = true;
+                        break;
+                    } else {
+                        throw new IllegalArgumentException(
+                            "You cannot change an existing drift configuration's base directory or includes/excludes filters.");
+                    }
                 }
             }
 
@@ -392,6 +487,81 @@ public class DriftManagerBean implements DriftManagerLocal {
         default:
             throw new IllegalArgumentException("Entity Context Type not supported [" + entityContext + "]");
         }
+    }
+
+    @Override
+    public boolean isBinaryFile(Drift drift) {
+        String path = drift.getPath();
+        int index = path.lastIndexOf('.');
+
+        if (index == -1 || index == path.length() - 1) {
+            return false;
+        }
+
+        return binaryFileTypes.contains(path.substring(index + 1, path.length()));
+    }
+
+    @Override
+    @TransactionAttribute(NOT_SUPPORTED)
+    public DriftDetails getDriftDetails(Subject subject, String driftId) {
+        log.debug("Loading drift details for drift id: " + driftId);
+
+        GenericDriftCriteria criteria = new GenericDriftCriteria();
+        criteria.addFilterId(driftId);
+        criteria.fetchChangeSet(true);
+
+        DriftDetails driftDetails = new DriftDetails();
+        DriftServerPluginFacet driftServerPlugin = getServerPlugin();
+
+        DriftFile newFile = null;
+        DriftFile oldFile = null;
+
+        PageList<? extends Drift<?, ?>> results = driftServerPlugin.findDriftsByCriteria(subject, criteria);
+        if (results.size() == 0) {
+            log.warn("Unable to get the drift details for drift id " + driftId + ". No drift object found with that id.");
+            return null;
+        }
+
+        Drift drift = results.get(0);
+        driftDetails.setDrift(drift);
+        try {
+            switch (drift.getCategory()) {
+                case FILE_ADDED:
+                    newFile = driftServerPlugin.getDriftFile(subject, drift.getNewDriftFile().getHashId());
+                    driftDetails.setNewFileStatus(newFile.getStatus());
+                    break;
+                case FILE_CHANGED:
+                    newFile = driftServerPlugin.getDriftFile(subject, drift.getNewDriftFile().getHashId());
+                    oldFile = driftServerPlugin.getDriftFile(subject, drift.getOldDriftFile().getHashId());
+
+                    driftDetails.setNewFileStatus(newFile.getStatus());
+                    driftDetails.setOldFileStatus(oldFile.getStatus());
+
+                    driftDetails.setPreviousChangeSet(loadPreviousChangeSet(subject, drift));
+                    break;
+                case FILE_REMOVED:
+                    oldFile = driftServerPlugin.getDriftFile(subject, drift.getOldDriftFile().getHashId());
+                    driftDetails.setOldFileStatus(oldFile.getStatus());
+                    break;
+            }
+        } catch (Exception e) {
+            log.error("An error occurred while loading the drift details for drift id " + driftId + ": " +
+                e.getMessage());
+            throw new RuntimeException("An error occurred while loading th drift details for drift id " + driftId, e);
+        }
+        driftDetails.setBinaryFile(isBinaryFile(drift));
+        return driftDetails;
+    }
+
+    private DriftChangeSet loadPreviousChangeSet(Subject subject, Drift drift) {
+        GenericDriftChangeSetCriteria criteria = new GenericDriftChangeSetCriteria();
+        criteria.addFilterResourceId(drift.getChangeSet().getResourceId());
+        criteria.addFilterDriftConfigurationId(drift.getChangeSet().getDriftConfigurationId());
+        criteria.addFilterVersion(Integer.toString(drift.getChangeSet().getVersion() - 1));
+
+        PageList<? extends DriftChangeSet<?>> results = findDriftChangeSetsByCriteria(subject, criteria);
+        // TODO handle empty results
+        return results.get(0);
     }
 
     private DriftServerPluginFacet getServerPlugin() {
