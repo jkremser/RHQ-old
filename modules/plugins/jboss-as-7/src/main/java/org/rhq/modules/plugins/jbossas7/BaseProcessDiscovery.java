@@ -49,6 +49,7 @@ import org.rhq.core.system.ProcessInfo;
 /**
  * Discovery class
  */
+@SuppressWarnings("rawtypes")
 public class BaseProcessDiscovery extends AbstractBaseDiscovery implements ResourceDiscoveryComponent
 
 {
@@ -217,7 +218,6 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
                     // empty
                 }
         }
-
     }
 
     private String findHost(ProcessInfo processInfo, boolean isDomain) {
@@ -244,7 +244,7 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
      * @param mode mode and thus command line switch to look for
      * @return the config or the default for the mode if no config was passed on the command line.
      */
-    String getServerConfigFromCommandLine(String[] commandLine, AS7Mode mode) {
+    protected String getServerConfigFromCommandLine(String[] commandLine, AS7Mode mode) {
         String configArg = mode.getConfigArg();
         for (String line: commandLine) {
             if (line.startsWith(configArg))
@@ -256,7 +256,7 @@ public class BaseProcessDiscovery extends AbstractBaseDiscovery implements Resou
     //-Dorg.jboss.boot.log.file=/devel/jbas7/jboss-as/build/target/jboss-7.0.0.Alpha2/domain/log/server-manager/boot.log
     //-Dlogging.configuration=file:/devel/jbas7/jboss-as/build/target/jboss-7.0.0.Alpha2/domain/configuration/logging.properties
 
-    String getLogFileFromCommandLine(String[] commandLine) {
+    protected String getLogFileFromCommandLine(String[] commandLine) {
 
         for (String line : commandLine) {
             if (line.startsWith(DORG_JBOSS_BOOT_LOG_FILE))

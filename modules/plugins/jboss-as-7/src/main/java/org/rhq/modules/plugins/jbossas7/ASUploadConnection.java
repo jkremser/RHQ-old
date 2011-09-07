@@ -44,19 +44,15 @@ import org.codehaus.jackson.map.ObjectMapper;
 public class ASUploadConnection {
 
     private static final String BOUNDARY_PARAM = "NeAG1QNIHHOyB5joAS7Rox!!";
-
     private static final String BOUNDARY = "--" + BOUNDARY_PARAM;
-
     private static final String CRLF = "\r\n";
-
     private static final String POST_REQUEST_METHOD = "POST";
-
     private static final String UPLOAD_URL_PATH = ASConnection.MANAGEMENT + "/add-content";
 
     private final Log log = LogFactory.getLog(ASUploadConnection.class);
 
-    BufferedOutputStream os = null;
-    InputStream is = null;
+    private BufferedOutputStream os = null;
+    private InputStream is = null;
     private HttpURLConnection connection;
     private String host;
     private int port;
@@ -197,7 +193,6 @@ public class ASUploadConnection {
         }
         return false;
     }
-
 
     private void closeQuietly(final Closeable closeable) {
         if(closeable != null) {

@@ -20,9 +20,6 @@ package org.rhq.modules.plugins.jbossas7;
 
 import java.util.Map;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -36,8 +33,6 @@ import org.rhq.modules.plugins.jbossas7.json.Operation;
  */
 public class LoggerComponent extends BaseComponent {
 
-    private final Log log = LogFactory.getLog(LoggerComponent.class);
-
     @Override
     public OperationResult invokeOperation(String name,
                                            Configuration parameters) throws InterruptedException, Exception {
@@ -50,7 +45,6 @@ public class LoggerComponent extends BaseComponent {
             op.addAdditionalProperty(entry.getKey(),ps.getStringValue());
         }
 
-
         ASConnection conn = getASConnection();
         ComplexResult result = conn.executeComplex(op);
 
@@ -62,7 +56,5 @@ public class LoggerComponent extends BaseComponent {
             failure.setErrorMessage(result.getFailureDescription().toString());
             return failure;
         }
-
-
     }
 }

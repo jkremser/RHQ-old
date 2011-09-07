@@ -37,7 +37,6 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertyGroupDefinition;
-import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.modules.plugins.jbossas7.json.Address;
@@ -126,10 +125,8 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
         }
         List<PropertyDefinition> listedDefs = configurationDefinition.getPropertiesInGroup(groupName);
         loadHandleProperties(config, listedDefs, operation);
-
     }
-
-
+    
     private void loadHandleProperties(Configuration config, List<PropertyDefinition> definitions, Operation op) throws Exception {
         if (definitions.size()==0)
             return;

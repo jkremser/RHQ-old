@@ -74,8 +74,7 @@ public class Operation {
             additionalProperties = new HashMap<String, Object>();
         additionalProperties.put(key,value);
     }
-
-    @SuppressWarnings("unused")
+    
     public void setAdditionalProperties(Map<String, Object> additionalProperties) {
         this.additionalProperties = additionalProperties;
     }

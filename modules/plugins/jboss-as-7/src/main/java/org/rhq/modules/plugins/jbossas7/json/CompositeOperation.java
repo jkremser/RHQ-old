@@ -30,9 +30,7 @@ import org.codehaus.jackson.annotate.JsonProperty;
  * @author Heiko W. Rupp
  */
 public class CompositeOperation extends Operation {
-
-
-
+    
     @JsonProperty
     List<Operation> steps = new ArrayList<Operation>();
 

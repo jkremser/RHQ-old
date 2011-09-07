@@ -40,14 +40,15 @@ import org.rhq.core.system.ProcessInfo;
  * in the area of processes and host.xml
  * @author Heiko W. Rupp
  */
+@SuppressWarnings("rawtypes")
 public abstract class AbstractBaseDiscovery<T extends ResourceComponent> implements ResourceDiscoveryComponent<T> {
-    static final String DORG_JBOSS_BOOT_LOG_FILE = "-Dorg.jboss.boot.log.file=";
+    private static final String DORG_JBOSS_BOOT_LOG_FILE = "-Dorg.jboss.boot.log.file=";
     private static final String DJBOSS_SERVER_HOME_DIR = "-Djboss.home.dir";
-    static final int DEFAULT_MGMT_PORT = 9990;
+    private static final int DEFAULT_MGMT_PORT = 9990;
     private static final String JBOSS_AS_PREFIX = "jboss-as-";
+
     protected Document hostXml;
     protected final Log log = LogFactory.getLog(this.getClass());
-
 
     /**
      * Read the host.xml or standalone.xml file depending on isDomainMode. If isDomainMode is true,
@@ -57,7 +58,7 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent> impleme
      * @param isDomainMode Indiates if host.xml should be read (true) or standalone.xml (false)
      */
     protected void readStandaloneOrHostXml(ProcessInfo processInfo, boolean isDomainMode) {
-        String hostXmlFile = getHostXmlFileLocation(processInfo,isDomainMode);
+        String hostXmlFile = getHostXmlFileLocation(processInfo, isDomainMode);
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         try {
             DocumentBuilder builder = factory.newDocumentBuilder();
@@ -65,7 +66,7 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent> impleme
             hostXml = builder.parse(is);
             is.close();
         } catch (Exception e) {
-            e.printStackTrace();  // TODO: Customise this generated block
+           log.error(e.getMessage(), e);
         }
     }
 
@@ -74,12 +75,12 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent> impleme
      * @param commandLine command line arguments of the process
      * @return The home dir if found or empty string otherwise
      */
-    String getHomeDirFromCommandLine(String[] commandLine) {
-            for (String line: commandLine) {
-                if (line.startsWith(DJBOSS_SERVER_HOME_DIR))
-                    return line.substring(DJBOSS_SERVER_HOME_DIR.length()+1);
-            }
-            return "";
+    protected String getHomeDirFromCommandLine(String[] commandLine) {
+        for (String line : commandLine) {
+            if (line.startsWith(DJBOSS_SERVER_HOME_DIR))
+                return line.substring(DJBOSS_SERVER_HOME_DIR.length() + 1);
+        }
+        return "";
     }
 
     /**
@@ -87,9 +88,8 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent> impleme
      * @param commandLine command line arguments of the process
      * @return The log file location or empty string otherwise
      */
-    String getLogFileFromCommandLine(String[] commandLine) {
-
-        for (String line: commandLine) {
+    protected String getLogFileFromCommandLine(String[] commandLine) {
+        for (String line : commandLine) {
             if (line.startsWith(DORG_JBOSS_BOOT_LOG_FILE))
                 return line.substring(DORG_JBOSS_BOOT_LOG_FILE.length());
         }
@@ -102,20 +102,20 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent> impleme
      * @see #readStandaloneOrHostXml(org.rhq.core.system.ProcessInfo, boolean) on how to obtain the parsed xml
      */
     protected HostPort getManagementPortFromHostXml() {
-        if (hostXml==null)
+        if (hostXml == null)
             throw new IllegalArgumentException("hostXml is null. You need to call 'readStandaloneOrHostXml' first.");
-        Element host =  hostXml.getDocumentElement();
+        Element host = hostXml.getDocumentElement();
         NodeList interfaceParent = host.getElementsByTagName("management-interfaces");
-        if (interfaceParent ==null || interfaceParent.getLength()==0) {
+        if (interfaceParent == null || interfaceParent.getLength() == 0) {
             log.warn("No <management-interfaces> found in host.xml");
             return new HostPort();
         }
         NodeList mgmtInterfaces = interfaceParent.item(0).getChildNodes();
-        if (mgmtInterfaces==null || mgmtInterfaces.getLength()==0) {
+        if (mgmtInterfaces == null || mgmtInterfaces.getLength() == 0) {
             log.warn("No <*-interface> found in host.xml");
             return new HostPort();
         }
-        for (int i = 0 ; i < mgmtInterfaces.getLength(); i++) {
+        for (int i = 0; i < mgmtInterfaces.getLength(); i++) {
             if (!(mgmtInterfaces.item(i) instanceof Element))
                 continue;
 
@@ -124,7 +124,7 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent> impleme
                 String tmp = mgmtInterface.getAttribute("port");
                 int port = Integer.valueOf(tmp);
                 HostPort hp = new HostPort();
-                hp.isLocal=true;
+                hp.isLocal = true;
                 hp.port = port;
 
                 String nIf = mgmtInterface.getAttribute("interface");
@@ -142,23 +142,26 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent> impleme
      * @return IP address to use
      */
     private String getInterface(String nIf) {
-        if (hostXml==null)
+        if (hostXml == null)
             throw new IllegalArgumentException("hostXml is null. You need to call 'readStandaloneOrHostXml' first.");
 
-        Element host =  hostXml.getDocumentElement();
+        Element host = hostXml.getDocumentElement();
         NodeList interfaceParent = host.getElementsByTagName("interfaces");
-        if (interfaceParent ==null || interfaceParent.getLength()==0) {
+        if (interfaceParent == null || interfaceParent.getLength() == 0) {
             log.warn("No <interfaces> found in host.xml");
             return null;
         }
+        
         NodeList mgmtInterfaces = interfaceParent.item(0).getChildNodes();
-        if (mgmtInterfaces==null || mgmtInterfaces.getLength()==0) {
+        if (mgmtInterfaces == null || mgmtInterfaces.getLength() == 0) {
             log.warn("No <*-interface> found in host.xml");
             return null;
         }
-        for (int i = 0 ; i < mgmtInterfaces.getLength(); i++) {
+        
+        for (int i = 0; i < mgmtInterfaces.getLength(); i++) {
             if (!(mgmtInterfaces.item(i) instanceof Element))
                 continue;
+            
             Element mgmtInterface = (Element) mgmtInterfaces.item(i);
             if (mgmtInterface.getNodeName().equals("interface")) {
                 String name = mgmtInterface.getAttribute("name");
@@ -166,8 +169,8 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent> impleme
                     continue;
 
                 NodeList nl = mgmtInterface.getChildNodes();
-                if (nl!=null) {
-                    for (int j = 0 ; j < nl.getLength(); j++) {
+                if (nl != null) {
+                    for (int j = 0; j < nl.getLength(); j++) {
                         if (!(nl.item(j) instanceof Element))
                             continue;
 
@@ -182,9 +185,9 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent> impleme
                     }
                 }
             }
-
         }
-        return null;  // TODO: Customise this generated block
+
+        return null; // TODO: Customise this generated block
     }
 
     /**
@@ -193,11 +196,10 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent> impleme
      * @return server name
      */
     protected String findHostName() {
-        if (hostXml==null)
+        if (hostXml == null)
             throw new IllegalArgumentException("hostXml is null. You need to call 'readStandaloneOrHostXml' first.");
 
-        String hostName = hostXml.getDocumentElement().getAttribute("name");
-        return hostName;
+        return hostXml.getDocumentElement().getAttribute("name");
     }
 
     /**
@@ -205,16 +207,16 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent> impleme
      * @return host and port of the domain controller
      */
     protected HostPort getDomainControllerFromHostXml() {
-        if (hostXml==null)
+        if (hostXml == null)
             throw new IllegalArgumentException("hostXml is null. You need to call 'readStandaloneOrHostXml' first.");
 
-        Element host =  hostXml.getDocumentElement();
+        Element host = hostXml.getDocumentElement();
         NodeList dcParent = host.getElementsByTagName("domain-controller");
-        if (dcParent==null || dcParent.getLength()==0)
+        if (dcParent == null || dcParent.getLength() == 0)
             return new HostPort(false);
         NodeList interfs = dcParent.item(0).getChildNodes();
         for (int i = 0; i < interfs.getLength(); i++) {
-            if (!(interfs.item(i)instanceof Element))
+            if (!(interfs.item(i) instanceof Element))
                 continue;
 
             Element interf = (Element) interfs.item(i);
@@ -241,25 +243,26 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent> impleme
     protected String getHostXmlFileLocation(ProcessInfo processInfo, boolean isDomain) {
 
         String home = processInfo.getEnvironmentVariable("jboss.home.dir");
-        if (home==null)
+        if (home == null)
             home = getHomeDirFromCommandLine(processInfo.getCommandLine());
+        
         StringBuilder builder = new StringBuilder(home);
-        if (isDomain)
+        if (isDomain) {
             builder.append(File.separator).append(AS7Mode.DOMAIN.getBaseDir());
-        else
-            builder.append(File.separator).append(AS7Mode.STANDALONE.getBaseDir());
-        builder.append(File.separator).append("configuration");
-        if (isDomain)
+            builder.append(File.separator).append("configuration");
             builder.append(File.separator).append(AS7Mode.HOST.getDefaultXmlFile());
-        else
+        } else {
+            builder.append(File.separator).append(AS7Mode.STANDALONE.getBaseDir());
+            builder.append(File.separator).append("configuration");
             builder.append(File.separator).append(AS7Mode.STANDALONE.getDefaultXmlFile());
-        return builder.toString();
+        }
 
+        return builder.toString();
     }
 
     protected String determineServerVersionFromHomeDir(String homeDir) {
         String version;
-        String tmp = homeDir.substring(homeDir.lastIndexOf("/")+1);
+        String tmp = homeDir.substring(homeDir.lastIndexOf("/") + 1);
         if (tmp.startsWith("jboss-as-")) {
             version = tmp.substring(JBOSS_AS_PREFIX.length());
         } else {
@@ -289,11 +292,7 @@ public abstract class AbstractBaseDiscovery<T extends ResourceComponent> impleme
 
         @Override
         public String toString() {
-            return "HostPort{" +
-                    "host='" + host + '\'' +
-                    ", port=" + port +
-                    ", isLocal=" + isLocal +
-                    '}';
+            return "HostPort{" + "host='" + host + '\'' + ", port=" + port + ", isLocal=" + isLocal + '}';
         }
     }
 }

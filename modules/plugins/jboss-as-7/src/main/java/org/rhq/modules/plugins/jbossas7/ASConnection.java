@@ -64,14 +64,12 @@ public class ASConnection {
         try {
             url = new URL("http", host, port, MANAGEMENT);
             urlString = url.toString();
-
         } catch (MalformedURLException e) {
             throw new IllegalArgumentException(e.getMessage());
         }
 
         // read system property "as7plugin.verbose"
         verbose = Boolean.getBoolean("as7plugin.verbose");
-
         mapper = new ObjectMapper();
     }
 
@@ -157,13 +155,13 @@ public class ASConnection {
                 es = conn.getErrorStream();
                 if (es != null) {
                     BufferedReader dr = new BufferedReader(new InputStreamReader(es));
-                    String ignore = null;
                     try {
-                        while ((ignore = dr.readLine()) != null) {
+                        while (dr.readLine() != null) {
                             //already reported error. just empty stream.
                         }
                         es.close();
                     } catch (IOException e1) {
+                        log.error(e1.getMessage(), e1);
                     }
                 }
             }
@@ -175,20 +173,19 @@ public class ASConnection {
 
             JsonNode ret = mapper.valueToTree(failure);
             return ret;
-
         } finally {
             if (br != null) {
                 try {
                     br.close();
                 } catch (IOException e) {
-                    e.printStackTrace(); // TODO: Customise this generated block
+                   log.error(e.getMessage(), e);
                 }
             }
             if (es != null) {
                 try {
                     es.close();
                 } catch (IOException e) {
-                    e.printStackTrace(); // TODO: Customise this generated block
+                    log.error(e.getMessage(), e);
                 }
             }
             long t2 = System.currentTimeMillis();

@@ -32,22 +32,19 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
 public class StandaloneASComponent extends BaseServerComponent implements OperationFacet {
 
     @Override
-    public OperationResult invokeOperation(String name,
-                                           Configuration parameters) throws Exception {
+    public OperationResult invokeOperation(String name, Configuration parameters) throws Exception {
 
         if (name.equals("start")) {
             return startServer(AS7Mode.STANDALONE);
         } else if (name.equals("restart")) {
             return restartServer(parameters, AS7Mode.STANDALONE);
-
         }
 
         // reload, shutdown go to the remote server
-        Operation op = new Operation(name,new Address());
+        Operation op = new Operation(name, new Address());
         Result res = getASConnection().execute(op);
 
         OperationResult operationResult = postProcessResult(name, res);
         return operationResult;
     }
-
 }

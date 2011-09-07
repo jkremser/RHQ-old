@@ -18,9 +18,6 @@
  */
 package org.rhq.modules.plugins.jbossas7;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.CreateResourceStatus;
@@ -36,12 +33,9 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  * @author Heiko W. Rupp
  */
 public class HostControllerComponent extends BaseServerComponent implements OperationFacet {
-
-    private final Log log = LogFactory.getLog(HostControllerComponent.class);
-
+    
     @Override
-    public OperationResult invokeOperation(String name,
-                                           Configuration parameters) throws InterruptedException, Exception {
+    public OperationResult invokeOperation(String name, Configuration parameters) throws InterruptedException, Exception {
 
         if (name.equals("start")) {
             return startServer(AS7Mode.DOMAIN);
@@ -111,6 +105,7 @@ public class HostControllerComponent extends BaseServerComponent implements Oper
             report.setStatus(CreateResourceStatus.FAILURE);
             report.setException(res.getThrowable());
         }
+        
         return report;
     }
 }

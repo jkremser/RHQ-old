@@ -22,9 +22,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
@@ -37,7 +34,6 @@ import org.rhq.core.pluginapi.inventory.CreateResourceReport;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
-import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
 
 /**
  * Component class for the JMS subsystem
@@ -45,12 +41,9 @@ import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
  */
 public class JmsComponent extends BaseComponent {
 
-    private final Log log = LogFactory.getLog(JmsComponent.class);
-
     @Override
     public CreateResourceReport createResource(CreateResourceReport report) {
-
-
+        
         Configuration pConf = report.getPluginConfiguration();
         Configuration resConf = report.getResourceConfiguration();
         ConfigurationDefinition resConfDef = report.getResourceType().getResourceConfigurationDefinition();
@@ -64,9 +57,9 @@ public class JmsComponent extends BaseComponent {
         // Loop over the properties from the config and add them as properties to the op TODO make generally available ?
         for (Map.Entry<String, Property> entry:  resConf.getAllProperties().entrySet()) {
             Property value = entry.getValue();
+            
             if (value !=null) {
                 String name = entry.getKey();
-
 
                 if (value instanceof PropertySimple) {
                     PropertyDefinitionSimple propDef = (PropertyDefinitionSimple) resConfDef.get(name);
@@ -77,19 +70,20 @@ public class JmsComponent extends BaseComponent {
                     List<Object> list = new ArrayList<Object>();
                     PropertyDefinitionList pd = resConfDef.getPropertyDefinitionList(name);
                     PropertyDefinitionSimple propDef = (PropertyDefinitionSimple) pd.getMemberDefinition();
+                    
                     for (Property p : propertyList.getList()) {
-
                         Object o = getObjectForProperty((PropertySimple) p, propDef);
                         list.add(o);
                     }
                     op.addAdditionalProperty(name,list);
                 }
             }
-        }
+        }        
+        
         ComplexResult res = (ComplexResult) getASConnection().execute(op,true);
-
+        
         // TODO Currently this reports a failure even if it succeeds for jms
-
+        
         if (res == null || !res.isSuccess()) {
             report.setStatus(CreateResourceStatus.FAILURE);
         } else {
@@ -97,9 +91,7 @@ public class JmsComponent extends BaseComponent {
             report.setResourceKey(theAddress.toString());
             report.setResourceName(report.getUserSpecifiedResourceName());
         }
-
-        System.out.println(report);
+        
         return report;
     }
-
 }
