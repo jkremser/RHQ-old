@@ -1892,8 +1892,19 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
         </plugin-configuration>
 
         <operation name="list-proxies" description="Read the list of httpd connected to the nodes.">
+            <results>
+               <c:simple-property name="operationResult" type="string" description="List of proxies the node is connected to. Format (hostname:port) separed with comas." />
+            </results>
         </operation>
-
+        
+        <operation name="read-proxies-configuration" description="Send a DUMP to httpd and display the result.">
+            <results>
+               <c:simple-property name="operationResult" type="string" description="Result of the DUMP command." />
+            </results>
+        </operation>
+        
+        <operation name="refresh" description="Refresh the node sending a new CONFIG message to Apache httpd."/>
+        
         <resource-configuration>
             <c:simple-property name="advertise-socket" displayName="Advertise Socket" type="string">
                 <c:option-source target="configuration" expression="socket-binding=name:type=SocketBindingGroup"/>
