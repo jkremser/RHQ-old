@@ -39,9 +39,8 @@ public class Operation {
     @JsonProperty(value = "address")
     private List<PROPERTY_VALUE> _address ;
     @JsonIgnore
-    Address address ;
+    private Address address ;
     private Map<String,Object> additionalProperties;
-
 
     public Operation(String operation, String addressKey, String addressValue) {
         this.operation = operation;

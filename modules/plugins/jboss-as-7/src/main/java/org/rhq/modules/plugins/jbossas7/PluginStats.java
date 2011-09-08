@@ -10,14 +10,13 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class PluginStats {
     private static PluginStats ourInstance = new PluginStats();
-
-    AtomicLong requestCount = new AtomicLong();
-    AtomicLong requestTime = new AtomicLong();
+    
     private static final int FIFO_SIZE = 200; // Initial capacity
-    List<Long> maxTime = new ArrayList<Long>(FIFO_SIZE);
-    final Object lock = new Object();
-
-
+    private final Object lock = new Object();
+    private AtomicLong requestCount = new AtomicLong();
+    private AtomicLong requestTime = new AtomicLong();
+    private List<Long> maxTime = new ArrayList<Long>(FIFO_SIZE);
+    
     public static PluginStats getInstance() {
         return ourInstance;
     }

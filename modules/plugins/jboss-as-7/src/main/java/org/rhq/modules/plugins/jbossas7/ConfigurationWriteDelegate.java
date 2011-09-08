@@ -48,7 +48,7 @@ import org.rhq.modules.plugins.jbossas7.json.WriteAttribute;
 
 public class ConfigurationWriteDelegate implements ConfigurationFacet {
 
-    final Log log = LogFactory.getLog(this.getClass());
+    private final Log log = LogFactory.getLog(this.getClass());
 
     private Address address;
     private ASConnection connection;

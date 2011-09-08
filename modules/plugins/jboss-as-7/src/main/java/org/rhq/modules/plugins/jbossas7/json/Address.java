@@ -63,7 +63,7 @@ public class Address {
      * outside the json package
      * @param property_values list of values, each describing a key-value pair of a path
      */
-    Address(List<PROPERTY_VALUE> property_values) {
+    public Address(List<PROPERTY_VALUE> property_values) {
         this();
         if (property_values!=null)
             path.addAll(property_values);

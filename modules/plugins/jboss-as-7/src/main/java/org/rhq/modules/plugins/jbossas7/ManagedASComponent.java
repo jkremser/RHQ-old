@@ -21,6 +21,9 @@ package org.rhq.modules.plugins.jbossas7;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
@@ -34,6 +37,7 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  */
 @SuppressWarnings("unused")
 public class ManagedASComponent extends BaseComponent {
+    private final Log log = LogFactory.getLog(this.getClass());
 
     /**
      * Get the availability of the managed AS server. We can't just check if

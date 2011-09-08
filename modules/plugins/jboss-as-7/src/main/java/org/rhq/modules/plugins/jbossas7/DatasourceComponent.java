@@ -23,7 +23,6 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
 public class DatasourceComponent extends BaseComponent implements OperationFacet {
 
     private static final String NOTSET = "-notset-";
-    private final Log log = LogFactory.getLog(DatasourceComponent.class);
 
     @Override
     public OperationResult invokeOperation(String operationName,
@@ -98,8 +97,7 @@ public class DatasourceComponent extends BaseComponent implements OperationFacet
         return result;
     }
 
-    void addAdditionalToOp(Operation op, Configuration parameters, String property, boolean optional)  {
-
+    private void addAdditionalToOp(Operation op, Configuration parameters, String property, boolean optional) {
         PropertySimple ps = parameters.getSimple(property);
         if (ps==null) {
             if (!optional)
@@ -113,12 +111,11 @@ public class DatasourceComponent extends BaseComponent implements OperationFacet
         }
     }
 
-
-    void addRequiredToOp(Operation op, Configuration parameters, String property)  {
+    private void addRequiredToOp(Operation op, Configuration parameters, String property)  {
         addAdditionalToOp(op,parameters,property,false);
     }
 
-    void addOptionalToOp(Operation op, Configuration parameters, String property) {
+    private void addOptionalToOp(Operation op, Configuration parameters, String property) {
         addAdditionalToOp(op,parameters,property,true);
     }
 }

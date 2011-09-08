@@ -47,8 +47,8 @@ public class ASConnection {
 
     public static final String MANAGEMENT = "/management";
     private final Log log = LogFactory.getLog(ASConnection.class);
-    URL url;
-    String urlString;
+    
+    private URL url;
     private ObjectMapper mapper;
     public static boolean verbose = false; // This is a variable on purpose, so devs can switch it on in the debugger or in the agent
     private HttpURLConnection conn;
@@ -63,7 +63,6 @@ public class ASConnection {
 
         try {
             url = new URL("http", host, port, MANAGEMENT);
-            urlString = url.toString();
         } catch (MalformedURLException e) {
             throw new IllegalArgumentException(e.getMessage());
         }

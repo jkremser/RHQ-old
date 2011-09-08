@@ -40,7 +40,7 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
 public class BaseServerComponent extends BaseComponent {
 
     private static final String SEPARATOR = "\n-----------------------\n";
-    final Log log = LogFactory.getLog(BaseServerComponent.class);
+    private final Log log = LogFactory.getLog(this.getClass());
 
     /**
      * Restart the server by first executing a 'shutdown' operation via its API. Then call
@@ -58,6 +58,7 @@ public class BaseServerComponent extends BaseComponent {
             tmp.setErrorMessage("Restart failed while failing to shut down: " + tmp.getErrorMessage());
             return tmp;
         }
+        
         Thread.sleep(500); // Wait 0.5s -- this is plenty
         return startServer(mode);
     }
@@ -101,11 +102,11 @@ public class BaseServerComponent extends BaseComponent {
 
             }
         }
+        
         processExecution.setWorkingDirectory(baseDir);
         processExecution.setCaptureOutput(true);
         processExecution.setWaitForCompletion(2000L); // 2 seconds // TODO: Should we wait longer than two seconds?
         processExecution.setKillOnTimeout(false);
-
 
         if (log.isDebugEnabled()) {
             log.debug("About to execute the following process: [" + processExecution + "]");
@@ -119,7 +120,6 @@ public class BaseServerComponent extends BaseComponent {
         }
 
         return operationResult;
-
     }
 
     private void logExecutionResults(ProcessExecutionResults results) {
@@ -167,5 +167,4 @@ public class BaseServerComponent extends BaseComponent {
         }
         return operationResult;
     }
-
 }

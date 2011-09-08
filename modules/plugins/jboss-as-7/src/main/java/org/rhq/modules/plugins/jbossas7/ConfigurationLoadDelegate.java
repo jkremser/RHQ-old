@@ -48,7 +48,7 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
 
 public class ConfigurationLoadDelegate implements ConfigurationFacet {
 
-    final Log log = LogFactory.getLog(this.getClass());
+    private final Log log = LogFactory.getLog(this.getClass());
 
     private Address address;
     private ASConnection connection;
@@ -179,15 +179,10 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
                     }
 
                 config.put(list);
-
             } else { // standard case
-
-
-
                 Object valueObject = results.get(propertyName);
 
                 if (propDef instanceof PropertyDefinitionSimple) {
-
                     PropertySimple value = loadHandlePropertySimple((PropertyDefinitionSimple) propDef, valueObject);
                     if (value!=null)
                         config.put(value);
@@ -209,7 +204,7 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
         }
     }
 
-    PropertySimple loadHandlePropertySimple(PropertyDefinitionSimple propDef, Object valueObject) {
+    private PropertySimple loadHandlePropertySimple(PropertyDefinitionSimple propDef, Object valueObject) {
         PropertySimple propertySimple;
 
         String name = propDef.getName();
@@ -238,7 +233,7 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
      * @param optionalEntryName
      * @return the populated map
      */
-    PropertyMap loadHandlePropertyMap(PropertyDefinitionMap propDef, Object valueObject, String optionalEntryName) {
+    private PropertyMap loadHandlePropertyMap(PropertyDefinitionMap propDef, Object valueObject, String optionalEntryName) {
         if (valueObject==null)
             return null;
 
@@ -252,8 +247,6 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
         }
 
         Map<String, PropertyDefinition> memberDefMap = propDef.getPropertyDefinitions();
-
-
 
         Map<String,Object> objects = (Map<String, Object>) valueObject;
         for (Map.Entry<String, PropertyDefinition> maEntry : memberDefMap.entrySet()) {
@@ -284,7 +277,6 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
                 if (log.isDebugEnabled())
                     log.debug("Property " + key + " was null");
             }
-
         }
 
         return propertyMap;
@@ -296,7 +288,7 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
      * @param valueObject The objects to put into the list
      * @return the property that describes the list.
      */
-    PropertyList loadHandlePropertyList(PropertyDefinitionList propDef, Object valueObject) {
+    private PropertyList loadHandlePropertyList(PropertyDefinitionList propDef, Object valueObject) {
         String propertyName = propDef.getName();
         PropertyList propertyList = new PropertyList(propertyName);
         PropertyDefinition memberDefinition = propDef.getMemberDefinition();
@@ -343,8 +335,6 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
      * @param report
      */
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
-
         throw new IllegalArgumentException("Please use ConfigurationWriteDelegate");
-
     }
 }

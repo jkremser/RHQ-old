@@ -18,6 +18,15 @@
  */
 package org.rhq.modules.plugins.jbossas7;
 
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
@@ -61,15 +70,7 @@ import org.rhq.modules.plugins.jbossas7.json.ReadResource;
 import org.rhq.modules.plugins.jbossas7.json.Remove;
 import org.rhq.modules.plugins.jbossas7.json.Result;
 
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
+@SuppressWarnings("rawtypes")
 public class BaseComponent implements ResourceComponent, MeasurementFacet, ConfigurationFacet, DeleteResourceFacet,
         CreateChildResourceFacet, OperationFacet
 {
@@ -77,17 +78,17 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
     private static final int INTERNAL_SIZE = INTERNAL.length();
     private static final String LOCALHOST = "localhost";
     private static final String DEFAULT_HTTP_MANAGEMENT_PORT = "9990";
-    final Log log = LogFactory.getLog(this.getClass());
+    private final Log log = LogFactory.getLog(this.getClass());
 
-    ResourceContext context;
-    Configuration pluginConfiguration;
-    String myServerName;
-    ASConnection connection;
-    String path;
-    Address address;
-    String key;
-    String host;
-    int port;
+    protected ResourceContext context;
+    protected Configuration pluginConfiguration;
+    protected String myServerName;
+    protected ASConnection connection;
+    protected String path;
+    protected Address address;
+    protected String key;
+    protected String host;
+    protected int port;
     private boolean verbose = ASConnection.verbose;
 
     /**
@@ -597,7 +598,7 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
         return (Collection<String>) res.getResult();
     }
 
-    Object getObjectForProperty(PropertySimple prop, PropertyDefinitionSimple propDef) {
+    protected Object getObjectForProperty(PropertySimple prop, PropertyDefinitionSimple propDef) {
 
         PropertySimpleType type = propDef.getType();
         switch (type) {

@@ -50,10 +50,9 @@ import org.rhq.core.system.ProcessInfo;
  * Discovery class
  */
 @SuppressWarnings("rawtypes")
-public class BaseProcessDiscovery extends AbstractBaseDiscovery implements ResourceDiscoveryComponent
-
-{
-    static final String DORG_JBOSS_BOOT_LOG_FILE = "-Dorg.jboss.boot.log.file=";
+public class BaseProcessDiscovery extends AbstractBaseDiscovery implements ResourceDiscoveryComponent {
+    
+    private static final String DORG_JBOSS_BOOT_LOG_FILE = "-Dorg.jboss.boot.log.file=";
     private final Log log = LogFactory.getLog(this.getClass());
 
     /**
