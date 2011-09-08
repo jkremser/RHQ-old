@@ -20,7 +20,6 @@ package org.rhq.modules.plugins.jbossas7;
 
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -319,7 +318,7 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
         if (verbose)
             log.info(uploadResult);
 
-        if (ASUploadConnection.isErrorReply(uploadResult)) {
+        if (uploadConnection.isErrorReply(uploadResult)) {
             report.setStatus(CreateResourceStatus.FAILURE);
             report.setErrorMessage(ASUploadConnection.getFailureDescription(uploadResult));
 
@@ -542,7 +541,7 @@ public class BaseComponent implements ResourceComponent, MeasurementFacet, Confi
                 String resourceKey = context.getResourceKey();
                 resourceKey = resourceKey.substring(resourceKey.indexOf("=")+1);
 
-                log.info("Promoting [" + resourceKey + "] to server group(s) [" + Arrays.asList(serverGroups) + "]");
+                log.info("Promoting [" + resourceKey + "] to server group(s) [" + serverGroups + "]");
 
                 PropertySimple simple = parameters.getSimple("enabled");
                 Boolean enabled = false;

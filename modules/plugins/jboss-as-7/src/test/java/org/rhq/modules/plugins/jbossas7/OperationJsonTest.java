@@ -18,13 +18,10 @@
  */
 package org.rhq.modules.plugins.jbossas7;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.annotate.JsonAnyGetter;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.SerializationConfig;
 import org.testng.annotations.Test;
@@ -44,13 +41,11 @@ public class OperationJsonTest {
 
 
     public void operationSerDeserTest() throws Exception{
-
         Address address= new Address();
         address.add("subsystem","web");
         address.add("connector","http");
 
         Operation operation = new WriteAttribute(address,"socket-binding","jndi");
-
 
         ObjectMapper mapper = new ObjectMapper();
 
@@ -62,12 +57,9 @@ public class OperationJsonTest {
         assert op.getName().equals("socket-binding") : "attribute name  is " + op.getName();
         assert op.getValue().equals("jndi") : "attribute value  is " + op.getValue();
         assert op.getAddress().size()==2 : "Address did not contain 2 parts, but " + op.getAddress().size();
-
-
     }
 
     public void propertyValueDeserTest() throws Exception {
-
         String json = "{\"myKey\":\"myValue\"}";
 
         ObjectMapper mapper = new ObjectMapper();
@@ -102,7 +94,6 @@ public class OperationJsonTest {
         assert op.getAdditionalProperties().containsKey("someBool") : "Key someBool not found ";
         Object someBool = op.getAdditionalProperties().get("someBool");
         assert Boolean.valueOf((Boolean) someBool) : "someBool was not true";
-
     }
 
     public void addPropsTest() throws Exception {
@@ -116,7 +107,6 @@ public class OperationJsonTest {
 
         String result = mapper.writeValueAsString(operation);
         System.out.println(result);
-
     }
 
     public void simpleResult() throws Exception {
@@ -159,7 +149,6 @@ public class OperationJsonTest {
     }
 
     public void complexResult1() throws Exception {
-
         String resultString = " {\"outcome\" : \"success\", \"result\" : {\"alias\" : [\"example.com\"], \"access-log\" : null, \"rewrite\" : null}}";
 
         ObjectMapper mapper = new ObjectMapper();
@@ -179,7 +168,6 @@ public class OperationJsonTest {
     }
 
     public void arrayResult1() throws Exception {
-
         String resultString = "{\"outcome\":\"success\",\"result\":[\"standard-sockets\",\"messaging-sockets\"],\"response-headers\":null, \"rolled-back\" : false}";
 
         ObjectMapper mapper = new ObjectMapper();
@@ -193,11 +181,9 @@ public class OperationJsonTest {
         assert stringList.get(0).equals("standard-sockets");
         assert stringList.get(1).equals("messaging-sockets");
         assert !result.isRolledBack();
-
     }
 
     public void rolledBack() throws Exception {
-
         String resultString = "{\"outcome\":\"failed\", \"rolled-back\" : true}";
 
         ObjectMapper mapper = new ObjectMapper();
@@ -207,13 +193,9 @@ public class OperationJsonTest {
         assert result.getOutcome().equals("failed");
         assert !result.isSuccess();
         assert result.isRolledBack();
-
     }
 
-
     public void complexResult2() throws Exception {
-
-
         String resultString =
                 "{\n" +
                         "  \"outcome\" : \"failed\",\n" +
@@ -281,7 +263,5 @@ public class OperationJsonTest {
         Map<String,Object> s3 = (Map<String, Object>) mainSg.get("server-demo");
         Map<String,Object> response = (Map<String, Object>) s3.get("response");
         assert response!=null;
-
     }
-
 }

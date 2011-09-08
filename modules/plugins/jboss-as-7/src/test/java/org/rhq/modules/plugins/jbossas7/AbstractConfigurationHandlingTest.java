@@ -28,7 +28,6 @@ import javax.xml.bind.util.ValidationEventCollector;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.JsonNode;
-import org.testng.annotations.BeforeSuite;
 
 import org.rhq.core.clientapi.agent.metadata.ConfigurationMetadataParser;
 import org.rhq.core.clientapi.agent.metadata.InvalidPluginDescriptorException;
@@ -47,7 +46,6 @@ public class AbstractConfigurationHandlingTest {
     private static final String DESCRIPTOR_FILENAME = "test-plugin.xml";
     private Log log = LogFactory.getLog(getClass());
     private PluginDescriptor pluginDescriptor;
-
 
     void loadPluginDescriptor() throws Exception {
         try {
@@ -93,7 +91,6 @@ public class AbstractConfigurationHandlingTest {
      *
      */
     protected class FakeConnection extends ASConnection {
-
         JsonNode content;
 
         public FakeConnection() {
@@ -106,7 +103,7 @@ public class AbstractConfigurationHandlingTest {
 
         @Override
         public JsonNode executeRaw(Operation operation) {
-            if (content==null)
+            if (content == null)
                 throw new IllegalStateException("Content not yet set");
             return content;
         }

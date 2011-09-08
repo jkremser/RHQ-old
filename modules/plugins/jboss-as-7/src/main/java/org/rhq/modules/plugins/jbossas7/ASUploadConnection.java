@@ -63,7 +63,7 @@ public class ASUploadConnection {
     }
 
     public OutputStream getOutputStream(String fileName) {
-         try {
+        try {
             // Create the HTTP connection to the upload URL
             String url = "http://" + host + ":" + port + UPLOAD_URL_PATH;
             connection = (HttpURLConnection) new URL(url).openConnection();
@@ -76,16 +76,15 @@ public class ASUploadConnection {
             os = new BufferedOutputStream(connection.getOutputStream());
             os.write(buildPostRequestHeader(fileName));
 
-             return os;
-         }
-         catch (Exception e) {
-             log.error("getOutputStream failed: " + e.getMessage());
-         }
+            return os;
+        } catch (Exception e) {
+            log.error("getOutputStream failed: " + e.getMessage());
+        }
 
         return null;
     }
 
-    public JsonNode finishUpload()  {
+    public JsonNode finishUpload() {
         JsonNode tree = null;
         try {
             os.write(buildPostRequestFooter());
@@ -93,7 +92,7 @@ public class ASUploadConnection {
 
             int code = connection.getResponseCode();
             log.info("Response code for file upload: " + code);
-            if (code==500)
+            if (code == 500)
                 is = connection.getErrorStream();
             else
                 is = connection.getInputStream();
@@ -109,18 +108,16 @@ public class ASUploadConnection {
                 ObjectMapper mapper = new ObjectMapper();
 
                 String s = builder.toString();
-                if (s!=null)
+                if (s != null)
                     tree = mapper.readTree(s);
                 else
                     log.warn("- no result received from InputStream -");
-            }
-            else
+            } else
                 log.warn("- no InputStream available -");
 
         } catch (IOException e) {
-            e.printStackTrace();  // TODO: Customise this generated block
-        }
-        finally {
+           log.error(e.getMessage(), e);
+        } finally {
             closeQuietly(is);
             closeQuietly(os);
         }
@@ -128,33 +125,34 @@ public class ASUploadConnection {
         return tree;
     }
 
-
     private byte[] buildPostRequestHeader(String fileName) throws UnsupportedEncodingException {
         final StringBuilder builder = new StringBuilder();
-        builder.append(buildPostRequestHeaderSection("form-data; name=\"file\"; filename=\""+fileName+"\"", "application/octet-stream", ""));
+        builder.append(buildPostRequestHeaderSection("form-data; name=\"file\"; filename=\"" + fileName + "\"",
+            "application/octet-stream", ""));
         return builder.toString().getBytes("US-ASCII");
     }
 
-    private StringBuilder buildPostRequestHeaderSection(final String contentDisposition, final String contentType, final String content) {
+    private StringBuilder buildPostRequestHeaderSection(final String contentDisposition, final String contentType,
+        final String content) {
         final StringBuilder builder = new StringBuilder();
         builder.append(BOUNDARY);
         builder.append(CRLF);
-        if(contentDisposition != null && contentDisposition.length() > 0) {
+        if (contentDisposition != null && contentDisposition.length() > 0) {
             builder.append(String.format("Content-Disposition: %s", contentDisposition));
         }
         builder.append(CRLF);
-        if(contentType != null && contentType.length() > 0) {
+        if (contentType != null && contentType.length() > 0) {
             builder.append(String.format("Content-Type: %s", contentType));
         }
         builder.append(CRLF);
-        if(content != null && content.length() > 0) {
+        if (content != null && content.length() > 0) {
             builder.append(content);
         }
         builder.append(CRLF);
         return builder;
     }
 
-    private byte[] buildPostRequestFooter() throws UnsupportedEncodingException{
+    private byte[] buildPostRequestFooter() throws UnsupportedEncodingException {
         final StringBuilder builder = new StringBuilder();
         builder.append(CRLF);
         builder.append(BOUNDARY);
@@ -164,13 +162,13 @@ public class ASUploadConnection {
     }
 
     public static String getFailureDescription(JsonNode jsonNode) {
-        if (jsonNode==null)
+        if (jsonNode == null)
             return "getFailureDescription: -input was null-";
         JsonNode node = jsonNode.findValue("failure-description");
         return node.getValueAsText();
     }
 
-    static boolean isErrorReply(JsonNode in) {
+    public boolean isErrorReply(JsonNode in) {
         if (in == null)
             return true;
 
@@ -185,20 +183,22 @@ public class ASUploadConnection {
                     String reason = reasonNode.getTextValue();
                     return true;
                 }
-
             } catch (Exception e) {
-                e.printStackTrace(); // TODO
+                log.error(e.getMessage(),e);
                 return true;
             }
         }
+        
         return false;
     }
 
     private void closeQuietly(final Closeable closeable) {
-        if(closeable != null) {
+        if (closeable != null) {
             try {
                 closeable.close();
-            } catch (final IOException e) {}
+            } catch (final IOException e) {
+                log.error(e.getMessage(),e);
+            }
         }
     }
 }

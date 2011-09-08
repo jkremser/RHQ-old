@@ -1,11 +1,7 @@
 package org.rhq.modules.plugins.jbossas7;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -13,7 +9,6 @@ import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
-import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
 import org.rhq.modules.plugins.jbossas7.json.Result;
 
 /**
@@ -35,7 +30,6 @@ public class DatasourceComponent extends BaseComponent implements OperationFacet
         if (operationName.equals("addDriver")) { // TODO decide if we need this at all. See also the plugin-descriptor
             String drivername = parameters.getSimpleValue("driver-name", NOTSET);
 
-
             Address theAddress = new Address(address);
             theAddress.add("jdbc-driver", drivername);
 
@@ -43,8 +37,6 @@ public class DatasourceComponent extends BaseComponent implements OperationFacet
             op.addAdditionalProperty("driver-name",drivername);
             op.addAdditionalProperty("deployment-name",parameters.getSimpleValue("deployment-name", NOTSET));
             op.addAdditionalProperty("driver-class-name",parameters.getSimpleValue("driver-class-name", NOTSET));
-
-
         }
         else if (operationName.equals("addDatasource")) {
             String name = parameters.getSimpleValue("name",NOTSET);
@@ -76,7 +68,6 @@ public class DatasourceComponent extends BaseComponent implements OperationFacet
             Map<String,Object> props = new HashMap<String, Object>(); // TODO
             props.put("_foo","_bar"); // TODO AS7-1209
             op.addAdditionalProperty("xa-data-source-properties",props);
-
         }
         else {
             /*
@@ -92,8 +83,7 @@ public class DatasourceComponent extends BaseComponent implements OperationFacet
         else {
             result.setErrorMessage(res.getFailureDescription());
         }
-
-
+        
         return result;
     }
 

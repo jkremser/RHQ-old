@@ -19,7 +19,6 @@
 package org.rhq.modules.plugins.jbossas7.json.serializer;
 
 import java.io.IOException;
-import java.lang.ref.PhantomReference;
 
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonProcessingException;
@@ -34,10 +33,9 @@ import org.rhq.modules.plugins.jbossas7.json.PROPERTY_VALUE;
  */
 public class PropertyValueDeserializer extends JsonDeserializer<PROPERTY_VALUE> {
 
-
     @Override
-    public PROPERTY_VALUE deserialize(JsonParser jsonParser,
-                                      DeserializationContext deserializationContext) throws IOException, JsonProcessingException {
+    public PROPERTY_VALUE deserialize(JsonParser jsonParser, DeserializationContext deserializationContext)
+        throws IOException, JsonProcessingException {
 
         String tmp = jsonParser.getText(); // {
         jsonParser.nextToken();
@@ -47,7 +45,7 @@ public class PropertyValueDeserializer extends JsonDeserializer<PROPERTY_VALUE> 
         jsonParser.nextToken();
         tmp = jsonParser.getText(); // }
 
-        PROPERTY_VALUE pv = new PROPERTY_VALUE(key,value);
+        PROPERTY_VALUE pv = new PROPERTY_VALUE(key, value);
         return pv;
     }
 }

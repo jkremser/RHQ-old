@@ -41,7 +41,8 @@ import org.rhq.modules.plugins.jbossas7.json.Operation;
 @Test
 public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest {
 
-    ObjectMapper mapper ;
+    ObjectMapper mapper;
+    
     @BeforeSuite
     void loadPluginDescriptor() throws Exception {
         super.loadPluginDescriptor();
@@ -69,12 +70,9 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
         assert step1.getOperation().equals("write-attribute");
         Map<String,Object> props = step1.getAdditionalProperties();
         assert props.size()==2;
-
-
     }
 
     public void test2() throws Exception {
-
         ConfigurationDefinition definition = loadDescriptor("listOfSimple1");
 
         FakeConnection connection = new FakeConnection();
@@ -98,11 +96,9 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
         assert props.size()==2;
         List<String> values = (List<String>) props.get("value");
         assert values.size()==2 : "Values had "+ values.size() + " entries"; // The optional null must not be present
-
-
-
+        
         String result = mapper.writeValueAsString(cop);
-
+        //TODO add an assert here, what should the result be?
     }
 
     public void test3() throws Exception {
@@ -131,8 +127,9 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
         assert values.size()==2 : "Values had "+ values.size() + " entries instead of 2"; // The optional null must not be present
 
         String result = mapper.writeValueAsString(cop);
-
+        //TODO add an assert here, what should the result be?
     }
+    
     public void test4() throws Exception {
 
         ConfigurationDefinition definition = loadDescriptor("mapOfSimple1");
@@ -159,7 +156,7 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
         assert values.size()==1 : "Values had "+ values.size() + " entries instead of 1"; // The optional null must not be present
 
         String result = mapper.writeValueAsString(cop);
-
+        //TODO add an assert here, what should the result be?
     }
 
     public void test5() throws Exception {
@@ -187,7 +184,7 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
         assert values.size()==1 : "Values had "+ values.size() + " entries instead of 1"; // The optional null must not be present
 
         String result = mapper.writeValueAsString(cop);
-
+        //TODO add an assert here, what should the result be?
     }
 
     public void test6() throws Exception {
@@ -220,7 +217,7 @@ public class ConfigurationUpdatingTest extends AbstractConfigurationHandlingTest
         assert map.size()==2 : "Map had " + map.size() + " entries instead of two";
 
         String result = mapper.writeValueAsString(cop);
-
+        //TODO add an assert here, what should the result be?
     }
 
     public void test7() throws Exception {
