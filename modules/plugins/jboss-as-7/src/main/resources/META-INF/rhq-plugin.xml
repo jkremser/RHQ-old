@@ -1903,12 +1903,75 @@ working area for individual server instances&lt;/li&gt;&lt;/ul&gt;"/>
             </results>
         </operation>
         
+        <operation name="read-proxies-info" description="Send a INFO to httpd and display the result.">
+            <results>
+               <c:simple-property name="operationResult" type="string" description="Result of the INFO command." />
+            </results>
+        </operation>
+        
+        <operation name="enable" description="Tell Apache httpd that all contexts of the node are ready receive requests.">
+            <results>
+               <c:simple-property name="operationResult" type="string" description="Result of the command." />
+            </results>
+        </operation>
+        
+        <operation name="disable" description="Tell Apache httpd that all contexts of the node can't process new requests.">
+            <results>
+               <c:simple-property name="operationResult" type="string" description="Result of the command." />
+            </results>
+        </operation>
+        
+        <operation name="stop" description="Tell Apache httpd that all contexts of the node can't process requests.">
+            <parameters>
+               <c:simple-property required="true" name="waittime" type="integer" displayName="Max amount of time modcluster will for the STOP operation, in seconds. Default 10s." />
+            </parameters>
+            <results>
+               <c:simple-property name="operationResult" type="string" description="Result of the command." />
+            </results>
+        </operation>
+        
+         <operation name="add-proxy" description="Add the proxy to the list of httpd contected to the node.">
+            <parameters>
+               <c:simple-property required="true" name="host" type="string" displayName="Hostname of the proxy (Apache httpd)" />
+               <c:simple-property required="true" name="port" type="integer" displayName="Port where the proxy (Apache httpd) is receiving the MCMP" />
+            </parameters>
+            <results>
+               <c:simple-property name="operationResult" type="string" description="Result of the command." />
+            </results>
+        </operation>
+        
         <operation name="refresh" description="Refresh the node sending a new CONFIG message to Apache httpd."/>
         
         <resource-configuration>
             <c:simple-property name="advertise-socket" displayName="Advertise Socket" type="string">
                 <c:option-source target="configuration" expression="socket-binding=name:type=SocketBindingGroup"/>
             </c:simple-property>
+            
+            <c:simple-property name="proxy-list" type="string" required="false" description="List of proxies, Format (hostname:port) separed with comas." />
+            <c:simple-property name="proxy-url" type="string" required="false" description="Base URL for MCMP requests." />
+            <c:simple-property name="advertise" type="boolean" required="false" default="false" description="Use Advertise logic or not." />
+            <c:simple-property name="advertise-security-key" type="string" required="false" description="String containing the security key for the Advertise logic." />
+            <c:simple-property name="excluded-contexts" type="string" required="false" description="List of contexts mod_cluster should ignore, Format String separed with comas." />           
+            <c:simple-property name="auto-enable-contexts" type="boolean" required="false" default="true" description="Enable contexts even if disabled in mod_cluster_manger (httpd)." />
+            <c:simple-property name="stop-context-timeout" type="integer" required="false" description="Max time to wait for context to process pending requests." />
+            <c:simple-property name="socket-timeout" type="integer" required="false" description="Timeout to wait for httpd to answer a MCMP message." />
+            
+            <!-- Balancer Configuration -->
+            <c:simple-property name="sticky-session" type="boolean" description="Use sticky sessions for requests." />
+            <c:simple-property name="sticky-session-remove" type="boolean" description="Remove session information on failover." />
+            <c:simple-property name="sticky-session-force" type="boolean" description="Don't failover a request with session information." />
+            <c:simple-property name="worker-timeout" type="integer" description="Timeout to wait in httpd for an available worker to process the requests." />
+            <c:simple-property name="max-attempts" type="integer" description="Max attempts to process an idempotent request." />
+            
+            <!-- Node Configuration -->
+            <c:simple-property name="flush-packets" type="boolean" required="false" description="Enables/disables packet flushing in httpd." />
+            <c:simple-property name="flush-wait" type="integer" required="false" description="Time to wait before flushing packets in httpd." />
+            <c:simple-property name="ping" type="integer" required="false" description="Time (in seconds) in which to wait for a pong answer to a ping." />
+            <c:simple-property name="smax" type="integer" required="false" description="Soft maximum idle connection count in httpd." />
+            <c:simple-property name="ttl" type="integer" required="false" description="Time to live (in seconds) for idle connections above smax." />
+            <c:simple-property name="node-timeout" type="integer" required="false" description="Timeout (in seconds) for proxy connections to a node" />
+            <c:simple-property name="balancer" type="string" required="false" description="The balancer name." />
+            <c:simple-property name="domain" type="string" required="false" description="Load balancing group." />
         </resource-configuration>
     </server>
 
