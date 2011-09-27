@@ -55,11 +55,11 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  *
  * @author Heiko W. Rupp
  */
-public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseComponent> {
+public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseComponent<?>> {
 
     private final Log log = LogFactory.getLog(this.getClass());
 
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<BaseComponent> context)
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<BaseComponent<?>> context)
         throws Exception {
 
         Set<DiscoveredResourceDetails> details = new HashSet<DiscoveredResourceDetails>();

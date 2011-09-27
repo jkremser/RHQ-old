@@ -69,8 +69,7 @@ import org.rhq.modules.plugins.jbossas7.json.ReadResource;
 import org.rhq.modules.plugins.jbossas7.json.Remove;
 import org.rhq.modules.plugins.jbossas7.json.Result;
 
-@SuppressWarnings("rawtypes")
-public class BaseComponent implements ResourceComponent, MeasurementFacet, ConfigurationFacet, DeleteResourceFacet,
+public class BaseComponent<T extends ResourceComponent<?>> implements ResourceComponent<T>, MeasurementFacet, ConfigurationFacet, DeleteResourceFacet,
         CreateChildResourceFacet, OperationFacet
 {
     private static final String INTERNAL = "_internal:";
