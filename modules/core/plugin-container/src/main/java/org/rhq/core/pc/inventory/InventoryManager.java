@@ -683,11 +683,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 // Ask the plugin's discovery component to find the new resource, throwing exceptions if it cannot be
                 // found at all.
                 discoveredResourceDetails = discoverResource(discoveryComponent, pluginConfiguration, discoveryContext,
-<<<<<<< HEAD
-                        parentResourceContainer);
-=======
                     parentResourceContainer);
->>>>>>> master
+
                 if (discoveredResourceDetails == null) {
                     log.info("Plugin Error: During manual add, discovery component method ["
                         + discoveryComponent.getClass().getName() + ".discoverResource()] returned null "
