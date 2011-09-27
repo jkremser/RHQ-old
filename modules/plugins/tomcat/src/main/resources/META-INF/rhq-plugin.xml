@@ -441,7 +441,6 @@
                property="VHost.name"
                displayName="Virtual Hosts"
                dataType="trait"
-               defaultOn="true"
                description="Virtual hosts this app runs on" />
 
             <metric
@@ -704,14 +703,12 @@
             displayName="Maximum Request Time"
             description="Maximum time it took to process a request."
             units="milliseconds"
-            defaultOn="true"
             category="performance" />
 
          <metric
             property="Catalina:type=GlobalRequestProcessor,name=%handler%%address%-%port%:requestCount"
             displayName="Request count"
             description="Total number of requests processed since last restart."
-            defaultOn="true"
             category="utilization"
             measurementType="trendsup" />
 
@@ -719,7 +716,6 @@
             property="Catalina:type=GlobalRequestProcessor,name=%handler%%address%-%port%:errorCount"
             displayName="Error count"
             description="Number of errors while processing since last restart."
-            defaultOn="true"
             category="utilization"
             measurementType="trendsup" />
 
@@ -727,7 +723,6 @@
             property="Catalina:type=ThreadPool,name=%handler%%address%-%port%:currentThreadsBusy"
             displayName="Threadpool Threads Active"
             description="Number of current busy threads."
-            defaultOn="true"
             category="utilization"
             displayType="summary" />
 
@@ -735,7 +730,6 @@
             property="Catalina:type=ThreadPool,name=%handler%%address%-%port%:currentThreadCount"
             displayName="Threadpool Threads Allocated"
             description="Number of current threads."
-            defaultOn="true"
             category="utilization"
             displayType="summary" />
 
@@ -743,7 +737,6 @@
             property="Catalina:type=ThreadPool,name=%handler%%address%-%port%:maxThreads"
             displayName="Threadpool Max Threads"
             description="Maximum number of threads that can be allocated for the ThreadPool."
-            defaultOn="true"
             category="utilization"
             displayType="detail" />
 
