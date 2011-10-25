@@ -19,6 +19,10 @@
  */
 package org.rhq.enterprise.server.drift;
 
+import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
+import static org.rhq.core.domain.drift.DriftChangeSetCategory.COVERAGE;
+import static org.rhq.core.domain.drift.DriftFileStatus.LOADED;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
@@ -52,17 +56,19 @@ import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
 import org.rhq.core.domain.criteria.DriftCriteria;
 import org.rhq.core.domain.criteria.JPADriftChangeSetCriteria;
 import org.rhq.core.domain.criteria.JPADriftCriteria;
+import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftChangeSetCategory;
 import org.rhq.core.domain.drift.DriftComposite;
-import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.drift.DriftConfigurationDefinition;
+import org.rhq.core.domain.drift.DriftDefinition;
 import org.rhq.core.domain.drift.DriftFile;
 import org.rhq.core.domain.drift.DriftFileStatus;
-import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.drift.JPADrift;
 import org.rhq.core.domain.drift.JPADriftChangeSet;
 import org.rhq.core.domain.drift.JPADriftFile;
 import org.rhq.core.domain.drift.JPADriftFileBits;
+import org.rhq.core.domain.drift.JPADriftSet;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.StopWatch;
@@ -76,9 +82,6 @@ import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.drift.DriftChangeSetSummary;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
-
-import static javax.ejb.TransactionAttributeType.REQUIRES_NEW;
-import static org.rhq.core.domain.drift.DriftFileStatus.LOADED;
 
 /**
  * The SLSB method implementation needed to support the JPA (RHQ Default) Drift Server Plugin.
@@ -114,41 +117,32 @@ public class JPADriftServerBean implements JPADriftServerLocal {
 
     @Override
     @TransactionAttribute(REQUIRES_NEW)
-    public void purgeByDriftConfigurationName(Subject subject, int resourceId, String driftConfigName) throws Exception {
+    public void purgeByDriftDefinitionName(Subject subject, int resourceId, String driftDefName) throws Exception {
 
         int driftsDeleted;
         int changeSetsDeleted;
         StopWatch timer = new StopWatch();
 
         // purge all drift entities first
-        Query q = entityManager.createNamedQuery(JPADrift.QUERY_DELETE_BY_DRIFTCONFIG_RESOURCE);
+        Query q = entityManager.createNamedQuery(JPADrift.QUERY_DELETE_BY_DRIFTDEF_RESOURCE);
         q.setParameter("resourceId", resourceId);
-        q.setParameter("driftConfigurationName", driftConfigName);
+        q.setParameter("driftDefinitionName", driftDefName);
         driftsDeleted = q.executeUpdate();
 
+        // delete the drift set
+//        JPADriftChangeSet changeSet = entityManager.createQuery(
+//            "select c from JPADriftChangeSet c where c.version = 0 and c.driftDefinition")
+
         // now purge all changesets
-        q = entityManager.createNamedQuery(JPADriftChangeSet.QUERY_DELETE_BY_DRIFTCONFIG_RESOURCE);
+        q = entityManager.createNamedQuery(JPADriftChangeSet.QUERY_DELETE_BY_DRIFTDEF_RESOURCE);
         q.setParameter("resourceId", resourceId);
-        q.setParameter("driftConfigurationName", driftConfigName);
+        q.setParameter("driftDefinitionName", driftDefName);
         changeSetsDeleted = q.executeUpdate();
 
         log.info("Purged [" + driftsDeleted + "] drift items and [" + changeSetsDeleted
-            + "] changesets associated with drift config [" + driftConfigName + "] from resource [" + resourceId
+            + "] changesets associated with drift def [" + driftDefName + "] from resource [" + resourceId
             + "]. Elapsed time=[" + timer.getElapsed() + "]ms");
         return;
-    }
-
-    @Override
-    public DriftSnapshot createSnapshot(Subject subject, DriftChangeSetCriteria criteria) {
-        // TODO security checks
-        DriftSnapshot snapshot = new DriftSnapshot();
-        PageList<? extends DriftChangeSet<?>> changeSets = findDriftChangeSetsByCriteria(subject, criteria);
-
-        for (DriftChangeSet<?> changeSet : changeSets) {
-            snapshot.add(changeSet);
-        }
-
-        return snapshot;
     }
 
     @Override
@@ -157,10 +151,29 @@ public class JPADriftServerBean implements JPADriftServerLocal {
         JPADriftChangeSetCriteria jpaCriteria = (criteria instanceof JPADriftChangeSetCriteria) ? (JPADriftChangeSetCriteria) criteria
             : new JPADriftChangeSetCriteria(criteria);
 
+        if (criteria.getFilterCategory() != null && criteria.getFilterCategory() == COVERAGE) {
+            if (jpaCriteria.isFetchDrifts()) {
+                jpaCriteria.fetchInitialDriftSet(true);
+                jpaCriteria.fetchDrifts(false);
+            }
+            jpaCriteria.addFilterVersion("0");
+        } else {
+            jpaCriteria.fetchInitialDriftSet(false);
+        }
+
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, jpaCriteria);
         CriteriaQueryRunner<JPADriftChangeSet> queryRunner = new CriteriaQueryRunner<JPADriftChangeSet>(jpaCriteria,
             generator, entityManager);
         PageList<JPADriftChangeSet> result = queryRunner.execute();
+
+        if (jpaCriteria.isFetchInitialDriftSet()) {
+            for (JPADriftChangeSet changeSet : result) {
+                // Need to wire up each drift with its parent change set.
+                for (JPADrift drift : changeSet.getInitialDriftSet().getDrifts()) {
+                    drift.setChangeSet(changeSet);
+                }
+            }
+        }
 
         return result;
     }
@@ -176,8 +189,8 @@ public class JPADriftServerBean implements JPADriftServerLocal {
         PageList<DriftComposite> result = new PageList<DriftComposite>();
         for (JPADrift drift : drifts) {
             JPADriftChangeSet changeSet = drift.getChangeSet();
-            DriftConfiguration driftConfig = changeSet.getDriftConfiguration();
-            result.add(new DriftComposite(drift, changeSet.getResource(), driftConfig.getName()));
+            DriftDefinition driftDef = changeSet.getDriftDefinition();
+            result.add(new DriftComposite(drift, changeSet.getResource(), driftDef.getName()));
         }
 
         return result;
@@ -195,6 +208,69 @@ public class JPADriftServerBean implements JPADriftServerLocal {
         PageList<JPADrift> result = queryRunner.execute();
 
         return result;
+    }
+
+    @Override
+    public String persistChangeSet(Subject subject, DriftChangeSet<?> changeSet) {
+        JPADriftChangeSet jpaChangeSet;
+
+        if (isTemplateChangeSet(changeSet)) {
+            jpaChangeSet = new JPADriftChangeSet(null, changeSet.getVersion(), changeSet.getCategory(), null);
+            jpaChangeSet.setDriftHandlingMode(changeSet.getDriftHandlingMode());
+        } else {
+            Resource resource = getResource(changeSet.getResourceId());
+            DriftDefinition driftDef = null;
+
+            for (DriftDefinition def : resource.getDriftDefinitions()) {
+                if (def.getId() == changeSet.getDriftDefinitionId()) {
+                    driftDef = def;
+                    break;
+                }
+            }
+
+            jpaChangeSet = new JPADriftChangeSet(resource, changeSet.getVersion(), changeSet.getCategory(), driftDef);
+        }
+
+        JPADriftSet driftSet = new JPADriftSet();
+
+        for (Drift<?, ?> drift : changeSet.getDrifts()) {
+            JPADrift jpaDrift = new JPADrift(jpaChangeSet, drift.getPath(), drift.getCategory(),
+                toJPADriftFile(drift.getOldDriftFile()), toJPADriftFile(drift.getNewDriftFile()));
+            driftSet.addDrift(jpaDrift);
+        }
+        entityManager.persist(driftSet);
+        jpaChangeSet.setInitialDriftSet(driftSet);
+        entityManager.persist(jpaChangeSet);
+
+        return jpaChangeSet.getId();
+    }
+
+    private boolean isTemplateChangeSet(DriftChangeSet<?> changeSet) {
+        return changeSet.getResourceId() == 0 && changeSet.getDriftDefinitionId() == 0;
+    }
+
+    @Override
+    public String copyChangeSet(Subject subject, String changeSetId, int driftDefId, int resourceId) {
+        Resource resource = entityManager.find(Resource.class, resourceId);
+        DriftDefinition driftDef = entityManager.find(DriftDefinition.class, driftDefId);
+        JPADriftChangeSet srcChangeSet = entityManager.find(JPADriftChangeSet.class, Integer.parseInt(changeSetId));
+        JPADriftChangeSet destChangeSet = new JPADriftChangeSet(resource, 0, COVERAGE, driftDef);
+        destChangeSet.setDriftHandlingMode(DriftConfigurationDefinition.DriftHandlingMode.normal);
+        destChangeSet.setInitialDriftSet(srcChangeSet.getInitialDriftSet());
+
+        entityManager.persist(destChangeSet);
+
+        return destChangeSet.getId();
+    }
+
+    private JPADriftFile toJPADriftFile(DriftFile driftFile) {
+        if (driftFile == null) {
+            return null;
+        }
+        JPADriftFile jpaFile = new JPADriftFile(driftFile.getHashId());
+        jpaFile.setDataSize(driftFile.getDataSize());
+        jpaFile.setStatus(driftFile.getStatus());
+        return jpaFile;
     }
 
     @Override
@@ -227,11 +303,7 @@ public class JPADriftServerBean implements JPADriftServerLocal {
     @TransactionAttribute(REQUIRES_NEW)
     public DriftChangeSetSummary storeChangeSet(Subject subject, final int resourceId, final File changeSetZip)
         throws Exception {
-        final Resource resource = entityManager.find(Resource.class, resourceId);
-        if (null == resource) {
-            throw new IllegalArgumentException("Resource not found [" + resourceId + "]");
-        }
-
+        final Resource resource = getResource(resourceId);
         final DriftChangeSetSummary summary = new DriftChangeSetSummary();
 
         try {
@@ -247,9 +319,9 @@ public class JPADriftServerBean implements JPADriftServerLocal {
                             stream)), false);
 
                         // store the new change set info (not the actual blob)
-                        DriftConfiguration config = findDriftConfiguration(resource, reader.getHeaders());
-                        if (config == null) {
-                            log.error("Unable to locate DriftConfiguration for Resource [" + resource
+                        DriftDefinition driftDef = findDriftDefinition(resource, reader.getHeaders());
+                        if (driftDef == null) {
+                            log.error("Unable to locate DriftDefinition for Resource [" + resource
                                 + "]. Change set cannot be saved.");
                             return false;
                         }
@@ -262,44 +334,56 @@ public class JPADriftServerBean implements JPADriftServerLocal {
                         int version = reader.getHeaders().getVersion();
 
                         DriftChangeSetCategory category = reader.getHeaders().getType();
-                        driftChangeSet = new JPADriftChangeSet(resource, version, category, config);
+                        driftChangeSet = new JPADriftChangeSet(resource, version, category, driftDef);
                         entityManager.persist(driftChangeSet);
 
                         summary.setCategory(category);
                         summary.setResourceId(resourceId);
-                        summary.setDriftConfigurationName(reader.getHeaders().getDriftConfigurationName());
-                        summary.setDriftHandlingMode(config.getDriftHandlingMode());
+                        summary.setDriftDefinitionName(reader.getHeaders().getDriftDefinitionName());
+                        summary.setDriftHandlingMode(driftDef.getDriftHandlingMode());
                         summary.setCreatedTime(driftChangeSet.getCtime());
 
-                        for (FileEntry entry : reader) {
-                            JPADriftFile oldDriftFile = getDriftFile(entry.getOldSHA(), emptyDriftFiles);
-                            JPADriftFile newDriftFile = getDriftFile(entry.getNewSHA(), emptyDriftFiles);
+                        if (version > 0) {
+                            for (FileEntry entry : reader) {
+                                JPADriftFile oldDriftFile = getDriftFile(entry.getOldSHA(), emptyDriftFiles);
+                                JPADriftFile newDriftFile = getDriftFile(entry.getNewSHA(), emptyDriftFiles);
 
-                            // TODO Figure out an efficient way to save coverage change sets.
-                            // The initial/coverage change set could contain hundreds or even thousands
-                            // of entries. We probably want to consider doing some kind of batch insert
-                            //
-                            // jsanda
+                                // TODO Figure out an efficient way to save coverage change sets.
+                                // The initial/coverage change set could contain hundreds or even thousands
+                                // of entries. We probably want to consider doing some kind of batch insert
+                                //
+                                // jsanda
 
-                            // use a path with only forward slashing to ensure consistent paths across reports
-                            String path = FileUtil.useForwardSlash(entry.getFile());
-                            JPADrift drift = new JPADrift(driftChangeSet, path, entry.getType(), oldDriftFile,
-                                newDriftFile);
-                            entityManager.persist(drift);
+                                // use a path with only forward slashing to ensure consistent paths across reports
+                                String path = FileUtil.useForwardSlash(entry.getFile());
+                                JPADrift drift = new JPADrift(driftChangeSet, path, entry.getType(), oldDriftFile,
+                                    newDriftFile);
+                                entityManager.persist(drift);
 
-                            // we are taking advantage of the fact that we know the summary is only used by the server
-                            // if the change set is a DRIFT report. If its a coverage report, it is not used (we do
-                            // not alert on coverage reports) - so don't waste memory by collecting all the paths
-                            // when we know they aren't going to be used anyway.
-                            if (category == DriftChangeSetCategory.DRIFT) {
-                                summary.addDriftPathname(path);
+                                // we are taking advantage of the fact that we know the summary is only used by the server
+                                // if the change set is a DRIFT report. If its a coverage report, it is not used (we do
+                                // not alert on coverage reports) - so don't waste memory by collecting all the paths
+                                // when we know they aren't going to be used anyway.
+                                if (category == DriftChangeSetCategory.DRIFT) {
+                                    summary.addDriftPathname(path);
+                                }
                             }
+                        } else {
+                            JPADriftSet driftSet = new JPADriftSet();
+                            for (FileEntry entry : reader) {
+                                JPADriftFile newDriftFile = getDriftFile(entry.getNewSHA(), emptyDriftFiles);
+                                String path = FileUtil.useForwardSlash(entry.getFile());
+                                driftSet.addDrift(new JPADrift(null, path, entry.getType(), null, newDriftFile));
+                            }
+                            entityManager.persist(driftSet);
+                            driftChangeSet.setInitialDriftSet(driftSet);
+                            entityManager.merge(driftChangeSet);
                         }
 
                         AgentClient agentClient = agentManager.getAgentClient(subjectManager.getOverlord(), resourceId);
                         DriftAgentService service = agentClient.getDriftAgentService();
 
-                        service.ackChangeSet(resourceId, reader.getHeaders().getDriftConfigurationName());
+                        service.ackChangeSet(resourceId, reader.getHeaders().getDriftDefinitionName());
 
                         // send a message to the agent requesting the empty JPADriftFile content
                         if (!emptyDriftFiles.isEmpty()) {
@@ -357,29 +441,10 @@ public class JPADriftServerBean implements JPADriftServerLocal {
         return result;
     }
 
-    /**
-     * This method only exists temporarily until the version header is added to the change
-     * set meta data file. This method determines the version by looking at the number of
-     * change sets in the database.
-     *
-     * @param r The resource
-     * @param c The drift configuration
-     * @return The next change set version number
-     */
-    private int getChangeSetVersion(Resource r, DriftConfiguration c) {
-        JPADriftChangeSetCriteria criteria = new JPADriftChangeSetCriteria();
-        criteria.addFilterResourceId(r.getId());
-        criteria.addFilterDriftConfigurationId(c.getId());
-        List<? extends DriftChangeSet<?>> changeSets = findDriftChangeSetsByCriteria(subjectManager.getOverlord(),
-            criteria);
-
-        return changeSets.size();
-    }
-
-    private DriftConfiguration findDriftConfiguration(Resource resource, Headers headers) {
-        for (DriftConfiguration driftConfig : resource.getDriftConfigurations()) {
-            if (driftConfig.getName().equals(headers.getDriftConfigurationName())) {
-                return driftConfig;
+    private DriftDefinition findDriftDefinition(Resource resource, Headers headers) {
+        for (DriftDefinition driftDef : resource.getDriftDefinitions()) {
+            if (driftDef.getName().equals(headers.getDriftDefinitionName())) {
+                return driftDef;
             }
         }
         return null;
@@ -439,5 +504,13 @@ public class JPADriftServerBean implements JPADriftServerLocal {
             e.printStackTrace();
             return null;
         }
+    }
+
+    private Resource getResource(int resourceId) {
+        Resource resource = entityManager.find(Resource.class, resourceId);
+        if (null == resource) {
+            throw new IllegalArgumentException("Resource not found [" + resourceId + "]");
+        }
+        return resource;
     }
 }

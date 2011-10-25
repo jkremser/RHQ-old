@@ -87,13 +87,13 @@ public class MessageCenterView extends Table implements MessageCenter.MessageLis
     }
 
     /**
-     * This will popup a non-modal dialog window with the messages in a list.
+     * This will popup a non-modal window with the messages in a list.
      */
     public void showMessageCenterWindow() {
         try {
             if (window == null) {
                 window = new MessageCenterWindow("MessageCenterViewWindow");
-                window.addItem(this);
+                window.addItem(this); // Use addItem(), not addMember(), when adding a widget to a Window!
                 window.addCloseClickHandler(new CloseClickHandler() {
                     @Override
                     public void onCloseClick(CloseClientEvent event) {
@@ -138,7 +138,7 @@ public class MessageCenterView extends Table implements MessageCenter.MessageLis
     protected void configureTable() {
         getListGrid().setEmptyMessage(MSG.view_messageCenter_noRecentMessages());
 
-        setTableTitle(MSG.view_messageCenter_lastNMessages(String.valueOf(CoreGUI.getMessageCenter().getMaxMessages())));
+        updateTitleCanvas(MSG.view_messageCenter_lastNMessages(String.valueOf(CoreGUI.getMessageCenter().getMaxMessages())));
 
         ListGridField severityField = new ListGridField(FIELD_SEVERITY);
         severityField.setType(ListGridFieldType.ICON);
@@ -259,7 +259,7 @@ public class MessageCenterView extends Table implements MessageCenter.MessageLis
                     try {
                         Integer maxSize = (Integer) actionValue;
                         CoreGUI.getMessageCenter().setMaxMessages(maxSize.intValue());
-                        setTableTitle(MSG.view_messageCenter_lastNMessages(maxSize.toString()));
+                        updateTitleCanvas(MSG.view_messageCenter_lastNMessages(maxSize.toString()));
                         refresh();
                     } catch (Throwable e) {
                         Log.error("Cannot set max messages", e);

@@ -29,6 +29,7 @@ import com.smartgwt.client.widgets.Canvas;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
@@ -51,11 +52,12 @@ import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTab;
 import org.rhq.enterprise.gui.coregui.client.components.tab.TwoLevelTabSelectedEvent;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewFactory;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
-import org.rhq.enterprise.gui.coregui.client.drift.ResourceDriftConfigurationView;
+import org.rhq.enterprise.gui.coregui.client.drift.ResourceDriftDefinitionsView;
 import org.rhq.enterprise.gui.coregui.client.drift.ResourceDriftHistoryView;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.InventoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.AbstractTwoLevelTabSetView;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.monitoring.IFrameWithMeasurementRangeEditorView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.event.EventCompositeHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.configuration.GroupResourceConfigurationEditView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.configuration.HistoryGroupResourceConfigurationView;
@@ -65,6 +67,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.inventory.M
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.schedules.SchedulesView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.GroupMeasurementTableView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.GroupMembersHealthView;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.GroupMonitoringTablesView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.traits.TraitsView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.operation.history.GroupOperationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.operation.schedule.GroupOperationScheduleListView;
@@ -114,7 +117,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
     private SubTab operationsSchedules;
     private SubTab alertHistory;
     private SubTab alertDef;
-    private SubTab driftConfig;
+    private SubTab driftDefinition;
     private SubTab driftHistory;
     private SubTab configCurrent;
     private SubTab configHistory;
@@ -236,9 +239,9 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
             .view_tabs_common_drift()), "subsystems/drift/Drift_16.png");
         this.driftHistory = new SubTab(driftTab.extendLocatorId(DriftSubTab.HISTORY), new ViewName(DriftSubTab.HISTORY,
             MSG.view_tabs_common_history()), null);
-        this.driftConfig = new SubTab(driftTab.extendLocatorId(DriftSubTab.DEFINITIONS), new ViewName(
+        this.driftDefinition = new SubTab(driftTab.extendLocatorId(DriftSubTab.DEFINITIONS), new ViewName(
             DriftSubTab.DEFINITIONS, MSG.common_title_definitions()), null);
-        driftTab.registerSubTabs(driftHistory, driftConfig);
+        driftTab.registerSubTabs(driftHistory, driftDefinition);
         tabs.add(driftTab);
 
         return tabs;
@@ -289,13 +292,19 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
         //       no metrics.
         boolean visible = hasMetricsOfType(this.groupComposite, null);
         if (updateTab(this.monitoringTab, visible, true)) {
-            final int groupId = groupComposite.getResourceGroup().getId();
+            final EntityContext groupContext = EntityContext.forGroup(groupComposite.getResourceGroup());
             visible = hasMetricsOfType(this.groupComposite, DataType.MEASUREMENT);
             viewFactory = (!visible) ? null : new ViewFactory() {
                 @Override
                 public Canvas createView() {
-                    return new FullHTMLPane(monitorGraphs.extendLocatorId("View"),
-                        "/rhq/group/monitor/graphs-plain.xhtml?groupId=" + groupId);
+                    String url = "/rhq/group/monitor/graphs-plain.xhtml?groupId=" + groupId;
+                    
+                    if (groupContext.isAutoGroup()) {
+                        url += "&parent=" + groupContext.parentResourceId + "&type=" + groupContext.resourceTypeId + "&groupType=auto";
+                    } else if (groupContext.isAutoCluster()) {
+                        url += "&groupType=cluster";
+                    }
+                    return new IFrameWithMeasurementRangeEditorView(monitorGraphs.extendLocatorId("View"), url);
                 }
             };
             updateSubTab(this.monitoringTab, this.monitorGraphs, visible, true, viewFactory);
@@ -307,15 +316,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
                     //                    return new FullHTMLPane(monitorTables.extendLocatorId("View"),
                     //                        "/rhq/group/monitor/tables-plain.xhtml?groupId=" + groupId);
                     //gwt version of group table view.
-                    LocatableVLayout groupTableView = new LocatableVLayout(monitorTables
-                        .extendLocatorId("monitorTable"));
-                    GroupMeasurementTableView metrics = new GroupMeasurementTableView(monitorTables
-                        .extendLocatorId("ViewMetrics"), groupComposite, groupId);
-                    GroupMembersHealthView memberHealth = new GroupMembersHealthView(monitorTables
-                        .extendLocatorId("ViewHealth"), groupId, false);
-                    groupTableView.addMember(metrics);
-                    groupTableView.addMember(memberHealth);
-                    return groupTableView;
+                    return new GroupMonitoringTablesView(monitorTables.extendLocatorId("monitorTable"), groupComposite);
                 }
             };
             updateSubTab(this.monitoringTab, this.monitorTables, visible, true, viewFactory);
@@ -342,7 +343,7 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
             viewFactory = (!visible) ? null : new ViewFactory() {
                 @Override
                 public Canvas createView() {
-                    return new FullHTMLPane(monitorCallTime.extendLocatorId("View"),
+                    return new IFrameWithMeasurementRangeEditorView(monitorCallTime.extendLocatorId("View"),
                         "/rhq/group/monitor/response-plain.xhtml?groupId=" + groupId);
                 }
             };
@@ -468,10 +469,10 @@ public class ResourceGroupDetailView extends AbstractTwoLevelTabSetView<Resource
                 }
             });
 
-            updateSubTab(this.driftTab, this.driftConfig, true, true, new ViewFactory() {
+            updateSubTab(this.driftTab, this.driftDefinition, true, true, new ViewFactory() {
                 @Override
                 public Canvas createView() {
-                    return ResourceDriftConfigurationView.get(driftConfig.extendLocatorId("View"), null);
+                    return ResourceDriftDefinitionsView.get(driftDefinition.extendLocatorId("View"), null);
                 }
             });
         }

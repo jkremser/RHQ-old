@@ -61,6 +61,13 @@ public class ImageManager {
     }
 
     /**
+     * Returns a generic edit icon.
+     */
+    public static String getEditDisabledIcon() {
+        return "[SKIN]/actions/edit_Disabled.png";
+    }
+
+    /**
      * Returns a generic remove icon.
      */
     public static String getRemoveIcon() {
@@ -79,6 +86,24 @@ public class ImageManager {
      */
     public static String getCancelIcon() {
         return "[SKIN]/actions/undo.png";
+    }
+
+    /**
+     * Returns a generic pinned icon.
+     */
+    public static String getUnpinnedIcon() {
+        return "[SKIN]/headerIcons/pin_left.png";
+    }
+
+    /**
+     * Returns a generic pinned icon.
+     */
+    public static String getPinnedIcon() {
+        return "[SKIN]/headerIcons/pin_down.png";
+    }
+
+    public static String getDriftIcon() {
+        return "subsystems/drift/Drift_16.png";
     }
 
     /**

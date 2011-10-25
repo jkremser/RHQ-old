@@ -40,11 +40,10 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableToolStrip;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
 
 /**
- * The content pane for the resource Summary>Dashboard subtab.
+ * The content pane for the resource Summary>Activity subtab.
  *
  * @author Jay Shaughnessy
  */
-
 public class ActivityView extends LocatableVLayout implements DashboardContainer, InitializableView {
 
     private static final String DASHBOARD_NAME_PREFIX = "ResourceDashboard_";
@@ -244,6 +243,11 @@ public class ActivityView extends LocatableVLayout implements DashboardContainer
 
     public void updateDashboardNames() {
         return;
+    }
+
+    @Override
+    public boolean isValidDashboardName(String name) {
+        return ((name != null) && (dashboardView != null) && name.equals(dashboardView.getDashboard().getName()));
     }
 
 }

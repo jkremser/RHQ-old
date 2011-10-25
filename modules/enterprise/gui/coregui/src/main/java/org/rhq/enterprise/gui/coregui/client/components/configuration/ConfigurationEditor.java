@@ -62,6 +62,7 @@ import com.smartgwt.client.widgets.form.fields.PasswordItem;
 import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.SpacerItem;
+import com.smartgwt.client.widgets.form.fields.SpinnerItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TextAreaItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
@@ -117,6 +118,7 @@ import org.rhq.core.domain.configuration.definition.constraint.RegexConstraint;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.components.form.IsLongValidator;
 import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
@@ -146,7 +148,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 //
 public class ConfigurationEditor extends LocatableVLayout {
 
-    private static final LinkedHashMap<String, String> BOOLEAN_PROPERTY_ITEM_VALUE_MAP = new LinkedHashMap<String, String>();
+    static final LinkedHashMap<String, String> BOOLEAN_PROPERTY_ITEM_VALUE_MAP = new LinkedHashMap<String, String>();
     static {
         BOOLEAN_PROPERTY_ITEM_VALUE_MAP.put(Boolean.TRUE.toString(), MSG.common_val_yes());
         BOOLEAN_PROPERTY_ITEM_VALUE_MAP.put(Boolean.FALSE.toString(), MSG.common_val_no());
@@ -390,6 +392,7 @@ public class ConfigurationEditor extends LocatableVLayout {
 
     public void reset() {
         this.configuration = this.originalConfiguration;
+        this.originalConfiguration = null; // so reload gets another copy
         reload();
     }
 
@@ -743,7 +746,7 @@ public class ConfigurationEditor extends LocatableVLayout {
                 .getName()) != null);
         } else {
             invalidPropertySetChanged = (this.invalidPropertyNameToDisplayNameMap.put(topLevelPropertyDefinition
-                .getName(), topLevelPropertyDefinition.getDisplayName()) != null);
+                .getName(), topLevelPropertyDefinition.getDisplayName()) == null);
         }
 
         PropertyValueChangeEvent event = new PropertyValueChangeEvent(property, propertyDefinition,
@@ -897,7 +900,7 @@ public class ConfigurationEditor extends LocatableVLayout {
 
     private static boolean isDynamic(PropertyDefinitionMap propertyDefinitionMap) {
         Map<String, PropertyDefinition> memberPropertyDefinitions = propertyDefinitionMap.getPropertyDefinitions();
-        return memberPropertyDefinitions == null || memberPropertyDefinitions.isEmpty();
+        return memberPropertyDefinitions.isEmpty();
     }
 
     private void addMemberPropertyDefinitionsToDynamicPropertyMap(PropertyDefinitionMap propertyDefinitionMap,
@@ -1047,18 +1050,18 @@ public class ConfigurationEditor extends LocatableVLayout {
         PropertyDefinitionSimple defSimple = (PropertyDefinitionSimple) summaryPropDef;
         PropertySimpleType propSimpleType = defSimple.getType();
         switch (propSimpleType) {
-        case BOOLEAN:
-            field.setType(ListGridFieldType.BOOLEAN);
-            break;
-        case INTEGER:
-            field.setType(ListGridFieldType.INTEGER);
-            break;
-        case FLOAT:
-        case DOUBLE:
-            field.setType(ListGridFieldType.FLOAT);
-            break;
-        default:
-            field.setType(ListGridFieldType.TEXT);
+            case BOOLEAN:
+                field.setType(ListGridFieldType.BOOLEAN);
+                break;
+            case INTEGER:
+                field.setType(ListGridFieldType.INTEGER);
+                break;
+            case FLOAT:
+            case DOUBLE:
+                field.setType(ListGridFieldType.FLOAT);
+                break;
+            default:
+                field.setType(ListGridFieldType.TEXT);
         }
         return field;
     }
@@ -1220,7 +1223,8 @@ public class ConfigurationEditor extends LocatableVLayout {
 
                     form.addItemChangedHandler(new ItemChangedHandler() {
                         public void onItemChanged(ItemChangedEvent itemChangedEvent) {
-                            newMemberPropertySimple.setStringValue((String) itemChangedEvent.getNewValue());
+                            Object newValue = itemChangedEvent.getNewValue();
+                            newMemberPropertySimple.setValue(newValue);
 
                             // Only enable the OK button, allowing the user to add the property to the map, if the
                             // property is valid.
@@ -1305,6 +1309,8 @@ public class ConfigurationEditor extends LocatableVLayout {
                 case STRING:
                 case FILE:
                 case DIRECTORY:
+                case LONG:
+                    // Treat values with type LONG as strings, since GWT does not support longs.
                     valueItem = new TextItem();
                     break;
                 case LONG_STRING:
@@ -1320,7 +1326,14 @@ public class ConfigurationEditor extends LocatableVLayout {
                     valueItem = radioGroupItem;
                     break;
                 case INTEGER:
-                case LONG:
+                    // Ideally, we'd use SpinnerItems for INTEGER props, but unfortunately, as of version 2.4, SmartGWT
+                    // has a nasty bug where it does not fire ValueChangedEvents or ItemChangedEvents when the value of
+                    // a SpinnerItem changes...
+                    /*SpinnerItem spinnerItem = new SpinnerItem();
+                    spinnerItem.setMin(Integer.MIN_VALUE);
+                    spinnerItem.setMax(Integer.MAX_VALUE);
+                    // TODO: If an integer constraint is defined on the propdef, use that to set the min and max.
+                    valueItem = spinnerItem;*/
                     valueItem = new IntegerItem();
                     break;
                 case FLOAT:
@@ -1335,14 +1348,17 @@ public class ConfigurationEditor extends LocatableVLayout {
             List<Validator> validators = buildValidators(propertyDefinitionSimple, propertySimple);
             valueItem.setValidators(validators.toArray(new Validator[validators.size()]));
 
-            if ((propertySimple.getConfiguration() != null) || (propertySimple.getParentMap() != null)
-                || (propertySimple.getParentList() != null)) {
+            if ((propertySimple.getConfiguration() != null) ||
+                (propertySimple.getParentMap() != null) ||
+                (propertySimple.getParentList() != null)) {
                 valueItem.addChangedHandler(new ChangedHandler() {
                     public void onChanged(ChangedEvent changedEvent) {
-                        updatePropertySimpleValue(changedEvent.getValue(), propertySimple, propertyDefinitionSimple);
+                        updatePropertySimpleValue(changedEvent.getItem(), changedEvent.getValue(), propertySimple,
+                            propertyDefinitionSimple);
                         // Only fire a prop value change event if the prop's a top-level simple or a simple within a
                         // top-level map.
-                        if (fireEventOnPropertyValueChange(propertyDefinitionSimple, propertySimple)) {
+                        if (shouldFireEventOnPropertyValueChange(changedEvent.getItem(), propertyDefinitionSimple,
+                            propertySimple)) {
                             boolean isValid = changedEvent.getItem().validate();
                             firePropertyChangedEvent(propertySimple, propertyDefinitionSimple, isValid);
                         }
@@ -1351,7 +1367,7 @@ public class ConfigurationEditor extends LocatableVLayout {
             }
         }
 
-        // For more robust and repeatable item locators (not positional), assign a name and a title.
+        // For more robust and repeatable (not positional) item locators, assign a name and a title.
         valueItem.setName(propertySimple.getName());
         valueItem.setTitle("none");
         valueItem.setShowTitle(false);
@@ -1384,14 +1400,14 @@ public class ConfigurationEditor extends LocatableVLayout {
         return valueItem;
     }
 
-    protected boolean fireEventOnPropertyValueChange(PropertyDefinitionSimple propertyDefinitionSimple,
-        PropertySimple propertySimple) {
+    protected boolean shouldFireEventOnPropertyValueChange(FormItem formItem,
+        PropertyDefinitionSimple propertyDefinitionSimple, PropertySimple propertySimple) {
         PropertyMap parentMap = propertySimple.getParentMap();
         return propertySimple.getConfiguration() != null || (parentMap != null && parentMap.getConfiguration() != null);
     }
 
-    protected void updatePropertySimpleValue(Object value, PropertySimple propertySimple,
-        PropertyDefinitionSimple propertyDefinitionSimple) {
+    protected void updatePropertySimpleValue(FormItem formItem, Object value, PropertySimple propertySimple,
+                                                PropertyDefinitionSimple propertyDefinitionSimple) {
         propertySimple.setErrorMessage(null);
         propertySimple.setValue(value);
     }
@@ -1443,23 +1459,34 @@ public class ConfigurationEditor extends LocatableVLayout {
                     Boolean isUnset = (Boolean) changeEvent.getValue();
                     valueItem.setDisabled(isUnset);
                     if (isUnset) {
-                        updatePropertySimpleValue(null, propertySimple, propertyDefinitionSimple);
-                        setValue(valueItem, null);
+                        if (valueItem.getValue() != null) {
+                            setValue(valueItem, null);
+                            updatePropertySimpleValue(unsetItem, null, propertySimple,
+                                propertyDefinitionSimple);
+                            firePropertyChangedEvent(propertySimple, propertyDefinitionSimple, true);
+                        }
                     } else {
                         valueItem.focusInItem();
                     }
                     valueItem.redraw();
-                    propertySimple.setValue(valueItem.getValue());
-                    firePropertyChangedEvent(propertySimple, propertyDefinitionSimple, true);
+                }
+            });
+
+            valueItem.addChangedHandler(new ChangedHandler() {
+                public void onChanged(ChangedEvent changedEvent) {
+                    // If new value is null, select the unset checkbox; otherwise, deselect it.
+                    Object value = changedEvent.getValue();
+                    boolean isUnset = (value == null);
+                    unsetItem.setValue(isUnset);
                 }
             });
 
             valueItem.addBlurHandler(new BlurHandler() {
                 public void onBlur(BlurEvent event) {
-                    if (event.getItem().getValue() == null) {
-                        unsetItem.setValue(true);
-                        valueItem.disable();
-                    }
+                    // When the user stops editing the input, disable it if its value is null.
+                    Object value = event.getItem().getValue();
+                    boolean isUnset = (value == null);
+                    event.getItem().setDisabled(isUnset);
                 }
             });
 
@@ -1514,8 +1541,10 @@ public class ConfigurationEditor extends LocatableVLayout {
             typeValidator = lengthRangeValidator;
             break;
         case INTEGER:
-        case LONG:
             typeValidator = new IsIntegerValidator();
+            break;
+        case LONG:
+            typeValidator = new IsLongValidator();
             break;
         case FLOAT:
         case DOUBLE:

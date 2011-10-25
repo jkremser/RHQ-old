@@ -58,6 +58,7 @@ import javax.xml.bind.annotation.XmlTransient;
 import org.hibernate.annotations.Cascade;
 import org.hibernate.annotations.CascadeType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * This is the root object for the storage of a hierarchical value set of data. This data may represent configurations
@@ -356,7 +357,7 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
         return (PropertySimple) getMap().get(name);
     }
 
-    public String getSimpleValue(String name, String defaultValue) {
+    public String getSimpleValue(String name, @Nullable String defaultValue) {
         PropertySimple property = (PropertySimple) getMap().get(name);
         if ((property != null) && (property.getStringValue() != null)) {
             return property.getStringValue();
@@ -607,7 +608,7 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
     }
 
     /**
-     * NOTE: An Configuration containing a null map is considered equal to a Configuration containing an empty map.
+     * NOTE: A Configuration containing a null map is considered equal to a Configuration containing an empty map.
      */
     @Override
     public boolean equals(Object obj) {

@@ -26,6 +26,7 @@ import org.apache.struts.action.ActionErrors;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.action.ActionMessage;
 
+import org.rhq.core.domain.common.composite.SystemSetting;
 import org.rhq.enterprise.gui.legacy.StringConstants;
 import org.rhq.enterprise.gui.legacy.action.BaseValidatorForm;
 import org.rhq.enterprise.server.RHQConstants;
@@ -71,7 +72,7 @@ public class SystemConfigForm extends BaseValidatorForm {
     
     @Override
     public String toString() {
-        StringBuffer buf = new StringBuffer(super.toString());
+        StringBuilder buf = new StringBuilder(super.toString());
 
         buf.append(" baseUrl=").append(baseUrl);
         buf.append(" agentMaxQuietTimeAllowed=").append(agentMaxQuietTimeAllowed);
@@ -238,11 +239,11 @@ public class SystemConfigForm extends BaseValidatorForm {
         ldapUsername = prop.getProperty(RHQConstants.LDAPBindDN);
         ldapPassword = prop.getProperty(RHQConstants.LDAPBindPW);
 
-        String ldapProtocol = prop.getProperty(RHQConstants.LDAPProtocol);
-        ldapSsl = ldapProtocol.equals("ssl");
+        String value = prop.getProperty(SystemSetting.USE_SSL_FOR_LDAP.getInternalName());
+        ldapSsl = Boolean.TRUE.toString().equals(value);
 
-        String jaasProvider = prop.getProperty(RHQConstants.JAASProvider);
-        ldapEnabled = RHQConstants.LDAPJAASProvider.equals(jaasProvider) ? Boolean.TRUE : null;
+        value = prop.getProperty(SystemSetting.LDAP_BASED_JAAS_PROVIDER.getInternalName());
+        ldapEnabled = (value != null) ? Boolean.valueOf(value) : false;
 
         String resourceGenericPropertiesUpgradeAllowed = prop.getProperty(RHQConstants.AllowResourceGenericPropertiesUpgrade);
         allowResourceGenericPropertiesUpgrade = Boolean.parseBoolean(resourceGenericPropertiesUpgradeAllowed);
@@ -344,11 +345,8 @@ public class SystemConfigForm extends BaseValidatorForm {
         prop.setProperty(RHQConstants.LDAPBindPW, ldapPassword);
         prop.setProperty(RHQConstants.LDAPProtocol, ldapSsl ? "ssl" : "");
 
-        if (ldapEnabled != null) {
-            prop.setProperty(RHQConstants.JAASProvider, RHQConstants.LDAPJAASProvider);
-        } else {
-            prop.setProperty(RHQConstants.JAASProvider, RHQConstants.JDBCJAASProvider);
-        }
+        prop.setProperty(SystemSetting.LDAP_BASED_JAAS_PROVIDER.getInternalName(),
+            (ldapEnabled != null) ? String.valueOf(ldapEnabled) : Boolean.FALSE.toString());
 
         prop.setProperty(RHQConstants.AllowResourceGenericPropertiesUpgrade, String.valueOf(allowResourceGenericPropertiesUpgrade));
         

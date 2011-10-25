@@ -50,19 +50,19 @@ import javax.persistence.Table;
 @NamedQueries( { @NamedQuery(name = JPADrift.QUERY_DELETE_BY_RESOURCES, query = "" //
     + "DELETE FROM JPADrift d " //
     + " WHERE d.changeSet IN ( SELECT dcs FROM JPADriftChangeSet dcs WHERE dcs.resource.id IN ( :resourceIds ) ) )"), //
-    @NamedQuery(name = JPADrift.QUERY_DELETE_BY_DRIFTCONFIG_RESOURCE, query = "" //
+    @NamedQuery(name = JPADrift.QUERY_DELETE_BY_DRIFTDEF_RESOURCE, query = "" //
         + "DELETE FROM JPADrift d " //
         + "  WHERE d.changeSet.id IN " //
         + "       (SELECT dcs.id " //
         + "          FROM JPADriftChangeSet dcs " //
-        + "         WHERE dcs.driftConfiguration.name = :driftConfigurationName AND dcs.resource.id = :resourceId)") })
+        + "         WHERE dcs.driftDefinition.name = :driftDefinitionName AND dcs.resource.id = :resourceId)") })
 @Table(name = "RHQ_DRIFT")
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_DRIFT_ID_SEQ")
 public class JPADrift implements Serializable, Drift<JPADriftChangeSet, JPADriftFile> {
     private static final long serialVersionUID = 1L;
 
     public static final String QUERY_DELETE_BY_RESOURCES = "JPADrift.deleteByResources";
-    public static final String QUERY_DELETE_BY_DRIFTCONFIG_RESOURCE = "JPADrift.deleteByDriftConfigResource";
+    public static final String QUERY_DELETE_BY_DRIFTDEF_RESOURCE = "JPADrift.deleteByDriftDefResource";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
@@ -80,8 +80,12 @@ public class JPADrift implements Serializable, Drift<JPADriftChangeSet, JPADrift
     @Enumerated(EnumType.STRING)
     private String path;
 
-    @JoinColumn(name = "DRIFT_CHANGE_SET_ID", referencedColumnName = "ID", nullable = false)
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @Column(name = "PATH_DIRECTORY", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private String directory;
+
+    @JoinColumn(name = "DRIFT_CHANGE_SET_ID", referencedColumnName = "ID", nullable = true)
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
     private JPADriftChangeSet changeSet;
 
     @JoinColumn(name = "OLD_DRIFT_FILE", referencedColumnName = "HASH_ID", nullable = true)
@@ -105,6 +109,8 @@ public class JPADrift implements Serializable, Drift<JPADriftChangeSet, JPADrift
         JPADriftFile newDriftFile) {
         this.changeSet = changeSet;
         this.path = path;
+        int i = path.lastIndexOf("/");
+        this.directory = (i != -1) ? path.substring(0, i) : "./";
         this.category = category;
         this.oldDriftFile = oldDriftFile;
         this.newDriftFile = newDriftFile;
@@ -158,6 +164,16 @@ public class JPADrift implements Serializable, Drift<JPADriftChangeSet, JPADrift
     @Override
     public void setPath(String path) {
         this.path = path;
+    }
+
+    @Override
+    public String getDirectory() {
+        return directory;
+    }
+
+    @Override
+    public void setDirectory(String directory) {
+        this.directory = directory;
     }
 
     @Override

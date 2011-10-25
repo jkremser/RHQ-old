@@ -38,11 +38,9 @@ public interface SystemGWTService extends RemoteService {
 
     ServerDetails getServerDetails() throws RuntimeException;
 
-    SystemSettings getSystemSettings();
+    SystemSettings getSystemSettings() throws RuntimeException;
 
-    HashMap<String, String> getSystemConfiguration() throws RuntimeException;
-
-    void setSystemConfiguration(HashMap<String, String> properties, boolean skipValidation) throws RuntimeException;
+    void setSystemSettings(SystemSettings settings) throws RuntimeException;
 
     /**
      * @return metadata properties about the agent download available on the server. 
@@ -75,4 +73,6 @@ public interface SystemGWTService extends RemoteService {
      * @return information about the bundle deployer tool that can be downloaded from the server
      */
     HashMap<String, String> getBundleDeployerDownload() throws RuntimeException;
+    
+    Boolean isLdapAuthorizationEnabled() throws RuntimeException;
 }

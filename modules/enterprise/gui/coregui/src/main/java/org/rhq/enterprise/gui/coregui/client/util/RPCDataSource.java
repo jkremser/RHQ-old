@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -38,11 +38,13 @@ import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSource;
 import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
+import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.types.DSDataFormat;
 import com.smartgwt.client.types.DSProtocol;
+import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.util.JSOHelper;
 import com.smartgwt.client.widgets.form.validator.IntegerRangeValidator;
 import com.smartgwt.client.widgets.form.validator.LengthRangeValidator;
@@ -78,6 +80,8 @@ public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSourc
     protected static final Messages MSG = CoreGUI.getMessages();
 
     private List<String> hightlightingFieldNames = new ArrayList<String>();
+    private Criteria previousCriteria;
+    private Integer dataPageSize;
 
     public RPCDataSource() {
         this(null);
@@ -94,6 +98,7 @@ public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSourc
         setCacheAllData(false);
         setDataProtocol(DSProtocol.CLIENTCUSTOM);
         setDataFormat(DSDataFormat.CUSTOM);
+        setDataPageSize(75);
     }
 
     /**
@@ -122,6 +127,12 @@ public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSourc
                     if (criteria.getPageControlOverrides() == null) {
                         criteria.setPageControl(getPageControl(request));
                     }
+                    if (Log.isDebugEnabled()) {
+                        Log.debug(getClass().getName() + " using [" + criteria.getPageControlOverrides()
+                            + "] for fetch request.");
+                    }
+                } else {
+                    Log.warn(getClass().getName() + ".getFetchCriteria() returned null - no paging of results will be done.");
                 }
                 executeFetch(request, response, criteria);
                 break;
@@ -150,6 +161,26 @@ public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSourc
         return request.getData();
     }
 
+    /**
+     * Returns the data page size that should be used for fetch requests, or null if results should not be paged.
+     * Default value is 50.
+     *
+     * @return the data page size that should be used for fetch requests, or null if results should not be paged
+     */
+    public Integer getDataPageSize() {
+        return dataPageSize;
+    }
+
+    /**
+     * Sets the data page size that should be used for fetch requests, or null if results should not be paged.
+     * Default value is 50. Subclasses that wish to use a different value should call this method in their constructors.
+     *
+     * @param dataPageSize the data page size that should be used for fetch requests, or null if results should not be paged
+     */
+    public void setDataPageSize(Integer dataPageSize) {
+        this.dataPageSize = dataPageSize;
+    }
+
     private Record getUpdatedRecord(DSRequest request, Record oldRecord) {
         // Get changed values.
         JavaScriptObject data = request.getData();
@@ -172,41 +203,46 @@ public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSourc
      * @return the page control for passing to criteria and other queries
      */
     protected PageControl getPageControl(DSRequest request) {
+        if (previousCriteria != null && !CriteriaUtility.equals(request.getCriteria(), this.previousCriteria)) {
+            // The criteria has changed since the last fetch request - reset paging.
+            Log.debug("Resetting paging on " + getClass().getName() + "...");
+            request.setStartRow(0);
+            request.setEndRow(getDataPageSize());
+        }
+        this.previousCriteria = (request.getCriteria() != null) ? request.getCriteria() : new Criteria();
+
         // Create PageControl and initialize paging.
         PageControl pageControl;
-        if (request.getStartRow() == null || request.getEndRow() == null) {
-            pageControl = new PageControl();
+        if (request.getEndRow() == null) {
+            // null endRow means no paging
+            Log.debug("WARNING: " + getClass().getName() + " is not using paging for fetch request.");
+            pageControl = PageControl.getUnlimitedInstance();
         } else {
-            pageControl = PageControl.getExplicitPageControl(request.getStartRow(), request.getEndRow()
-                - request.getStartRow());
+            int startRow = (request.getStartRow() != null) ? request.getStartRow() : 0;
+            int endRow = request.getEndRow();
+            pageControl = PageControl.getExplicitPageControl(startRow, (endRow - startRow));
         }
 
+        // Initialize sorting.
         initializeSorting(pageControl, request);
 
         return pageControl;
     }
 
     private void initializeSorting(PageControl pageControl, DSRequest request) {
-        // TODO: Uncomment this once the bug in request.getSortBy() is fixed.
-        /*SortSpecifier[] sortSpecifiers = request.getSortBy();
+        SortSpecifier[] sortSpecifiers = request.getSortBy();
         if (sortSpecifiers != null) {
             for (SortSpecifier sortSpecifier : sortSpecifiers) {
                 PageOrdering ordering = (sortSpecifier.getSortDirection() == SortDirection.ASCENDING) ?
                     PageOrdering.ASC : PageOrdering.DESC;
                 String columnName = sortSpecifier.getField();
-                pageControl.addDefaultOrderingField(columnName, ordering);
-            }
-        }*/
-
-        String sortBy = request.getAttribute("sortBy");
-        if (sortBy != null) {
-            String[] sorts = sortBy.split(",");
-            for (String sort : sorts) {
-                PageOrdering ordering = (sort.startsWith("-")) ? PageOrdering.DESC : PageOrdering.ASC;
-                String columnName = (ordering == PageOrdering.DESC) ? sort.substring(1) : sort;
                 String sortField = getSortFieldForColumn(columnName);
-                if (null != sortField)
+                if (sortField != null) {
                     pageControl.addDefaultOrderingField(sortField, ordering);
+                } else {
+                    Log.warn("Field [" + columnName + "] in [" + getClass().getName()
+                        + "] could not be mapped to a PageControl ordering field.");
+                }
             }
         }
     }
@@ -214,7 +250,7 @@ public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSourc
     /**
      * By default, for a sortable column, the field name (usually a ListGridField name) is used as the
      * OrderingField in the PageControl passed to the server.  If for some reason the field name does not
-     * properly map to a sortable entity field, this method can be overrident to provide the proper maping.
+     * properly map to a sortable entity field, this method can be overridden to provide the proper mapping.
      * Note that certain columns may also leverage sort fields in the underlying (rhq) criteria class itself, but
      * not every sortable column may be appropriate as a sort field in the criteria.      
      * 
@@ -257,7 +293,7 @@ public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSourc
     protected void sendSuccessResponse(DSRequest request, DSResponse response, Record record, Message message,
         String viewPath) {
         response.setStatus(RPCResponse.STATUS_SUCCESS);
-        response.setData(new Record[] { record });
+        response.setData(new Record[]{record});
         processResponse(request.getRequestId(), response);
         if (viewPath != null) {
             CoreGUI.goToView(viewPath, message);
@@ -277,16 +313,21 @@ public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSourc
 
     protected void sendSuccessResponseRecords(DSRequest request, DSResponse response, PageList<Record> records) {
         response.setStatus(RPCResponse.STATUS_SUCCESS);
-        Record[] recordsArray = new Record[records.size()];
-        for (int i = 0, recordsSize = records.size(); i < recordsSize; i++) {
-            Record record = records.get(i);
-            recordsArray[i] = record;
-        }
+        Record[] recordsArray = records.toArray(new Record[records.size()]);
         response.setData(recordsArray);
-        // For paging to work, we have to specify size of full result set.
-        int totalRows = (records.isUnbounded()) ? records.size() : records.getTotalSize();
-        response.setTotalRows(totalRows);
+        setPagingInfo(response, records);
         processResponse(request.getRequestId(), response);
+    }
+
+    protected void setPagingInfo(DSResponse response, PageList pageList) {
+        // For paging to work, we have to specify size of full result set.
+        int totalRows = (pageList.isUnbounded()) ? pageList.size() : pageList.getTotalSize();
+        response.setTotalRows(totalRows);
+        // Also set start row and end row in case for some reason we're not returning the same page the ListGrid
+        // requested.
+        //PageControl pageControl = pageList.getPageControl();
+        //response.setStartRow(pageControl.getStartRow());
+        //response.setEndRow(pageControl.getStartRow() + pageControl.getPageSize());
     }
 
     protected void sendFailureResponse(DSRequest request, DSResponse response, String message, Throwable caught) {
@@ -309,9 +350,7 @@ public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSourc
         response.setStatus(RPCResponse.STATUS_SUCCESS);
         Record[] records = buildRecords(dataObjects);
         response.setData(records);
-        // For paging to work, we have to specify size of full result set.
-        int totalRows = (dataObjects.isUnbounded()) ? records.length : dataObjects.getTotalSize();
-        response.setTotalRows(totalRows);
+        setPagingInfo(response, dataObjects);
     }
 
     public ListGridRecord[] buildRecords(Collection<T> dataObjects) {
@@ -465,17 +504,18 @@ public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSourc
         addFields(Arrays.asList(fields));
     }
 
-    @SuppressWarnings("unchecked")
     public static <S> S[] getArrayFilter(DSRequest request, String paramName, Class<S> type) {
-        Log.debug("Fetching array " + paramName + " (" + type + ")");
-        Criteria criteria = request.getCriteria();
+        return getArrayFilter(request.getCriteria(), paramName, type);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <S> S[] getArrayFilter(Criteria criteria, String paramName, Class<S> type) {
         Map<String, Object> criteriaMap = criteria.getValues();
 
-        S[] resultArray = null;
-
+        S[] resultArray;
         Object value = criteriaMap.get(paramName);
         if (value == null) {
-            // nothing to do, result is already null
+            resultArray = null;
         } else if (type == Integer.class) {
             int[] intermediates;
             if (isArray(value)) {
@@ -516,7 +556,9 @@ public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSourc
             throw new IllegalArgumentException(MSG.dataSource_rpc_error_unsupportedArrayFilterType(type.getName()));
         }
 
-        Log.debug("Result array = " + Arrays.toString(resultArray));
+        if (Log.isDebugEnabled() && resultArray != null) {
+            Log.debug("Array filter: " + paramName + "=[" + Arrays.toString(resultArray) + "]");
+        }
 
         return resultArray;
     }
@@ -554,17 +596,20 @@ public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSourc
         }
     }
 
-    @SuppressWarnings("unchecked")
     public static <S> S getFilter(DSRequest request, String paramName, Class<S> type) {
-        Criteria criteria = request.getCriteria();
+        return getFilter(request.getCriteria(), paramName, type);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <S> S getFilter(Criteria criteria, String paramName, Class<S> type) {
+
         Map<String, Object> criteriaMap = (criteria != null) ? criteria.getValues() : Collections
             .<String, Object> emptyMap();
 
-        S result = null;
-
+        S result;
         Object value = criteriaMap.get(paramName);
         if (value == null || value.toString().equals("")) {
-            // nothing to do, result is already null
+            result = null;
         } else {
             String strValue = value.toString();
             if (type == String.class) {
@@ -580,7 +625,9 @@ public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSourc
             }
         }
 
-        Log.debug("Result: " + paramName + "=[" + result + "]");
+        if (Log.isDebugEnabled() && result != null) {
+            Log.debug("Filter: " + paramName + "=[" + result + "]");
+        }
 
         return result;
     }

@@ -62,8 +62,8 @@ import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.content.PackageType;
+import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 import org.rhq.core.domain.event.EventDefinition;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.operation.OperationDefinition;
@@ -107,7 +107,9 @@ import org.rhq.core.domain.util.Summary;
         + "  (SELECT COUNT(md) FROM MeasurementDefinition AS md WHERE md.resourceType = rt AND md.defaultOn = TRUE), "//
         + "  (SELECT COUNT(md) FROM MeasurementDefinition AS md WHERE md.resourceType = rt AND md.defaultOn = FALSE), "//
         + "  (SELECT COUNT(ad) FROM AlertDefinition AS ad WHERE ad.resourceType = rt AND ad.deleted = FALSE AND ad.enabled = TRUE), "//
-        + "  (SELECT COUNT(ad) FROM AlertDefinition AS ad WHERE ad.resourceType = rt AND ad.deleted = FALSE AND ad.enabled = FALSE) "//
+        + "  (SELECT COUNT(ad) FROM AlertDefinition AS ad WHERE ad.resourceType = rt AND ad.deleted = FALSE AND ad.enabled = FALSE), "//
+        + "  (SELECT COUNT(ddt) FROM DriftDefinitionTemplate AS ddt WHERE ddt.resourceType = rt AND ddt.isUserDefined = FALSE), "//
+        + "  (SELECT COUNT(ddt) FROM DriftDefinitionTemplate AS ddt WHERE ddt.resourceType = rt AND ddt.isUserDefined = TRUE) "//
         + ")" //
         + "FROM ResourceType AS rt WHERE rt.deleted = false"),
     @NamedQuery(name = ResourceType.QUERY_FIND_BY_CATEGORY, query = "SELECT rt FROM ResourceType AS rt "
@@ -177,7 +179,7 @@ import org.rhq.core.domain.util.Summary;
         + "         (SELECT COUNT(packageType) FROM rt.packageTypes packageType)," // content
         + "         (SELECT COUNT(metricDef) FROM rt.metricDefinitions metricDef WHERE metricDef.dataType = 3)," // calltime
         + "         (SELECT COUNT(propDef) FROM rt.pluginConfigurationDefinition pluginConfig JOIN pluginConfig.propertyDefinitions propDef WHERE propDef.name = 'snapshotLogEnabled')," //
-        + "         (SELECT COUNT(driftConfig) FROM rt.driftConfigurationTemplates driftConfig)," // drift
+        + "         (SELECT COUNT(driftDef) FROM rt.driftDefinitionTemplates driftDef)," // drift
         + "         (SELECT COUNT(bundleConfig) FROM rt.bundleConfiguration bundleConfig)" // bundle        
         + "       ) " //
         + "  FROM ResourceType rt " //
@@ -398,9 +400,8 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
     @OneToOne(mappedBy = "resourceType", fetch = FetchType.LAZY, cascade = CascadeType.ALL, optional = true)
     private BundleType bundleType;
 
-    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JoinTable(name = "RHQ_DRIFT_TEMPLATE_MAP", joinColumns = @JoinColumn(name = "RESOURCE_TYPE_ID", nullable = false), inverseJoinColumns = @JoinColumn(name = "CONFIG_TEMPLATE_ID", nullable = false))
-    private Set<ConfigurationTemplate> driftConfigurationTemplates = new HashSet<ConfigurationTemplate>();
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "resourceType")
+    private Set<DriftDefinitionTemplate> driftDefinitionTemplates = new HashSet<DriftDefinitionTemplate>();
 
     // note that this is mapped to a Configuration entity, which is what it really is. However, our getter/setter
     // only provides access to this via ResourceTypeBundleConfiguration to encapsulate the innards of this implementation
@@ -828,16 +829,16 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
         this.bundleType = bundleType;
     }
 
-    // this must return the actual set, not a copy - see the metadata manager SLSB for when we update plugin metadata
-    public Set<ConfigurationTemplate> getDriftConfigurationTemplates() {
-        return driftConfigurationTemplates;
+    public Set<DriftDefinitionTemplate> getDriftDefinitionTemplates() {
+        return driftDefinitionTemplates;
     }
 
-    public void addDriftConfigurationTemplate(ConfigurationTemplate template) {
-        if (driftConfigurationTemplates == null) {
-            driftConfigurationTemplates = new HashSet<ConfigurationTemplate>(1);
+    public void addDriftDefinitionTemplate(DriftDefinitionTemplate template) {
+        if (driftDefinitionTemplates == null) {
+            driftDefinitionTemplates = new HashSet<DriftDefinitionTemplate>();
         }
-        driftConfigurationTemplates.add(template);
+        template.setResourceType(this);
+        driftDefinitionTemplates.add(template);
     }
 
     @Override

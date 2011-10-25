@@ -28,7 +28,6 @@ import org.rhq.core.domain.drift.Drift;
 import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftComposite;
 import org.rhq.core.domain.drift.DriftFile;
-import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.util.PageList;
 
 /**
@@ -44,10 +43,25 @@ import org.rhq.core.domain.util.PageList;
  */
 public interface DriftServerPluginFacet {
 
-    DriftSnapshot createSnapshot(Subject subject, DriftChangeSetCriteria criteria);
-
     /**
-     * Standard criteria based fetch method
+     * <p>
+     * Performs criteria-based search for change sets.
+     * </p>
+     * <p>
+     * Note that there are really two types
+     * of change sets - a delta change set and a snapshot or coverage change set. A snapshot
+     * includes all files that are under drift detection. The delta snapshot just includes
+     * references to those files that have changed (here change can be a modification,
+     * addition, or deletion of a file).
+     * </p>
+     * <p>
+     * Implementations of this method can assume that queries for snapshots and for delta
+     * change sets will always be made in separate calls; in other words, this method should
+     * return either only snapshots (i.e., coverage change sets) or only delta change sets.
+     * This assumption/restriction is in place in large part because of how the UI queries
+     * change sets.
+     * </p>
+     *
      * @param subject
      * @param criteria
      * @return The DriftChangeSets matching the criteria
@@ -83,17 +97,37 @@ public interface DriftServerPluginFacet {
      */
     DriftChangeSetSummary saveChangeSet(Subject subject, int resourceId, File changeSetZip) throws Exception;
 
+    /**
+     *
+     * @param subject
+     * @param changeSet
+     * @return The change set id
+     */
+    String persistChangeSet(Subject subject, DriftChangeSet<?> changeSet);
+
+    /**
+     * Creates a copy of the specified, existing change set. The new change set will be
+     * persisted. The new change set will belong to the specified drift definition.
+     *
+     * @param subject
+     * @param changeSetId
+     * @param driftDefId
+     * @param resourceId
+     * @return
+     */
+    String copyChangeSet(Subject subject, String changeSetId, int driftDefId, int resourceId);
+
     void saveChangeSetFiles(Subject subject, File changeSetFilesZip) throws Exception;
 
     /**
-     * When a user wants to completely remove all data related to a drift configuration,
+     * When a user wants to completely remove all data related to a drift definition,
      * this method will be called to give the plugin a chance to clean up any data related
-     * to the drift configuration that is going to be deleted.
+     * to the drift definition that is going to be deleted.
      * @param Subject
-     * @param resourceId the resource whose drift configuration is being purged
-     * @param driftConfigName identifies the data that is to be purged
+     * @param resourceId the resource whose drift definition is being purged
+     * @param driftDefName identifies the data that is to be purged
      */
-    void purgeByDriftConfigurationName(Subject subject, int resourceId, String driftConfigName) throws Exception;
+    void purgeByDriftDefinitionName(Subject subject, int resourceId, String driftDefName) throws Exception;
 
     /**
      * This will remove all drift files that are no longer referenced by drift entries. This is a maintenance method
@@ -111,5 +145,5 @@ public interface DriftServerPluginFacet {
      * @param hash The hash the uniquely identifies the requested content
      * @return The content as a string
      */
-    String getDriftFileBits(String hash);
+    String getDriftFileBits(Subject subject, String hash);
 }

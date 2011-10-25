@@ -35,6 +35,7 @@ import javax.security.auth.login.AppConfigurationEntry;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.common.composite.SystemSetting;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.core.jaas.JDBCLoginModule;
 import org.rhq.enterprise.server.core.jaas.JDBCPrincipalCheckLoginModule;
@@ -43,7 +44,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.security.UntrustedSSLSocketFactory;
 
 /**
- * Deploy the JAAS login modules that are configured. JDBC login module is always deployed, however, the LDAP login
+ * Deploy the JAAS login modules that are configured. The JDBC login module is always deployed, however, the LDAP login
  * module is only deployed if LDAP is enabled in the RHQ configuration.
  */
 public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceMBean, MBeanRegistration {
@@ -65,9 +66,9 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
     public void installJaasModules() {
         try {
             log.info("Installing RHQ Server's JAAS login modules");
-            Properties conf = LookupUtil.getSystemManager().getSystemConfiguration(
+            Properties systemConfig = LookupUtil.getSystemManager().getSystemConfiguration(
                 LookupUtil.getSubjectManager().getOverlord());
-            registerJaasModules(conf);
+            registerJaasModules(systemConfig);
         } catch (Exception e) {
             log.fatal("Error deploying JAAS login modules", e);
             throw new RuntimeException(e);
@@ -100,40 +101,41 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
     public void postDeregister() {
     }
 
-    private void registerJaasModules(Properties conf) throws Exception {
+    private void registerJaasModules(Properties systemConfig) throws Exception {
         List<AppConfigurationEntry> configEntries = new ArrayList<AppConfigurationEntry>();
         AppConfigurationEntry ace;
         Map<String, String> configOptions;
 
         try {
-            configOptions = getJdbcOptions(conf);
+            configOptions = getJdbcOptions(systemConfig);
             ace = new AppConfigurationEntry(JDBCLoginModule.class.getName(),
                 AppConfigurationEntry.LoginModuleControlFlag.SUFFICIENT, configOptions);
 
             // We always add the JDBC provider to the auth config
-            this.log.info("Enabling RHQ JDBC JAAS Provider");
+            this.log.info("Enabling RHQ JDBC JAAS Provider...");
             configEntries.add(ace);
 
-            String provider = conf.getProperty(RHQConstants.JAASProvider);
+            String value = systemConfig.getProperty(SystemSetting.LDAP_BASED_JAAS_PROVIDER.getInternalName());
+            boolean isLdapAuthenticationEnabled = (value != null) ? RHQConstants.LDAPJAASProvider.equals(value) : false;
 
-            if ((provider != null) && provider.equals(RHQConstants.LDAPJAASProvider)) {
+            if (isLdapAuthenticationEnabled) {
                 // this is a "gatekeeper" that only allows us to go to LDAP if there is no principal in the DB
-                configOptions = getJdbcOptions(conf);
+                configOptions = getJdbcOptions(systemConfig);
                 ace = new AppConfigurationEntry(JDBCPrincipalCheckLoginModule.class.getName(),
                     AppConfigurationEntry.LoginModuleControlFlag.REQUISITE, configOptions);
-                this.log.info("Enabling RHQ JDBC-2 JAAS Provider");
+                this.log.info("Enabling RHQ JDBC-2 Principal Check JAAS Provider...");
                 configEntries.add(ace);
 
                 // this is the LDAP module that checks the LDAP for auth
-                configOptions = getLdapOptions(conf);
+                configOptions = getLdapOptions(systemConfig);
                 try {
                     validateLdapOptions(configOptions);
                     ace = new AppConfigurationEntry(LdapLoginModule.class.getName(),
                         AppConfigurationEntry.LoginModuleControlFlag.REQUISITE, configOptions);
-                    this.log.info("Enabling RHQ LDAP JAAS Provider");
+                    this.log.info("Enabling RHQ JDBC-2 LDAP JAAS Provider...");
                     configEntries.add(ace);
                 } catch (NamingException e) {
-                    this.log.info("Disabling RHQ LDAP JAAS Provider: " + e.getMessage(), e);
+                    this.log.info("Disabling RHQ JDBC-2 LDAP JAAS Provider: " + e, e);
                 }
             }
 
@@ -143,7 +145,7 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
             Object obj = mbeanServer.invoke(objName, AUTH_METHOD, new Object[] { SECURITY_DOMAIN_NAME, config },
                 new String[] { "java.lang.String", config.getClass().getName() });
         } catch (Exception e) {
-            throw new Exception("Error registering RHQ JAAS Modules", e);
+            throw new Exception("Error registering RHQ JAAS modules", e);
         }
     }
 
@@ -162,7 +164,9 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
 
         configOptions.put(Context.INITIAL_CONTEXT_FACTORY, conf.getProperty(RHQConstants.LDAPFactory));
         configOptions.put(Context.PROVIDER_URL, conf.getProperty(RHQConstants.LDAPUrl));
-        configOptions.put(Context.SECURITY_PROTOCOL, conf.getProperty(RHQConstants.LDAPProtocol));
+        String value = conf.getProperty(SystemSetting.USE_SSL_FOR_LDAP.getInternalName());
+        boolean ldapSsl = Boolean.TRUE.toString().equals(value);
+        configOptions.put(Context.SECURITY_PROTOCOL, (ldapSsl) ? "ssl" : null);
         configOptions.put("LoginProperty", conf.getProperty(RHQConstants.LDAPLoginProperty));
         configOptions.put("Filter", conf.getProperty(RHQConstants.LDAPFilter));
         configOptions.put("GroupFilter", conf.getProperty(RHQConstants.LDAPGroupFilter));
@@ -188,7 +192,7 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
         }
 
         String protocol = options.get(Context.SECURITY_PROTOCOL);
-        if ((protocol != null) && protocol.equals("ssl")) {
+        if ("ssl".equals(protocol)) {
             String ldapSocketFactory = env.getProperty("java.naming.ldap.factory.socket");
             if (ldapSocketFactory == null) {
                 env.put("java.naming.ldap.factory.socket", UntrustedSSLSocketFactory.class.getName());

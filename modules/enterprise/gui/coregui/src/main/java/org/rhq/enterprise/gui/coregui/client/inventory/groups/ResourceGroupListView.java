@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2011 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.groups;
 
+import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.AVAIL_CHILDREN;
+import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.AVAIL_DESCENDANTS;
 import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.CATEGORY;
 import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.DESCRIPTION;
 import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupDataSourceField.NAME;
@@ -27,7 +29,6 @@ import static org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGro
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
@@ -46,6 +47,7 @@ import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.PopupWindow;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.AuthorizedTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
@@ -56,7 +58,6 @@ import org.rhq.enterprise.gui.coregui.client.inventory.groups.wizard.GroupCreate
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.ResourceResourceGroupsView;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
-import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableWindow;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
@@ -105,8 +106,7 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
         ListGridField idField = new ListGridField("id", MSG.common_title_id());
         idField.setWidth(50);
 
-        ListGridField categoryField = new ListGridField(CATEGORY.propertyName());
-        categoryField.setTitle("&nbsp;");
+        ListGridField categoryField = new ListGridField(CATEGORY.propertyName(), CATEGORY.title());
         categoryField.setWidth(25);
         categoryField.setAlign(Alignment.CENTER);
         categoryField.setCellFormatter(new CellFormatter() {
@@ -119,18 +119,19 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
         });
         categoryField.setShowHover(true);
         categoryField.setHoverCustomizer(new HoverCustomizer() {
-            @Override
             public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
                 String categoryName = record.getAttribute(CATEGORY.propertyName());
                 GroupCategory category = GroupCategory.valueOf(categoryName);
-                String displayName = null;
+                String displayName;
                 switch (category) {
-                case COMPATIBLE:
-                    displayName = MSG.view_group_summary_compatible();
-                    break;
-                case MIXED:
-                    displayName = MSG.view_group_summary_mixed();
-                    break;
+                    case COMPATIBLE:
+                        displayName = MSG.view_group_summary_compatible();
+                        break;
+                    case MIXED:
+                        displayName = MSG.view_group_summary_mixed();
+                        break;
+                    default:
+                        throw new IllegalStateException("Unknown group category: " + category);
                 }
                 return displayName;
             }
@@ -148,21 +149,25 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
         });
 
         ListGridField descriptionField = new ListGridField(DESCRIPTION.propertyName(), DESCRIPTION.title());
-        descriptionField.setWidth("30%");
+        descriptionField.setWidth("28%");
 
         ListGridField typeNameField = new ListGridField(TYPE.propertyName(), TYPE.title());
-        typeNameField.setWidth("10%");
+        typeNameField.setWidth("14%");
 
         ListGridField pluginNameField = new ListGridField(PLUGIN.propertyName(), PLUGIN.title());
-        pluginNameField.setWidth("10%");
+        pluginNameField.setWidth("8%");
 
-        ListGridField availabilityChildrenField = new ListGridField("availabilityChildren", MSG
-            .view_inventory_groups_children(), 120); // 120 due to the html in ResourceGroupCompositeDataSource.getAlignedAvailabilityResults
+        ListGridField availabilityChildrenField = new ListGridField(AVAIL_CHILDREN.propertyName(),
+            AVAIL_CHILDREN.title(), 110); // 110 due to the html in ResourceGroupCompositeDataSource.getAlignedAvailabilityResults
+        availabilityChildrenField.setCanSortClientOnly(true);
+        availabilityChildrenField.setCanGroupBy(false);
         availabilityChildrenField.setWrap(false);
         availabilityChildrenField.setAlign(Alignment.CENTER);
 
-        ListGridField availabilityDescendantsField = new ListGridField("availabilityDescendents", MSG
-            .view_inventory_groups_descendants(), 120); // 120 due to the html in ResourceGroupCompositeDataSource.getAlignedAvailabilityResults
+        ListGridField availabilityDescendantsField = new ListGridField(AVAIL_DESCENDANTS.propertyName(),
+            AVAIL_DESCENDANTS.title(), 110); // 110 due to the html in ResourceGroupCompositeDataSource.getAlignedAvailabilityResults
+        availabilityDescendantsField.setCanSortClientOnly(true);
+        availabilityDescendantsField.setCanGroupBy(false);
         availabilityDescendantsField.setWrap(false);
         availabilityDescendantsField.setAlign(Alignment.CENTER);
 
@@ -213,28 +218,20 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
                 new AbstractTableAction(TableActionEnablement.ALWAYS) {
                     @Override
                     public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                        final LocatableWindow winModal = new LocatableWindow(extendLocatorId("MembershipWindow"));
-                        winModal.setTitle(MSG.view_tabs_common_group_membership());
-                        winModal.setOverflow(Overflow.VISIBLE);
-                        winModal.setShowMinimizeButton(false);
-                        winModal.setIsModal(true);
-                        winModal.setShowModalMask(true);
-                        winModal.setWidth(700);
-                        winModal.setHeight(450);
-                        winModal.setAutoCenter(true);
-                        winModal.setShowResizer(true);
-                        winModal.setCanDragResize(true);
-                        winModal.centerInPage();
-                        winModal.addCloseClickHandler(new CloseClickHandler() {
-                            @Override
-                            public void onCloseClick(CloseClientEvent event) {
-                                winModal.markForDestroy();
-                            }
-                        });
-
                         ResourceResourceGroupsView membershipView = new ResourceResourceGroupsView(
                             ResourceGroupListView.this.extendLocatorId("MembershipView"),
                             ResourceGroupListView.this.resourceIdToModify.intValue());
+
+                        final PopupWindow winModal = new PopupWindow(extendLocatorId("MembershipWindow"),
+                            membershipView);
+                        winModal.setTitle(MSG.view_tabs_common_group_membership());
+                        winModal.setWidth(700);
+                        winModal.setHeight(450);
+                        winModal.addCloseClickHandler(new CloseClickHandler() {
+                            public void onCloseClick(CloseClientEvent event) {
+                                refreshTableInfo(); // make sure we re-enable the footer buttons in case user canceled
+                            }
+                        });
 
                         membershipView.setSaveButtonHandler(new ClickHandler() {
                             @Override
@@ -244,7 +241,6 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
                             }
                         });
 
-                        winModal.addItem(membershipView);
                         winModal.show();
                     }
                 });
@@ -267,8 +263,8 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
     public static ResourceGroupListView getGroupsOf(String locatorId, int explicitResourceId,
         boolean canModifyMembership) {
 
-        ResourceGroupListView view = new ResourceGroupListView(locatorId, new Criteria("explicitResourceId", String
-            .valueOf(explicitResourceId)), MSG.common_title_resourceGroups());
+        ResourceGroupListView view = new ResourceGroupListView(locatorId, new Criteria("explicitResourceId",
+            String.valueOf(explicitResourceId)), MSG.common_title_resourceGroups());
         if (canModifyMembership) {
             view.resourceIdToModify = Integer.valueOf(explicitResourceId);
         }

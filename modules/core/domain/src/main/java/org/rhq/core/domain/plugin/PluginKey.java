@@ -19,15 +19,21 @@
 
 package org.rhq.core.domain.plugin;
 
+import java.io.Serializable;
+
+import org.jetbrains.annotations.Nullable;
+
 /**
  * Encapsulates informaton that can uniquely identify a plugin.
  * 
  * @author John Mazzitelli
  */
-public class PluginKey {
-    private final PluginDeploymentType deployment;
-    private final String pluginType;
-    private final String pluginName;
+public class PluginKey implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    private PluginDeploymentType deployment;
+    private String pluginType;
+    private String pluginName;
 
     /**
      * Creates a plugin key that identifies an agent plugin. There is only
@@ -56,6 +62,10 @@ public class PluginKey {
             throw new IllegalArgumentException("invalid pluginType: " + pluginType);
         }
         return new PluginKey(PluginDeploymentType.SERVER, pluginType, pluginName);
+    }
+
+    protected PluginKey() {
+        // required for GWT
     }
 
     /**
@@ -103,6 +113,7 @@ public class PluginKey {
         return pluginName;
     }
 
+    @Nullable
     public String getPluginType() {
         return pluginType;
     }
@@ -110,8 +121,8 @@ public class PluginKey {
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        builder.append("PluginKey [deployment=").append(deployment).append(", pluginType=").append(pluginType).append(
-            ", pluginName=").append(pluginName).append("]");
+        builder.append("PluginKey [deployment=").append(deployment).append(", pluginType=").append(pluginType)
+            .append(", pluginName=").append(pluginName).append("]");
         return builder.toString();
     }
 

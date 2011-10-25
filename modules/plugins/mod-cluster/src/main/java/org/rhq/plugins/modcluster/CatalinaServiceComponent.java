@@ -30,16 +30,16 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.plugins.jmx.JMXComponent;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
 import org.rhq.plugins.modcluster.config.JBossWebServerFile;
 
-@SuppressWarnings({ "rawtypes", "deprecation" })
-public class CatalinaServiceComponent extends MBeanResourceComponent {
+@SuppressWarnings({ "deprecation" })
+public class CatalinaServiceComponent extends MBeanResourceComponent<JMXComponent<?>> {
 
     private static final Log log = LogFactory.getLog(CatalinaServiceComponent.class);
 
-    private static final String SERVER_HOME_DIR = "serverHomeDir";
-    private static final String CONFIGURATION_FILE_RELATIVE_PATH = "/deploy/jboss-web.deployer/server.xml";
+    private final static String MOD_CLUSTER_CONFIG_FILE = "modclusterConfigFile";
 
     @Override
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
@@ -109,10 +109,10 @@ public class CatalinaServiceComponent extends MBeanResourceComponent {
             .getParentResourceComponent();
 
         PropertySimple property = modClusterComponent.getResourceContext().getPluginConfiguration()
-            .getSimple(SERVER_HOME_DIR);
+            .getSimple(MOD_CLUSTER_CONFIG_FILE);
 
         if (property != null) {
-            String fileName = property.getStringValue() + CONFIGURATION_FILE_RELATIVE_PATH;
+            String fileName = property.getStringValue();
             return new JBossWebServerFile(fileName);
         }
 

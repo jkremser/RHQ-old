@@ -40,6 +40,7 @@ import org.rhq.core.clientapi.server.configuration.ConfigurationServerService;
 import org.rhq.core.clientapi.server.content.ContentServerService;
 import org.rhq.core.clientapi.server.core.CoreServerService;
 import org.rhq.core.clientapi.server.discovery.DiscoveryServerService;
+import org.rhq.core.clientapi.server.drift.DriftServerService;
 import org.rhq.core.clientapi.server.event.EventServerService;
 import org.rhq.core.clientapi.server.inventory.ResourceFactoryServerService;
 import org.rhq.core.clientapi.server.measurement.MeasurementServerService;
@@ -177,7 +178,7 @@ public class PluginContainerTest extends JMockTest {
         } catch (InterruptedException e) {
             throw new IllegalStateException("Thread interrupted while waiting for plugin container to start.", e);
         }
-        
+
         InventoryManager im = PluginContainer.getInstance().getInventoryManager();
         for (int i = 0; i < CURRENT_SETUP.get().numberOfInitialDiscoveries(); ++i) {
             im.executeServerScanImmediately();
@@ -339,7 +340,8 @@ public class PluginContainerTest extends JMockTest {
         serverServices.setMeasurementServerService(context.mock(MeasurementServerService.class));
         serverServices.setOperationServerService(context.mock(OperationServerService.class));
         serverServices.setResourceFactoryServerService(context.mock(ResourceFactoryServerService.class));
-    
+        serverServices.setDriftServerService(context.mock(DriftServerService.class));
+        
         conf.setServerServices(serverServices);
         
         return conf;
@@ -358,7 +360,7 @@ public class PluginContainerTest extends JMockTest {
     }
     
     private static File createTemporaryDirectory(PluginContainerSetup setup) {
-        String name = null;
+        String name;
         boolean mustBeNew = true;
         if (setup.sharedGroup().length() > 0) {
             name = setup.sharedGroup();
@@ -378,7 +380,7 @@ public class PluginContainerTest extends JMockTest {
     
     private File copyPluginToDestination(Object testObject, String plugin, File destination) throws IOException {
         URI pluginUri = URI.create(plugin);
-        URL pluginUrl = null;
+        URL pluginUrl;
         if ("classpath".equals(pluginUri.getScheme())) {
             String path = pluginUri.getPath();
             pluginUrl = testObject.getClass().getResource(path);

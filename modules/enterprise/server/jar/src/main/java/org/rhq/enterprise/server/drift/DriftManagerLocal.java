@@ -19,22 +19,28 @@
  */
 package org.rhq.enterprise.server.drift;
 
+import java.io.File;
 import java.io.InputStream;
 
 import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
-import org.rhq.core.domain.criteria.DriftConfigurationCriteria;
+import org.rhq.core.domain.criteria.DriftCriteria;
+import org.rhq.core.domain.criteria.DriftDefinitionCriteria;
 import org.rhq.core.domain.drift.Drift;
-import org.rhq.core.domain.drift.DriftConfiguration;
+import org.rhq.core.domain.drift.DriftChangeSet;
+import org.rhq.core.domain.drift.DriftComposite;
+import org.rhq.core.domain.drift.DriftDefinition;
+import org.rhq.core.domain.drift.DriftDefinitionComposite;
 import org.rhq.core.domain.drift.DriftDetails;
-import org.rhq.core.domain.drift.FileDiffReport;
+import org.rhq.core.domain.drift.DriftFile;
+import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.plugin.pc.drift.DriftServerPluginFacet;
+import org.rhq.enterprise.server.plugin.pc.drift.DriftChangeSetSummary;
 
 @Local
-public interface DriftManagerLocal extends DriftServerPluginFacet, DriftManagerRemote {
+public interface DriftManagerLocal extends DriftManagerRemote {
 
     /**
      * This method initiates an out-of-band (JMS-Based) server-side pull of the change-set file. Upon successful
@@ -46,7 +52,7 @@ public interface DriftManagerLocal extends DriftServerPluginFacet, DriftManagerR
      * @param zipStream The change-set zip file stream
      * @throws Exception
      */
-    void addChangeSet(int resourceId, long zipSize, InputStream zipStream) throws Exception;
+    void addChangeSet(Subject subject, int resourceId, long zipSize, InputStream zipStream) throws Exception;
 
     /**
      * This method initiates an out-of-band (JMS-Based) server-side pull of the drift file zip. Upon successful
@@ -57,50 +63,89 @@ public interface DriftManagerLocal extends DriftServerPluginFacet, DriftManagerR
      * @param zipStream The drift files zip file stream
      * @throws Exception
      */
-    void addFiles(int resourceId, long zipSize, InputStream zipStream) throws Exception;
-
-    /**
-     * Remove the provided driftConfig (identified by name) on the specified entityContext.
-     * Agents, if available, will be notified of the change. 
-     * @param subject
-     * @param entityContext
-     * @param driftConfigName
-     */
-    void deleteDriftConfiguration(Subject subject, EntityContext entityContext, String driftConfigName);
+    void addFiles(Subject subject, int resourceId, String driftDefName, String token, long zipSize,
+        InputStream zipStream) throws Exception;
 
     /**
      * This is for internal use only - do not call it unless you know what you are doing.
      */
-    void deleteResourceDriftConfiguration(Subject subject, int resourceId, int driftConfigId);
+    void deleteResourceDriftDefinition(Subject subject, int resourceId, int driftDefId);
 
     /**
-     * One time on-demand request to detect drift on the specified entities, using the supplied config.
+     * One time on-demand request to detect drift on the specified entities, using the supplied def.
      * 
      * @param entityContext
-     * @param driftConfig
+     * @param driftDef
      * @throws RuntimeException
      */
-    void detectDrift(Subject subject, EntityContext context, DriftConfiguration driftConfig);
+    void detectDrift(Subject subject, EntityContext context, DriftDefinition driftDef);
 
-    PageList<DriftConfiguration> findDriftConfigurationsByCriteria(Subject subject, DriftConfigurationCriteria criteria);
+    PageList<DriftComposite> findDriftCompositesByCriteria(Subject subject, DriftCriteria criteria);
+
+    PageList<DriftDefinitionComposite> findDriftDefinitionCompositesByCriteria(Subject subject,
+        DriftDefinitionCriteria criteria);
 
     /**
-     * Get the specified drift configuration. Note, the full Configuration is fetched. 
+     * Get the specified drift definition. Note, the full Configuration is fetched. 
      * 
-     * @param driftConfigId
-     * @return The drift configuration
-     * @throws RuntimeException, IllegalArgumentException if entity or driftConfig not found.
+     * @param driftDefId
+     * @return The drift definition
+     * @throws RuntimeException, IllegalArgumentException if entity or driftDef not found.
      */
-    DriftConfiguration getDriftConfiguration(Subject subject, int driftConfigId);
+    DriftDefinition getDriftDefinition(Subject subject, int driftDefId);
 
     /**
-     * Update the provided driftConfig (identified by name) on the specified EntityContext.  If it exists it will be replaced. If not it will
+     * Returns an object that encapsulates the information needed for viewing drift details
+     *
+     * @param subject
+     * @param driftId
+     * @return
+     */
+    DriftDetails getDriftDetails(Subject subject, String driftId);
+
+    DriftFile getDriftFile(Subject subject, String hashId) throws Exception;
+
+    /**
+     * Returns the content associated with the specified hash as a string
+     *
+     * @param hash The hash the uniquely identifies the requested content
+     * @return The content as a string
+     */
+    String getDriftFileBits(Subject subject, String hash);
+
+    boolean isBinaryFile(Subject subject, Drift<?, ?> drift);
+
+    String persistSnapshot(Subject subject, DriftSnapshot snapshot, DriftChangeSet<? extends Drift<?, ?>> changeSet);
+
+    void processRepeatChangeSet(int resourceId, String driftDefName, int version);
+
+    /**
+     * When a user wants to completely remove all data related to a drift definition,
+     * this method will be called to give the plugin a chance to clean up any data related
+     * to the drift definition that is going to be deleted.
+     * @param Subject
+     * @param resourceId the resource whose drift definition is being purged
+     * @param driftDefName identifies the data that is to be purged
+     */
+    void purgeByDriftDefinitionName(Subject subject, int resourceId, String driftDefName) throws Exception;
+
+    void saveChangeSetContent(Subject subject, int resourceId, String driftDefName, String token, File changeSetFilesZip)
+        throws Exception;
+
+    DriftChangeSetSummary saveChangeSet(Subject subject, int resourceId, File changeSetZip) throws Exception;
+
+    void saveChangeSetFiles(Subject subject, File changeSetFilesZip) throws Exception;
+
+    void updateDriftDefinition(DriftDefinition driftDefinition);
+
+    /**
+     * Update the provided driftDef (identified by name) on the specified EntityContext.  If it exists it will be replaced. If not it will
      * be added.  Agents, if available, will be notified of the change. 
      * @param subject
      * @param entityContext
-     * @param driftConfig
+     * @param driftDef
      */
-    void updateDriftConfiguration(Subject subject, EntityContext entityContext, DriftConfiguration driftConfig);
+    void updateDriftDefinition(Subject subject, EntityContext entityContext, DriftDefinition driftDef);
 
     /**
      * This will remove all drift files that are no longer referenced by drift entries. This is a maintenance method
@@ -112,33 +157,4 @@ public interface DriftManagerLocal extends DriftServerPluginFacet, DriftManagerR
      */
     int purgeOrphanedDriftFiles(Subject subject, long purgeMillis);
 
-    /**
-     * Returns the content associated with the specified hash as a string
-     *
-     * @param hash The hash the uniquely identifies the requested content
-     * @return The content as a string
-     */
-    String getDriftFileBits(String hash);
-
-    /**
-     * Generates a unified diff of the two files references by drift. In the case of a
-     * modified file, a Drift object references the current and previous versions of the
-     * file. This method generates a diff of the two versions.
-     *
-     * @param drift Specifies the two files that will be compared
-     * @return A report containing a unified diff of the two versions of the file
-     * referenced by drift
-     */
-    FileDiffReport generateUnifiedDiff(Drift<?, ?> drift);
-
-    /**
-     * Returns an object that encapsulates the information needed for viewing drift details
-     *
-     * @param subject
-     * @param driftId
-     * @return
-     */
-    DriftDetails getDriftDetails(Subject subject, String driftId);
-
-    boolean isBinaryFile(Drift<?, ?> drift);
 }

@@ -60,11 +60,12 @@ public class DriftHistoryView extends StringIDTableSection<DriftDataSource> {
     private static SortSpecifier DEFAULT_SORT_SPECIFIER = new SortSpecifier(DriftDataSource.ATTR_CTIME,
         SortDirection.DESCENDING);
 
-    private static final Criteria INITIAL_CRITERIA = new Criteria();
+    public static final Criteria INITIAL_CRITERIA = new Criteria();
 
     private EntityContext context;
     private boolean hasWriteAccess;
-    private DriftDataSource dataSource;
+
+    protected DriftDataSource dataSource;
 
     static {
         DriftCategory[] categoryValues = DriftCategory.values();
@@ -79,19 +80,24 @@ public class DriftHistoryView extends StringIDTableSection<DriftDataSource> {
 
     // for subsystem views
     public DriftHistoryView(String locatorId) {
-        this(locatorId, SUBSYSTEM_VIEW_ID.getTitle(), EntityContext.forSubsystemView(), false);
+        this(locatorId, SUBSYSTEM_VIEW_ID.getTitle(), EntityContext.forSubsystemView(), false, INITIAL_CRITERIA);
     }
 
     public DriftHistoryView(String locatorId, EntityContext entityContext) {
-        this(locatorId, SUBSYSTEM_VIEW_ID.getTitle(), entityContext, false);
+        this(locatorId, SUBSYSTEM_VIEW_ID.getTitle(), entityContext, false, INITIAL_CRITERIA);
     }
 
     public DriftHistoryView(String locatorId, String tableTitle, EntityContext entityContext) {
-        this(locatorId, tableTitle, entityContext, false);
+        this(locatorId, tableTitle, entityContext, false, INITIAL_CRITERIA);
     }
 
-    protected DriftHistoryView(String locatorId, String tableTitle, EntityContext context, boolean hasWriteAccess) {
-        super(locatorId, tableTitle, INITIAL_CRITERIA, new SortSpecifier[] { DEFAULT_SORT_SPECIFIER });
+    protected DriftHistoryView(String locatorId, String tableTitle, EntityContext entityContext, boolean hasWriteAccess) {
+        this(locatorId, tableTitle, entityContext, hasWriteAccess, INITIAL_CRITERIA);
+    }
+
+    protected DriftHistoryView(String locatorId, String tableTitle, EntityContext context, boolean hasWriteAccess,
+        Criteria initialCriteria) {
+        super(locatorId, tableTitle, initialCriteria, new SortSpecifier[] { DEFAULT_SORT_SPECIFIER });
         this.context = context;
         this.hasWriteAccess = hasWriteAccess;
 
@@ -122,12 +128,12 @@ public class DriftHistoryView extends StringIDTableSection<DriftDataSource> {
         SelectItem categoryFilter = new EnumSelectItem(DriftDataSource.FILTER_CATEGORIES, MSG.common_title_category(),
             DriftCategory.class, categories, categoryIcons);
 
-        TextItem configurationFilter = new TextItem(DriftDataSource.FILTER_DEFINITION, MSG.common_title_definition());
+        TextItem definitionFilter = new TextItem(DriftDataSource.FILTER_DEFINITION, MSG.common_title_definition());
         TextItem changeSetFilter = new TextItem(DriftDataSource.FILTER_SNAPSHOT, MSG.view_drift_table_snapshot());
         TextItem pathFilter = new TextItem(DriftDataSource.FILTER_PATH, MSG.common_title_path());
 
         if (isShowFilterForm()) {
-            setFilterFormItems(configurationFilter, changeSetFilter, categoryFilter, pathFilter);
+            setFilterFormItems(definitionFilter, changeSetFilter, categoryFilter, pathFilter);
         }
     }
 
@@ -150,8 +156,9 @@ public class DriftHistoryView extends StringIDTableSection<DriftDataSource> {
         return new CellFormatter() {
             public String format(Object value, ListGridRecord record, int i, int i1) {
                 Integer resourceId = record.getAttributeAsInt(AncestryUtil.RESOURCE_ID);
+                Integer driftDefId = record.getAttributeAsInt(DriftDataSource.ATTR_CHANGESET_DEF_ID);
                 String driftId = getId(record);
-                String url = LinkManager.getDriftHistoryLink(resourceId, driftId);
+                String url = LinkManager.getDriftHistoryLink(resourceId, driftDefId, driftId);
                 String formattedValue = TimestampCellFormatter.format(value);
                 return SeleniumUtility.getLocatableHref(url, formattedValue, null);
             }

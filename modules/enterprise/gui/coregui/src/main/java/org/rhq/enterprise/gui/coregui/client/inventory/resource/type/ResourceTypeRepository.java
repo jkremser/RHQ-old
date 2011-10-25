@@ -30,8 +30,8 @@ import com.allen_sauer.gwt.log.client.Log;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
-import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
+import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
@@ -58,7 +58,7 @@ public class ResourceTypeRepository {
     private static ResourceTypeGWTServiceAsync resourceTypeService = GWTServiceLookup.getResourceTypeGWTService();
 
     public enum MetadataType {
-        children, operations, measurements, content, events, pluginConfigurationDefinition, resourceConfigurationDefinition, subCategory, parentTypes, processScans, productVersions, driftConfigurationTemplates
+        children, operations, measurements, content, events, pluginConfigurationDefinition, resourceConfigurationDefinition, subCategory, parentTypes, processScans, productVersions, driftDefinitionTemplates
     }
 
     public static class Cache {
@@ -115,7 +115,7 @@ public class ResourceTypeRepository {
             }
         });
 
-        // com.allen_sauer.gwt.log.client.Log.info("Loaded types from cache in " + (System.currentTimeMillis() - start));
+        //Log.info("Loaded types from cache in " + (System.currentTimeMillis() - start));
     }
 
     public void loadResourceTypes(final PageList<ResourceGroup> groups, final ResourceTypeLoadedInGroupCallback callback) {
@@ -148,7 +148,7 @@ public class ResourceTypeRepository {
             }
         });
 
-        // com.allen_sauer.gwt.log.client.Log.info("Loaded types from cache in " + (System.currentTimeMillis() - start));
+        //Log.info("Loaded types from cache in " + (System.currentTimeMillis() - start));
     }
 
     public void getResourceTypes(Integer[] resourceTypeIds, final TypesLoadedCallback callback) {
@@ -169,7 +169,7 @@ public class ResourceTypeRepository {
     public void getResourceTypes(Integer[] resourceTypeIds, EnumSet<MetadataType> metadataTypesNeeded,
         final TypesLoadedCallback callback) {
 
-        // note metadataTypesNeeded == null implies EnumSet.noneOf(MetadataType.class)
+        // note, metadataTypesNeeded == null implies EnumSet.noneOf(MetadataType.class)
         final EnumSet<MetadataType> metadataTypes;
         if (metadataTypesNeeded == null) {
             metadataTypes = EnumSet.noneOf(MetadataType.class);
@@ -185,7 +185,6 @@ public class ResourceTypeRepository {
         if (resourceTypeIds == null) {
             //preload all
         } else {
-
             for (Integer typeId : resourceTypeIds) {
                 // we need to query for data if:
                 // 1. we don't have the resource type in our cache at all, or...
@@ -210,55 +209,53 @@ public class ResourceTypeRepository {
             criteria.addFilterIds(typesNeeded.toArray(new Integer[typesNeeded.size()]));
         }
 
-        if (metadataTypes != null) {
-            for (MetadataType metadataType : metadataTypes) {
-                switch (metadataType) {
-                case children:
-                    criteria.fetchChildResourceTypes(true);
-                    break;
-                case content:
-                    criteria.fetchPackageTypes(true);
-                    break;
-                case events:
-                    criteria.fetchEventDefinitions(true);
-                    break;
-                case measurements:
-                    criteria.fetchMetricDefinitions(true);
-                    break;
-                case operations:
-                    criteria.fetchOperationDefinitions(true);
-                    break;
-                case parentTypes:
-                    criteria.fetchParentResourceTypes(true);
-                    break;
-                case pluginConfigurationDefinition:
-                    criteria.fetchPluginConfigurationDefinition(true);
-                    break;
-                case processScans:
-                    criteria.fetchProcessScans(true);
-                    break;
-                case productVersions:
-                    criteria.fetchProductVersions(true);
-                    break;
-                case resourceConfigurationDefinition:
-                    criteria.fetchResourceConfigurationDefinition(true);
-                    break;
-                case subCategory:
-                    criteria.fetchSubCategory(true);
-                    break;
-                case driftConfigurationTemplates:
-                    criteria.fetchDriftConfigurationTemplates(true);
-                    break;
-                default:
-                    Log.error("ERROR: metadataType " + metadataType.name()
-                        + " not incorporated into ResourceType criteria.");
-                }
+        for (MetadataType metadataType : metadataTypes) {
+            switch (metadataType) {
+            case children:
+                criteria.fetchChildResourceTypes(true);
+                break;
+            case content:
+                criteria.fetchPackageTypes(true);
+                break;
+            case events:
+                criteria.fetchEventDefinitions(true);
+                break;
+            case measurements:
+                criteria.fetchMetricDefinitions(true);
+                break;
+            case operations:
+                criteria.fetchOperationDefinitions(true);
+                break;
+            case parentTypes:
+                criteria.fetchParentResourceTypes(true);
+                break;
+            case pluginConfigurationDefinition:
+                criteria.fetchPluginConfigurationDefinition(true);
+                break;
+            case processScans:
+                criteria.fetchProcessScans(true);
+                break;
+            case productVersions:
+                criteria.fetchProductVersions(true);
+                break;
+            case resourceConfigurationDefinition:
+                criteria.fetchResourceConfigurationDefinition(true);
+                break;
+            case subCategory:
+                criteria.fetchSubCategory(true);
+                break;
+            case driftDefinitionTemplates:
+                criteria.fetchDriftDefinitionTemplates(true);
+                break;
+            default:
+                Log.error("Metadata type [" + metadataType.name()
+                    + "] not incorporated into ResourceType criteria.");
             }
         }
 
         criteria.setPageControl(PageControl.getUnlimitedInstance());
 
-        Log.info("Loading " + typesNeeded.size() + ((metadataTypes != null) ? (" types: " + metadataTypes) : ""));
+        Log.info("Loading [" + typesNeeded.size() + "] types with facets=[" + metadataTypes + "]...");
 
         if ((topLevelServerAndServiceTypes == null) && (metadataTypes != null)
             && metadataTypes.contains(MetadataType.children)) {
@@ -352,13 +349,13 @@ public class ResourceTypeRepository {
                                 case subCategory:
                                     cachedType.setSubCategory(type.getSubCategory());
                                     break;
-                                case driftConfigurationTemplates:
-                                    if (cachedType.getDriftConfigurationTemplates() != null) {
-                                        cachedType.getDriftConfigurationTemplates().clear(); // remove any old ones hanging around
+                                case driftDefinitionTemplates:
+                                    if (cachedType.getDriftDefinitionTemplates() != null) {
+                                        cachedType.getDriftDefinitionTemplates().clear(); // remove any old ones hanging around
                                     }
-                                    if (type.getDriftConfigurationTemplates() != null) {
-                                        for (ConfigurationTemplate ct : type.getDriftConfigurationTemplates()) {
-                                            cachedType.addDriftConfigurationTemplate(ct);
+                                    if (type.getDriftDefinitionTemplates() != null) {
+                                        for (DriftDefinitionTemplate template : type.getDriftDefinitionTemplates()) {
+                                            cachedType.addDriftDefinitionTemplate(template);
                                         }
                                     }
                                     break;
@@ -392,7 +389,7 @@ public class ResourceTypeRepository {
     public void preloadAll() {
         getResourceTypes((Integer[]) null, EnumSet.allOf(MetadataType.class), new TypesLoadedCallback() {
             public void onTypesLoaded(Map<Integer, ResourceType> types) {
-                com.allen_sauer.gwt.log.client.Log.info("Preloaded [" + types.size() + "] Resource types.");
+                Log.info("Preloaded [" + types.size() + "] Resource types.");
             }
         });
     }

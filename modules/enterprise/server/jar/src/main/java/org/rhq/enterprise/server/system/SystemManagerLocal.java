@@ -137,6 +137,8 @@ public interface SystemManagerLocal {
 
     boolean isExperimentalFeaturesEnabled();
 
+    boolean isLdapAuthorizationEnabled();
+    
     void validateSystemConfiguration(Subject subject, Properties properties) throws InvalidSystemConfigurationException;
     
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -151,7 +153,11 @@ public interface SystemManagerLocal {
 
     SystemSettings getSystemSettings(Subject subject);
 
+    void setSystemSettings(Subject subject, SystemSettings settings) throws Exception;
+    
+    @Deprecated
     Properties getSystemConfiguration(Subject subject);
 
+    @Deprecated
     void setSystemConfiguration(Subject subject, Properties properties, boolean skipValidation) throws Exception;
 }

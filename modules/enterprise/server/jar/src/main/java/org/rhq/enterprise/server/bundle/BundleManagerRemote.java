@@ -100,6 +100,8 @@ public interface BundleManagerRemote {
 
     /**
      * A convenience method taking a byte array as opposed to a stream for the file bits.
+     * WARNING: obviously, this requires the entire bundle file to have been loaded fully in memory.
+     * For very large files, this could cause OutOfMemoryErrors.
      * 
      * @see {@link addBundleFile(Subject, int, String, String, Architecture, InputStream, boolean)}     
      */
@@ -144,8 +146,8 @@ public interface BundleManagerRemote {
      * can be added.  This call defines a deployment.  The defined deployment can then be
      * scheduled in a separate call.  
      * @param subject user that must have proper permissions
-     * @param BundleVersionId the BundleVersion being deployed by this deployment
-     * @param BundleDestinationId the BundleDestination for the deployment
+     * @param bundleVersionId the BundleVersion being deployed by this deployment
+     * @param bundleDestinationId the BundleDestination for the deployment
      * @param description an optional longer description describing this deployment 
      * @param configuration a Configuration (pojo) to be associated with this deployment. Although
      *        it is not enforceable must be that of the associated BundleVersion.
@@ -164,7 +166,7 @@ public interface BundleManagerRemote {
      * Creates a bundle destination that describes a target for the bundle deployments.
      * 
      * @param subject user must have MANAGE_INVENTORY permission
-     * @param BundleId the Bundle to be deployed to this Destination
+     * @param bundleId the Bundle to be deployed to this Destination
      * @param name a name for this destination. not null or empty
      * @param description an optional longer description describing this destination 
      * @param destBaseDirName The name of the base directory location where the bundle will be deployed.
@@ -172,7 +174,7 @@ public interface BundleManagerRemote {
      *                        This name isn't the directory itself, it refers to the named location as
      *                        defined in the agent plugin's descriptor for the resource's type
      * @param deployDir the root dir for deployments to this destination
-     * @param groupIf the target platforms for deployments to this destination 
+     * @param groupId the target platforms for deployments to this destination 
      * @return the persisted destination
      * @throws Exception
      */
@@ -218,6 +220,23 @@ public interface BundleManagerRemote {
     BundleVersion createBundleVersionViaFile( //
         @WebParam(name = "subject") Subject subject, //        
         @WebParam(name = "distributionFile") File distributionFile) throws Exception;
+
+    /**
+     * Creates a bundle version based on the actual bytes of a Bundle Distribution file. This is essentially
+     * the same as {@link #createBundleVersionViaFile(Subject, File)} but the caller is providing the actual
+     * bytes of the file as opposed to the file itself.
+     * WARNING: obviously, this requires the entire distribution file to have been loaded fully in memory.
+     * For very large distribution files, this could cause OutOfMemoryErrors.
+     * 
+     * @param subject
+     * @param fileBytes the file bits that make up the entire bundle distribution file
+     * @return the persisted BundleVersion with alot of the internal relationships filled in to help the caller
+     *         understand all that this method did. Bundle files specifically are returned.
+     */
+    @WebMethod
+    BundleVersion createBundleVersionViaByteArray( //
+        @WebParam(name = "subject") Subject subject, //        
+        @WebParam(name = "fileBytes") byte[] fileBytes) throws Exception;
 
     /**
      * Creates a bundle version based on a Bundle Distribution file. Typically a zip file, the bundle distribution

@@ -987,9 +987,10 @@
              </c:group>
              <c:group name="control" displayName="Operations">
                <c:simple-property name="scriptPrefix" displayName="Script Prefix" type="string" required="false"
-                               description="A prefix applied to script execution commands. Typically a sudo
-                                            for applicable platforms. The prefix is applied verbatim. As such, a
-                                            sudo user must be configured appropriately. Ignored if not set."/>
+                               description="A prefix applied to script execution commands; this prefix is applied verbatim.
+                                            The full path of the executable is required (e.g. /usr/bin/sudo). For applicable platforms,
+                                            this is typically a sudo command, so a sudo user must be configured appropriately for the specified command.
+                                            Ignored if not set."/>
                <c:simple-property name="startScript" displayName="Start Script" type="file" required="false"
                                description="The path to the script used by the 'Start' operation
                                             to start this JBossAS server
@@ -1194,7 +1195,7 @@
              </configuration>
           </content>
 
-          <drift-configuration name="Core Files">
+          <drift-definition name="Core Files">
               <basedir>
                   <value-context>pluginConfiguration</value-context>
                   <value-name>homeDir</value-name>
@@ -1204,7 +1205,7 @@
                   <include path="lib" />
                   <include path="client" />
               </includes>
-          </drift-configuration>
+          </drift-definition>
 
           <bundle-target>
              <destination-base-dir name="Install Directory" description="The top directory where the JBossAS Server is installed. (i.e. the value found in the 'JBoss Home Directory' connection property)">

@@ -20,7 +20,6 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-
 package org.rhq.enterprise.gui.coregui.client.inventory.resource;
 
 import java.util.LinkedHashMap;
@@ -59,6 +58,7 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
         String title, SortSpecifier[] sortSpecifier, String[] excludeFields, String... headerIcons) {
         super(locatorId, criteria, title, sortSpecifier, excludeFields, headerIcons);
         this.parentResourceComposite = parentResourceComposite;
+        setInitialCriteriaFixed(true);
     }
 
     public ResourceCompositeSearchView(String locatorId, ResourceComposite parentResourceComposite, Criteria criteria,
@@ -66,11 +66,7 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
         this(locatorId, parentResourceComposite, criteria, title, null, null, headerIcons);
     }
 
-    public ResourceCompositeSearchView(String locatorId, Criteria criteria, String title, String... headerIcons) {
-        this(locatorId, null, criteria, title, headerIcons);
-    }
-
-    // surpress unchecked warnings because the superclass has different generic types for the datasource
+    // suppress unchecked warnings because the superclass has different generic types for the datasource
     @SuppressWarnings("unchecked")
     @Override
     protected RPCDataSource getDataSourceInstance() {

@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.dashboard;
 
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -33,6 +34,7 @@ import com.smartgwt.client.widgets.form.events.ColorSelectedEvent;
 import com.smartgwt.client.widgets.form.events.ColorSelectedHandler;
 import com.smartgwt.client.widgets.form.fields.ButtonItem;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
+import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.BlurEvent;
@@ -86,6 +88,7 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author Simeon Pinder
  */
 public class DashboardView extends LocatableVLayout {
+
     private DashboardContainer dashboardContainer;
     private Dashboard storedDashboard;
 
@@ -144,6 +147,11 @@ public class DashboardView extends LocatableVLayout {
 
         this.dashboardContainer = dashboardContainer;
         this.storedDashboard = storedDashboard;
+        // This is a workaround for the fact that RHQ 4.1 and earlier wrongly allowed the user to save a dashboard with
+        // 0 columns.
+        if (this.storedDashboard.getColumns() == 0) {
+            this.storedDashboard.setColumns(1);
+        }
         this.context = context;
 
         switch (this.context.getType()) {
@@ -224,15 +232,24 @@ public class DashboardView extends LocatableVLayout {
         if (dashboardContainer.supportsDashboardNameEdit()) {
             nameItem = new TextItem("name", MSG.common_title_dashboard_name());
             nameItem.setValue(storedDashboard.getName());
+            nameItem.setLength(200);
             nameItem.setWrapTitle(false);
             nameItem.addBlurHandler(new BlurHandler() {
                 public void onBlur(BlurEvent blurEvent) {
-                    String val = (String) blurEvent.getItem().getValue();
-                    val = (null == val) ? "" : val.trim();
-                    if (!("".equals(val) || val.equals(storedDashboard.getName()))) {
-                        storedDashboard.setName(val);
+                    FormItem nameItem = blurEvent.getItem();
+                    String name = (String) nameItem.getValue();
+                    String trimmedName = (name == null) ? "" : name.trim();
+                    if (dashboardContainer.isValidDashboardName(trimmedName)) {
+                        storedDashboard.setName(trimmedName);
                         save();
                         dashboardContainer.updateDashboardNames();
+                    } else {
+                        // TODO: i18n
+                        Message message = new Message("There is already a dashboard named '" + trimmedName
+                            + "'. Please specify a name that is not already in use.", Message.Severity.Error,
+                            EnumSet.of(Message.Option.Transient));
+                        CoreGUI.getMessageCenter().notify(message);
+                        nameItem.setValue(storedDashboard.getName());
                     }
                 }
             });
@@ -246,19 +263,23 @@ public class DashboardView extends LocatableVLayout {
         addColumn.setAutoFit(true);
         addColumn.setStartRow(false);
         addColumn.setEndRow(false);
+
+        final ButtonItem removeColumn = new ButtonItem("removeColumn", MSG.common_title_remove_column());
+        removeColumn.setAutoFit(true);
+        removeColumn.setStartRow(false);
+        removeColumn.setEndRow(false);
+        removeColumn.setDisabled(storedDashboard.getColumns() == 1);
+
         addColumn.addClickHandler(new com.smartgwt.client.widgets.form.fields.events.ClickHandler() {
             public void onClick(com.smartgwt.client.widgets.form.fields.events.ClickEvent event) {
                 portalLayout.addMember(new PortalColumn());
                 numColItem.setValue(storedDashboard.getColumns() + 1);
                 storedDashboard.setColumns(storedDashboard.getColumns() + 1);
+                removeColumn.setDisabled(storedDashboard.getColumns() == 1);
                 save();
             }
         });
 
-        ButtonItem removeColumn = new ButtonItem("removeColumn", MSG.common_title_remove_column());
-        removeColumn.setAutoFit(true);
-        removeColumn.setStartRow(false);
-        removeColumn.setEndRow(false);
         removeColumn.addClickHandler(new com.smartgwt.client.widgets.form.fields.events.ClickHandler() {
             public void onClick(com.smartgwt.client.widgets.form.fields.events.ClickEvent event) {
 
@@ -272,10 +293,13 @@ public class DashboardView extends LocatableVLayout {
                     portalLayout.removeMember(lastColumn);
                     numColItem.setValue(numColumns - 1);
                     storedDashboard.setColumns(storedDashboard.getColumns() - 1);
+                    removeColumn.setDisabled(storedDashboard.getColumns() == 1);
                     save();
                 }
             }
         });
+
+
 
         // build the menu of valid portlets for this context, sorted by portlet name
         final Menu addPortletMenu = new LocatableMenu(editForm.extendLocatorId("PortletMenu"));

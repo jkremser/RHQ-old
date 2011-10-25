@@ -27,8 +27,8 @@ import javax.ejb.Local;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.DriftChangeSetCriteria;
 import org.rhq.core.domain.criteria.DriftCriteria;
+import org.rhq.core.domain.drift.DriftChangeSet;
 import org.rhq.core.domain.drift.DriftComposite;
-import org.rhq.core.domain.drift.DriftSnapshot;
 import org.rhq.core.domain.drift.JPADrift;
 import org.rhq.core.domain.drift.JPADriftChangeSet;
 import org.rhq.core.domain.drift.JPADriftFile;
@@ -43,8 +43,6 @@ import org.rhq.enterprise.server.plugin.pc.drift.DriftChangeSetSummary;
  */
 @Local
 public interface JPADriftServerLocal {
-
-    DriftSnapshot createSnapshot(Subject subject, DriftChangeSetCriteria criteria);
 
     /**
      * Simple get method for a JPADriftFile. Does not return the content.
@@ -71,6 +69,10 @@ public interface JPADriftServerLocal {
      * @return The Drifts matching the criteria
      */
     PageList<JPADrift> findDriftsByCriteria(Subject subject, DriftCriteria criteria);
+
+    String persistChangeSet(Subject subject, DriftChangeSet<?> changeSet);
+
+    String copyChangeSet(Subject subject, String changeSetId, int driftDefId, int resourceId);
 
     /**
      * SUPPORTS JPA DRIFT SERVER PLUGIN 
@@ -113,9 +115,9 @@ public interface JPADriftServerLocal {
     /**
      * SUPPORTS JPA DRIFT SERVER PLUGIN
      * This is for internal use only - do not call it unless you know what you are doing.
-     * This purges all drift entities and changeset entities associated with the drift config.
+     * This purges all drift entities and changeset entities associated with the drift definition.
      */
-    void purgeByDriftConfigurationName(Subject subject, int resourceId, String driftConfigName) throws Exception;
+    void purgeByDriftDefinitionName(Subject subject, int resourceId, String driftDefName) throws Exception;
 
     /**
      * SUPPORTS JPA DRIFT SERVER PLUGIN
