@@ -16,12 +16,6 @@
     <name>RHQ Enterprise Core GUI</name>
     <description>the RHQ Enterprise Core GUI webapp</description>
 
-    <scm>
-        <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/gui/coregui/</connection>
-        <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/gui/coregui/</developerConnection>
-    </scm>
-
-
     <properties>
         <!-- dependency versions -->
         <gwt.version>2.0.4</gwt.version>
@@ -71,7 +65,6 @@
              Messages_ja.properties and MessageConstants_ja.properties. -->
         <gwt.locale>en,de,ja,pt,zh</gwt.locale>
     </properties>
-
 
     <dependencies>
 
