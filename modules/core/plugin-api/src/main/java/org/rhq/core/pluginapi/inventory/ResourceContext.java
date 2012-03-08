@@ -63,12 +63,13 @@ import org.rhq.core.system.pquery.ProcessInfoQuery;
  */
 @SuppressWarnings("unchecked")
 public class ResourceContext<T extends ResourceComponent<?>> {
-    
+
     private static final Log LOG = LogFactory.getLog(ResourceContext.class);
-    
+
     private final String resourceKey;
     private final ResourceType resourceType;
     private final String version;
+    private final String resourceUuid;
     private final T parentResourceComponent;
     private final ResourceContext<?> parentResourceContext;
     private final Configuration pluginConfiguration;
@@ -83,22 +84,22 @@ public class ResourceContext<T extends ResourceComponent<?>> {
     private final Executor availCollectionThreadPool;
     private final PluginContainerDeployment pluginContainerDeployment;
     private final ResourceTypeProcesses trackedProcesses;
-    
+
     private static class Children {
         public ResourceType resourceType;
         public String parentResourceUuid;
-        
+
         public Children(String parentResourceUuid, ResourceType resourceType) {
             this.parentResourceUuid = parentResourceUuid;
             this.resourceType = resourceType;
         }
-        
+
         @Override
         public int hashCode() {
             int uuidHashCode = parentResourceUuid == null ? 1 : parentResourceUuid.hashCode();
             return 31 * uuidHashCode * resourceType.getId();
         }
-        
+
         @Override
         public boolean equals(Object other) {
             if (other == this) {
@@ -115,9 +116,9 @@ public class ResourceContext<T extends ResourceComponent<?>> {
                 .equals(o.parentResourceUuid)) && resourceType.equals(o.resourceType);
         }
     }
-    
+
     private static Map<Children, ResourceTypeProcesses> PROCESSES_PER_PARENT_PER_RESOURCE_TYPE = new HashMap<Children, ResourceTypeProcesses>();
-        
+
     /**
      * Creates a new {@link ResourceContext} object.
      *
@@ -157,6 +158,7 @@ public class ResourceContext<T extends ResourceComponent<?>> {
         this.resourceKey = resource.getResourceKey();
         this.resourceType = resource.getResourceType();
         this.version = resource.getVersion();
+        this.resourceUuid = resource.getUuid();
         this.parentResourceComponent = parentResourceComponent;
         this.parentResourceContext = parentResourceContext;
         this.resourceDiscoveryComponent = resourceDiscoveryComponent;
@@ -176,7 +178,7 @@ public class ResourceContext<T extends ResourceComponent<?>> {
         this.operationContext = operationContext;
         this.contentContext = contentContext;
         this.availCollectionThreadPool = availCollectorThreadPool;
-        
+
         String parentResourceUuid = "";
         if (resource.getParentResource() != null) {
             parentResourceUuid = resource.getParentResource().getUuid();
@@ -216,6 +218,15 @@ public class ResourceContext<T extends ResourceComponent<?>> {
     }
 
     /**
+     * The {@link Resource#getUuid() uuid} of the resource this context is associated with.
+     *
+     * @return the resource's uuid string
+     */
+    public String getResourceUuid() {
+        return this.resourceUuid;
+    }
+
+    /**
      * The parent of the resource component that is associated with this context.
      *
      * @return parent component of the associated resource component
@@ -236,7 +247,7 @@ public class ResourceContext<T extends ResourceComponent<?>> {
     protected ResourceContext<?> getParentResourceContext() {
         return this.parentResourceContext;
     }
-    
+
     /**
      * Returns a {@link SystemInfo} object that contains information about the platform/operating system that the
      * resource is running on. With this object, you can natively obtain things such as the operating system name, its
@@ -269,15 +280,16 @@ public class ResourceContext<T extends ResourceComponent<?>> {
      */
     public ProcessInfo getNativeProcess() {
         ProcessInfo processInfo = trackedProcesses.getProcessInfo(resourceKey);
-        
+
         if (!isRediscoveryRequired(processInfo)) {
             return processInfo;
         }
-        
+
         if (LOG.isTraceEnabled()) {
-            LOG.trace("getNativeProcess(): rediscovery required on resource " + resourceType + " with key " + resourceKey + ", syncing on " + trackedProcesses);
+            LOG.trace("getNativeProcess(): rediscovery required on resource " + resourceType + " with key "
+                + resourceKey + ", syncing on " + trackedProcesses);
         }
-        
+
         synchronized (trackedProcesses) {
             //right, we've entered the critical section...
             //we might have waited for another thread to actually fill in the tracked processes
@@ -297,10 +309,9 @@ public class ResourceContext<T extends ResourceComponent<?>> {
                     if (!processes.isEmpty()) {
                         ResourceDiscoveryContext<T> context;
 
-                        context =
-                            new ResourceDiscoveryContext<T>(this.resourceType, this.parentResourceComponent,
-                                this.parentResourceContext, this.systemInformation, processes, Collections.EMPTY_LIST,
-                                getPluginContainerName(), getPluginContainerDeployment());
+                        context = new ResourceDiscoveryContext<T>(this.resourceType, this.parentResourceComponent,
+                            this.parentResourceContext, this.systemInformation, processes, Collections.EMPTY_LIST,
+                            getPluginContainerName(), getPluginContainerDeployment());
 
                         details = this.resourceDiscoveryComponent.discoverResources(context);
 
@@ -314,9 +325,9 @@ public class ResourceContext<T extends ResourceComponent<?>> {
         }
 
         if (LOG.isTraceEnabled()) {
-            LOG.trace("getNativeProcess(): rediscovery done");            
+            LOG.trace("getNativeProcess(): rediscovery done");
         }
-        
+
         return processInfo;
     }
 
@@ -483,7 +494,7 @@ public class ResourceContext<T extends ResourceComponent<?>> {
         return new AvailabilityCollectorRunnable(availChecker, interval,
             Thread.currentThread().getContextClassLoader(), this.availCollectionThreadPool);
     }
-    
+
     /**
      * Returns a shared object representing the processes detected for given resource type under given parent.
      * Note that this comes from a static field so it is shared by any resource contexts representing a
@@ -495,14 +506,14 @@ public class ResourceContext<T extends ResourceComponent<?>> {
      * @return
      */
     private static ResourceTypeProcesses getTrackedProcesses(String parentResourceUuid, ResourceType resourceType) {
-        synchronized(PROCESSES_PER_PARENT_PER_RESOURCE_TYPE) {
+        synchronized (PROCESSES_PER_PARENT_PER_RESOURCE_TYPE) {
             Children key = new Children(parentResourceUuid, resourceType);
             ResourceTypeProcesses ret = PROCESSES_PER_PARENT_PER_RESOURCE_TYPE.get(key);
             if (ret == null) {
                 ret = new ResourceTypeProcesses();
                 PROCESSES_PER_PARENT_PER_RESOURCE_TYPE.put(key, ret);
             }
-            
+
             return ret;
         }
     }
