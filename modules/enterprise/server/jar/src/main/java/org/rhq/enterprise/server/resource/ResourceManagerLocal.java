@@ -72,8 +72,10 @@ public interface ResourceManagerLocal {
      * @param parentId set to -1 to imply that this is a root resource, which has no parent
      *
      * @throws ResourceAlreadyExistsException if an equivalent resource already exists
+     * @throws ResourceNotFoundException if the parent resource (specified by parentId) doesn't exist
+     * @throws ResourceTypeNotFoundException if the resource type of the resource was not found in the database
      */
-    void createResource(Subject user, Resource resource, int parentId) throws ResourceAlreadyExistsException;
+    void createResource(Subject user, Resource resource, int parentId) throws ResourceAlreadyExistsException, ResourceNotFoundException, ResourceTypeNotFoundException;
 
     /**
      * Update a Resource's editable properties (name, description, and location).

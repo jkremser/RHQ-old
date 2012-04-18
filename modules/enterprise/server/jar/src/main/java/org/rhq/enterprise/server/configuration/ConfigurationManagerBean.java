@@ -101,6 +101,7 @@ import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.core.domain.util.PasswordObfuscationUtility;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.core.util.exception.ThrowableUtil;
@@ -284,6 +285,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         Configuration existingPluginConfiguration = resource.getPluginConfiguration();
         ConfigurationMaskingUtility.unmaskConfiguration(newPluginConfiguration, existingPluginConfiguration);
 
+        PasswordObfuscationUtility.obfuscatePasswords(resource.getResourceType().getPluginConfigurationDefinition(), newPluginConfiguration);
+        
         // create our new update request and assign it to our resource - its status will initially be "in progress"
         PluginConfigurationUpdate update = new PluginConfigurationUpdate(resource, newPluginConfiguration,
             subject.getName());
@@ -328,6 +331,9 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         if (resource == null) {
             throw new ResourceNotFoundException("Resource [" + resourceId + "] does not exist.");
         }
+        
+        PasswordObfuscationUtility.obfuscatePasswords(resource.getResourceType().getResourceConfigurationDefinition(), configuration);
+        
         resource.setResourceConfiguration(configuration);
         entityManager.merge(resource);
     }
@@ -1275,6 +1281,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         Configuration existingResourceConfiguration = resource.getResourceConfiguration();
         ConfigurationMaskingUtility.unmaskConfiguration(newResourceConfiguration, existingResourceConfiguration);
 
+        PasswordObfuscationUtility.obfuscatePasswords(resource.getResourceType().getResourceConfigurationDefinition(), newResourceConfiguration);
+                
         // Calling the persist method via the EJB interface to pick up the method's REQUIRES_NEW semantics and persist
         // the update in a separate transaction; this way, the update is committed prior to sending the agent request
         // Note, the persist method will return null if newConfiguration is no different than the current Resource
@@ -1416,6 +1424,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         //Configuration zeroedConfiguration = newConfiguration.deepCopy(false);
         Configuration zeroedConfiguration = newConfiguration.deepCopyWithoutProxies();
 
+        PasswordObfuscationUtility.obfuscatePasswords(resource.getResourceType().getResourceConfigurationDefinition(), zeroedConfiguration);
+        
         // create our new update request and assign it to our resource - its status will initially be "in progress"
         ResourceConfigurationUpdate newUpdateRequest = new ResourceConfigurationUpdate(resource, zeroedConfiguration,
             newSubject);
@@ -1736,6 +1746,9 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             Resource resource = resourceManager.getResource(subjectManager.getOverlord(), resourceId);
             Configuration existingPluginConfiguration = resource.getPluginConfiguration();
             ConfigurationMaskingUtility.unmaskConfiguration(memberPluginConfiguration, existingPluginConfiguration);
+            
+            PasswordObfuscationUtility.obfuscatePasswords(resource.getResourceType().getPluginConfigurationDefinition(), memberPluginConfiguration);
+            
             Resource flyWeight = new Resource(resourceId);
             PluginConfigurationUpdate memberUpdate = new PluginConfigurationUpdate(flyWeight,
                 memberPluginConfiguration, subject.getName());
@@ -1801,6 +1814,9 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             Resource resource = resourceManager.getResource(subjectManager.getOverlord(), resourceId);
             Configuration existingResourceConfiguration = resource.getResourceConfiguration();
             ConfigurationMaskingUtility.unmaskConfiguration(memberResourceConfiguration, existingResourceConfiguration);
+            
+            PasswordObfuscationUtility.obfuscatePasswords(resource.getResourceType().getResourceConfigurationDefinition(), memberResourceConfiguration);
+            
             Resource flyWeight = new Resource(resourceId);
             ResourceConfigurationUpdate memberUpdate = new ResourceConfigurationUpdate(flyWeight,
                 memberResourceConfiguration, subject.getName());

@@ -61,6 +61,7 @@ import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.content.ContentServiceRequest;
 import org.rhq.core.domain.content.InstalledPackage;
 import org.rhq.core.domain.content.InstalledPackageHistory;
@@ -112,6 +113,7 @@ import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
 import org.rhq.core.domain.server.PersistenceUtility;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PasswordObfuscationUtility;
 import org.rhq.core.util.IntExtractor;
 import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.enterprise.server.RHQConstants;
@@ -163,7 +165,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     @IgnoreDependency
     private MeasurementScheduleManagerLocal measurementScheduleManager;
 
-    public void createResource(Subject user, Resource resource, int parentId) throws ResourceAlreadyExistsException {
+    public void createResource(Subject user, Resource resource, int parentId) throws ResourceAlreadyExistsException, ResourceNotFoundException, ResourceTypeNotFoundException {
         Resource parent = null;
         if (parentId != Resource.ROOT_ID) {
             // not trying to create a root resource, so lookup the parent
@@ -192,6 +194,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             parent.addChildResource(resource);
         }
 
+        obfuscatePasswords(user, resource);
+        
         entityManager.persist(resource);
         log.debug("********* resource persisted ************");
         // Execute sub-methods as overlord to bypass additional security checks.
@@ -2695,5 +2699,20 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         }
 
         return enableResourceIds;
+    }
+    
+    private void obfuscatePasswords(Subject subject, Resource resource) throws ResourceTypeNotFoundException {
+        ConfigurationDefinition pluginConfigDef = resource.getResourceType().getPluginConfigurationDefinition();
+        ConfigurationDefinition resourceConfigDef = resource.getResourceType().getResourceConfigurationDefinition();
+        
+        if (pluginConfigDef == null || resourceConfigDef == null) {
+            ResourceType attachedResourceType = typeManager.getResourceTypeById(subject, resource.getResourceType().getId());
+            
+            pluginConfigDef = attachedResourceType.getPluginConfigurationDefinition();
+            resourceConfigDef = attachedResourceType.getResourceConfigurationDefinition();
+        }
+        
+        PasswordObfuscationUtility.obfuscatePasswords(pluginConfigDef, resource.getPluginConfiguration());
+        PasswordObfuscationUtility.obfuscatePasswords(resourceConfigDef, resource.getResourceConfiguration());        
     }
 }

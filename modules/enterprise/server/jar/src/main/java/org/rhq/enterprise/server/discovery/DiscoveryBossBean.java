@@ -61,6 +61,7 @@ import org.rhq.core.clientapi.server.discovery.StaleTypeException;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.resource.Agent;
@@ -75,6 +76,7 @@ import org.rhq.core.domain.server.PersistenceUtility;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.core.domain.util.PasswordObfuscationUtility;
 import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
@@ -87,7 +89,9 @@ import org.rhq.enterprise.server.resource.ProductVersionManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceAlreadyExistsException;
 import org.rhq.enterprise.server.resource.ResourceAvailabilityManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceNotFoundException;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.resource.metadata.PluginManagerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
@@ -490,6 +494,10 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
                 this.resourceManager.createResource(creator, resource, parentResource.getId());
             } catch (ResourceAlreadyExistsException e) {
                 throw new IllegalStateException(e);
+            } catch (ResourceNotFoundException e) {
+                throw new IllegalStateException(e);
+            } catch (ResourceTypeNotFoundException e) {
+                throw new IllegalStateException(e);
             }
 
             mergeResourceResponse = new MergeResourceResponse(resource.getId(), false);
@@ -687,9 +695,29 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         log.debug("Merging [" + resource + "]...");
         Resource existingResource = getExistingResource(resource);
 
+        ConfigurationDefinition resourceConfigDefinition = null;
+        ConfigurationDefinition pluginConfigDefinition = null;
         if (existingResource != null) {
+            resourceConfigDefinition = existingResource.getResourceType().getResourceConfigurationDefinition();
+            pluginConfigDefinition = existingResource.getResourceType().getPluginConfigurationDefinition();
+                        
+            PasswordObfuscationUtility.obfuscatePasswords(resourceConfigDefinition, resource.getResourceConfiguration());
+            PasswordObfuscationUtility.obfuscatePasswords(pluginConfigDefinition, resource.getPluginConfiguration());
+            
             updatePreviouslyInventoriedResource(resource, existingResource);
         } else {
+            ResourceType resourceType = resource.getResourceType();
+            try {
+                ResourceType attachedResourceType = resourceTypeManager.getResourceTypeById(subjectManager.getOverlord(), resourceType.getId());
+                resourceConfigDefinition = attachedResourceType.getResourceConfigurationDefinition();
+                pluginConfigDefinition = attachedResourceType.getPluginConfigurationDefinition();
+            } catch (ResourceTypeNotFoundException e) {
+                throw new InvalidInventoryReportException("Could not find a resource type in the database: " + resourceType, e);
+            }
+            
+            PasswordObfuscationUtility.obfuscatePasswords(resourceConfigDefinition, resource.getResourceConfiguration());        
+            PasswordObfuscationUtility.obfuscatePasswords(pluginConfigDefinition, resource.getPluginConfiguration());
+
             presetAgent(resource, agent);
             addResourceToInventory(resource, parentResource);
         }
