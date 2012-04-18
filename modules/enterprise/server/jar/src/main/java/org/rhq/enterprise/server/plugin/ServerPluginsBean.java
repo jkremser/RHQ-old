@@ -52,6 +52,7 @@ import org.rhq.core.domain.plugin.PluginDeploymentType;
 import org.rhq.core.domain.plugin.PluginKey;
 import org.rhq.core.domain.plugin.PluginStatusType;
 import org.rhq.core.domain.plugin.ServerPlugin;
+import org.rhq.core.domain.util.PasswordObfuscationUtility;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
@@ -523,6 +524,8 @@ public class ServerPluginsBean implements ServerPluginsLocal {
             // make sure we create (if necessary) and attach the configs
             Configuration config = plugin.getPluginConfiguration();
             if (config != null) {
+                ConfigurationDefinition def = getServerPluginConfigurationDefinition(new PluginKey(plugin));
+                PasswordObfuscationUtility.obfuscatePasswords(def, config);
                 config = entityManager.merge(config);
                 plugin.setPluginConfiguration(config);
             }
