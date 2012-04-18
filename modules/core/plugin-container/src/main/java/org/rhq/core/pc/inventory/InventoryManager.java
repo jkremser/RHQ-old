@@ -63,6 +63,7 @@ import org.rhq.core.clientapi.server.discovery.InvalidInventoryReportException;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.clientapi.server.discovery.StaleTypeException;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
@@ -78,6 +79,7 @@ import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.ResourceErrorType;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.ResourceUpgradeReport;
+import org.rhq.core.domain.util.PasswordObfuscationUtility;
 import org.rhq.core.pc.ContainerService;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
@@ -321,6 +323,12 @@ public class InventoryManager extends AgentService implements ContainerService, 
             ResourceDiscoveryComponent proxy = this.discoveryComponentProxyFactory.getDiscoveryComponentProxy(
                 context.getResourceType(), component, timeout, parentResourceContainer);
             Set<DiscoveredResourceDetails> results = proxy.discoverResources(context);
+            
+            ConfigurationDefinition pluginConfigDef = context.getResourceType().getPluginConfigurationDefinition();
+            
+            for(DiscoveredResourceDetails result : results) {
+                PasswordObfuscationUtility.obfuscatePasswords(pluginConfigDef, result.getPluginConfiguration());
+            }
             return results;
         } catch (TimeoutException te) {
             log.warn("Discovery for Resources of [" + context.getResourceType() + "] has been running for more than "
@@ -357,6 +365,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
             ManualAddFacet proxy = this.discoveryComponentProxyFactory.getDiscoveryComponentProxy(
                 context.getResourceType(), component, timeout, ManualAddFacet.class, parentResourceContainer);
             DiscoveredResourceDetails result = proxy.discoverResource(pluginConfig, context);
+            
+            PasswordObfuscationUtility.obfuscatePasswords(context.getResourceType().getPluginConfigurationDefinition(), result.getPluginConfiguration());
+            
             return result;
         } catch (TimeoutException te) {
             log.warn("Manual add of Resource of type [" + context.getResourceType() + "] with plugin configuration ["
@@ -2800,6 +2811,13 @@ public class InventoryManager extends AgentService implements ContainerService, 
             }
 
             resourceContainer = initResourceContainer(mergedResource);
+            
+            ResourceType resourceType = resourceContainer.getResourceContext().getResourceType();
+            ConfigurationDefinition pluginConfigDef = resourceType.getPluginConfigurationDefinition();
+            ConfigurationDefinition resourceConfigDef = resourceType.getResourceConfigurationDefinition();
+            
+            PasswordObfuscationUtility.obfuscatePasswords(pluginConfigDef, mergedResource.getPluginConfiguration());
+            PasswordObfuscationUtility.obfuscatePasswords(resourceConfigDef, mergedResource.getResourceConfiguration());                    
         } finally {
             this.inventoryLock.writeLock().unlock();
         }
