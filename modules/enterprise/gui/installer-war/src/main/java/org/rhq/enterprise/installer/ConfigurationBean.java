@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.installer;
 
-import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.sql.Connection;
 import java.sql.Statement;
@@ -40,10 +39,9 @@ import mazz.i18n.Msg;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.jboss.resource.security.SecureIdentityLoginModule;
-
 import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.core.util.obfuscation.Obfuscator;
 import org.rhq.enterprise.installer.i18n.InstallerI18NResourceKeys;
 
 /**
@@ -803,34 +801,16 @@ public class ConfigurationBean {
     }
 
     private String encryptPassword(String password) throws Exception {
-
-        // We need to do some mumbo jumbo, as the interesting method is private
-        // in SecureIdentityLoginModule
-
         try {
-            SecureIdentityLoginModule lm = new SecureIdentityLoginModule();
-            Class<?> clazz = SecureIdentityLoginModule.class;
-            Method m = clazz.getDeclaredMethod("encode", String.class);
-            m.setAccessible(true);
-            String res = (String) m.invoke(lm, password);
-            return res;
+            return Obfuscator.encode(password);
         } catch (Exception e) {
             throw new Exception("Encoding db password failed: ", e);
         }
     }
 
-    private String decodePassword(String encrypedPassword) throws Exception {
-
-        // We need to do some mumbo jumbo, as the interesting method is private
-        // in SecureIdentityLoginModule
-
+    private String decodePassword(String encryptedPassword) throws Exception {
         try {
-            SecureIdentityLoginModule lm = new SecureIdentityLoginModule();
-            Class<?> clazz = SecureIdentityLoginModule.class;
-            Method m = clazz.getDeclaredMethod("decode", String.class);
-            m.setAccessible(true);
-            char[] res = (char[]) m.invoke(lm, encrypedPassword);
-            return new String(res);
+            return Obfuscator.decode(encryptedPassword);
         } catch (Exception e) {
             throw new Exception("Decoding db password failed: ", e);
         }
