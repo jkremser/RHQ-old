@@ -25,6 +25,7 @@ public class HostPort {
 
     public String host;
     public int port;
+    public boolean isSecureConnection = false;
     public boolean isLocal = true;
     public boolean withOffset = false;
 
@@ -41,7 +42,8 @@ public class HostPort {
 
     @Override
     public String toString() {
-        return "HostPort{" + "host='" + host + '\'' + ", port=" + port + ", isLocal=" + isLocal + '}';
+        return "HostPort{" + "host='" + host + '\'' + ", port=" + port + ", isSecureConnection=" + isSecureConnection
+            + ", isLocal=" + isLocal + '}';
     }
 
 }

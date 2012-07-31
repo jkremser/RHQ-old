@@ -90,9 +90,10 @@ public class HostConfiguration {
         String portString;
         String interfaceExpression;
 
-        String socketBindingName;
+        HostPort managementHostPort = new HostPort();
 
-        socketBindingName = obtainXmlPropertyViaXPath("//management/management-interfaces/http-interface/socket-binding/@http");
+        String socketBindingName = obtainXmlPropertyViaXPath("//management/management-interfaces/http-interface/socket-binding/@http");
+        String secureSocketBindingName = obtainXmlPropertyViaXPath("//management/management-interfaces/http-interface/socket-binding/@https");
         String socketInterface = obtainXmlPropertyViaXPath("//management/management-interfaces/http-interface/socket/@interface");
         String portOffsetRaw = null;
 
@@ -104,7 +105,7 @@ public class HostConfiguration {
                                 + "']/loopback-address/@value");
             }
             portString = obtainXmlPropertyViaXPath("//management/management-interfaces/http-interface/socket/@port");
-        } else if (socketBindingName.isEmpty()) {
+        } else if (socketBindingName.isEmpty() && secureSocketBindingName.isEmpty()) {
             // old AS7.0, early 7.1 style
             portString = obtainXmlPropertyViaXPath("//management/management-interfaces/http-interface/@port");
             String interfaceName = obtainXmlPropertyViaXPath("//management/management-interfaces/http-interface/@interface");
@@ -115,15 +116,23 @@ public class HostConfiguration {
                                 + "']/loopback-address/@value");
             }
         } else {
+            String selectedSocketBindingName = socketBindingName;
+
+            if (!secureSocketBindingName.isEmpty()) {
+                managementHostPort.isSecureConnection = true;
+                selectedSocketBindingName = secureSocketBindingName;
+            }
+
             // later AS7.1 and EAP6 standalone.xml
             portString = obtainXmlPropertyViaXPath("/server/socket-binding-group/socket-binding[@name='"
-                + socketBindingName + "']/@port");
+                + selectedSocketBindingName + "']/@port");
             String interfaceName = obtainXmlPropertyViaXPath("/server/socket-binding-group/socket-binding[@name='"
-                + socketBindingName + "']/@interface");
+                + selectedSocketBindingName + "']/@interface");
+
             String socketBindingGroupName = "standard-sockets";
             // /server/socket-binding-group[@name='standard-sockets']/@port-offset
-            String xpathExpression =
-                    "/server/socket-binding-group[@name='" + socketBindingGroupName + "']/@port-offset";
+            String xpathExpression = "/server/socket-binding-group[@name='" + socketBindingGroupName
+                + "']/@port-offset";
             portOffsetRaw = obtainXmlPropertyViaXPath(xpathExpression);
 
             // TODO the next may also be expressed differently
@@ -134,39 +143,39 @@ public class HostConfiguration {
                                 + "']/loopback-address/@value");
             }
         }
-        HostPort hp = new HostPort();
+
 
         if (!interfaceExpression.isEmpty())
-            hp.host = replaceDollarExpression(interfaceExpression, commandLine, "localhost");
+            managementHostPort.host = replaceDollarExpression(interfaceExpression, commandLine, "localhost");
         else
-            hp.host = "localhost"; // Fallback
+            managementHostPort.host = "localhost"; // Fallback
 
-        hp.port = 0;
+        managementHostPort.port = 0;
 
         if (portString != null && !portString.isEmpty()) {
             String tmp = replaceDollarExpression(portString, commandLine, String.valueOf(DEFAULT_MGMT_PORT));
-            hp.port = Integer.valueOf(tmp);
+            managementHostPort.port = Integer.valueOf(tmp);
         }
 
         if (portOffsetRaw != null && !portOffsetRaw.isEmpty()) {
             String portOffsetString = replaceDollarExpression(portOffsetRaw, commandLine, "0");
             Integer portOffset = Integer.valueOf(portOffsetString);
-            hp.port += portOffset;
-            hp.withOffset = true;
+            managementHostPort.port += portOffset;
+            managementHostPort.withOffset = true;
         }
 
         // TODO (ips): We shouldn't need the below code if the above code that reads the port offset from the config
         //             file is working correctly.
-        if (!hp.withOffset && (mode == AS7Mode.STANDALONE)) {
+        if (!managementHostPort.withOffset && (mode == AS7Mode.STANDALONE)) {
             // Only standalone applies the port offset to the management ports.
             String value = commandLine.getSystemProperties().get(SOCKET_BINDING_PORT_OFFSET_SYSPROP);
             if (value != null) {
                 int offset = Integer.valueOf(value);
-                hp.port += offset;
+                managementHostPort.port += offset;
             }
         }
 
-        return hp;
+        return managementHostPort;
     }
 
     /**

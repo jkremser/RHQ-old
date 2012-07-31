@@ -40,7 +40,7 @@ public class Domain2Descriptor {
 
     private static final String PLUGIN_NAME = "JBossAS7";
 
-    //Need to hard code until JIRA addressed: https://issues.jboss.org/browse/AS7-4384 
+    //Need to hard code until JIRA addressed: https://issues.jboss.org/browse/AS7-4384
     private String[] properties = { "cpu", "mem", "heap", "sessions", "requests", "send-traffic", "receive-traffic",
         "busyness", "connection-pool" };
     private D2DMode mode = null;
@@ -110,7 +110,7 @@ public class Domain2Descriptor {
         }
 
         //create connection
-        ASConnection conn = new ASConnection("localhost", 9990, user, pass);
+        ASConnection conn = new ASConnection("localhost", 9990, false, user, pass);
 
         Address address = new Address(path);
 
@@ -279,7 +279,7 @@ public class Domain2Descriptor {
             element.append("</runs-inside>\n");
         }
 
-        //plugin config 
+        //plugin config
         element.append("\n");
         doIndent(childIndent, element);
         element.append("<plugin-configuration>\n");
@@ -313,12 +313,12 @@ public class Domain2Descriptor {
         return excluded;
     }
 
-    /** Assume parent metadata type passed in with 
-     *  i)description 
-     *  ii)attributes 
-     *  iii)operations 
+    /** Assume parent metadata type passed in with
+     *  i)description
+     *  ii)attributes
+     *  iii)operations
      *  iv)children
-     * 
+     *
      * @param indent
      * @param metaDataNode
      */
@@ -664,7 +664,7 @@ public class Domain2Descriptor {
     }
 
     /** Assumes custom operation for AS7 node.
-     * 
+     *
      * @param name of custom operation.
      * @param operationMap Json node representation of operation details as Map<String,Object>.
      */
@@ -713,8 +713,8 @@ public class Domain2Descriptor {
     }
 
     /** Builds 'description' attribute for an xml node.
-     * 
-     * @param builder 
+     *
+     * @param builder
      * @param description
      * @param defaultValueText
      */
@@ -746,10 +746,10 @@ public class Domain2Descriptor {
 
     /** Escape all known problematic html characters returned to prevent
      *  xml or html parse issues.
-     *  
-     *  Currently includes a few popular and encountered escape characters. 
-     *  We may want to add them all later.  
-     * 
+     *
+     *  Currently includes a few popular and encountered escape characters.
+     *  We may want to add them all later.
+     *
      * @param description
      * @return
      */
@@ -920,7 +920,7 @@ public class Domain2Descriptor {
 
     /** Assumes that -object- is a json type where allowable values are defined
      *  in the 'allowed' child. Generates the matching <c:property-options> entries.
-     * 
+     *
      * @param indent
      * @param props
      * @param defaultSelection
@@ -959,7 +959,7 @@ public class Domain2Descriptor {
 
     /** Generates hardcoded list of options not available because of JIRA
      *  https://issues.jboss.org/browse/AS7-4384
-     * 
+     *
      * @param indent
      * @param properties
      * @param defaultSelection
@@ -977,7 +977,7 @@ public class Domain2Descriptor {
 
         doIndent(indent + 1, optionList);
         optionList.append("<c:property-options>\n");
-        //spinder 3/28/12: There is not way to query this option list and process is not used much. Hardcoding for now. 
+        //spinder 3/28/12: There is not way to query this option list and process is not used much. Hardcoding for now.
         //https://issues.jboss.org/browse/AS7-4384
         for (String prop : properties) {
             doIndent(indent + 2, optionList);

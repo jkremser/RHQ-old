@@ -188,6 +188,8 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         HostPort managementHostPort = hostConfig.getManagementHostPort(commandLine, getMode());
         serverPluginConfig.setHostname(managementHostPort.host);
         serverPluginConfig.setPort(managementHostPort.port);
+        serverPluginConfig.setSecureConnection(managementHostPort.isSecureConnection);
+
         pluginConfig.setSimpleValue("realm", hostConfig.getManagementSecurityRealm());
         JBossProductType productType = JBossProductType.determineJBossProductType(homeDir);
         serverPluginConfig.setProductType(productType);
@@ -208,7 +210,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
             version = versionFromHomeDir;
         } else {
             ProductInfo productInfo = new ProductInfo(managementHostPort.host, serverPluginConfig.getUser(),
-                serverPluginConfig.getPassword(), managementHostPort.port);
+                serverPluginConfig.getPassword(), managementHostPort.port, managementHostPort.isSecureConnection);
             productInfo = productInfo.getFromRemote();
             String productVersion = (productInfo.fromRemote) ? productInfo.productVersion : versionFromHomeDir;
             // TODO: Grab the product version from the product info properties file, so we aren't relying on connecting
@@ -432,6 +434,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
 
         String hostname = serverPluginConfig.getHostname();
         Integer port = serverPluginConfig.getPort();
+        Boolean secureConnection = serverPluginConfig.isSecureConnection();
         String user = serverPluginConfig.getUser();
         String pass = serverPluginConfig.getPassword();
 
@@ -439,7 +442,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
             throw new InvalidPluginConfigurationException("Hostname and port must both be set.");
         }
 
-        ProductInfo productInfo = new ProductInfo(hostname, user, pass, port).getFromRemote();
+        ProductInfo productInfo = new ProductInfo(hostname, user, pass, port, secureConnection).getFromRemote();
         JBossProductType productType = productInfo.getProductType();
 
         if (productType==null) {
@@ -577,6 +580,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         private String user;
         private String pass;
         private int port;
+        private boolean secureConnection;
         private String productVersion;
         private JBossProductType productType;
         private String releaseVersion;
@@ -584,11 +588,13 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         private boolean fromRemote = false;
         private String serverName;
 
-        public ProductInfo(String hostname, String user, String pass, int port) {
+
+        public ProductInfo(String hostname, String user, String pass, int port, boolean secureConnection) {
             this.hostname = hostname;
             this.user = user;
             this.pass = pass;
             this.port = port;
+            this.secureConnection = secureConnection;
         }
 
         public String getProductVersion() {
@@ -600,7 +606,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         }
 
         public ProductInfo getFromRemote() {
-            ASConnection connection = new ASConnection(hostname, port, user, pass);
+            ASConnection connection = new ASConnection(hostname, port, secureConnection, user, pass);
             try {
                 String productName = getServerAttribute(connection, "product-name");
                 productType = ((productName != null) && !productName.isEmpty()) ?

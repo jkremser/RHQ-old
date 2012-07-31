@@ -107,7 +107,7 @@ public abstract class AbstractIntegrationTest {
     }
 
     ASConnection getASConnection() {
-        ASConnection connection = new ASConnection(DC_HOST, DC_HTTP_PORT, DC_USER, DC_PASS);
+        ASConnection connection = new ASConnection(DC_HOST, DC_HTTP_PORT, false, DC_USER, DC_PASS);
         return connection;
     }
 

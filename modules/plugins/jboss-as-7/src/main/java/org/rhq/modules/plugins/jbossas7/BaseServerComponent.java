@@ -87,7 +87,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
 
         serverPluginConfig = new ServerPluginConfiguration(pluginConfiguration);
         connection = new ASConnection(serverPluginConfig.getHostname(), serverPluginConfig.getPort(),
-                serverPluginConfig.getUser(), serverPluginConfig.getPassword());
+            serverPluginConfig.isSecureConnection(), serverPluginConfig.getUser(), serverPluginConfig.getPassword());
         @SuppressWarnings("UnusedDeclaration")
         AvailabilityType avail = getAvailability();
         logFileEventDelegate = new LogFileEventResourceComponentHelper(context);

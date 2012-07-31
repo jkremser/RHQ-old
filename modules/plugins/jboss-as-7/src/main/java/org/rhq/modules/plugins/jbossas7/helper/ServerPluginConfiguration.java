@@ -42,6 +42,7 @@ public class ServerPluginConfiguration {
         public static final String LOG_DIR = "logDir";
         public static final String PRODUCT_TYPE = "productType";
         public static final String HOST_CONFIG_FILE = "hostConfigFile";
+        public static final String SECURE_CONNECTION = "secureConnection";
     }
 
     private Configuration pluginConfig;
@@ -65,6 +66,15 @@ public class ServerPluginConfiguration {
 
     public void setPort(int port) {
         this.pluginConfig.setSimpleValue(Property.PORT, String.valueOf(port));
+    }
+
+    public Boolean isSecureConnection() {
+        String stringValue = this.pluginConfig.getSimpleValue(Property.SECURE_CONNECTION);
+        return (stringValue != null) ? Boolean.valueOf(stringValue) : false;
+    }
+
+    public void setSecureConnection(boolean secureConnection) {
+        this.pluginConfig.setSimpleValue(Property.SECURE_CONNECTION, String.valueOf(secureConnection));
     }
 
     public String getUser() {

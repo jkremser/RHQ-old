@@ -76,16 +76,18 @@ public class ASConnection {
     private Authenticator passwordAuthenticator;
     private String host;
     private int port;
+    private boolean secureConnection;
 
     /**
      * Construct an ASConnection object. The real "physical" connection is done in {@link #executeRaw(Operation)}.
      *
      * @param host Host of the DomainController or standalone server
      * @param port Port of the JSON api.
+     * @param secureConnection Whether to use secure connections for communication
      * @param user user needed for authentication
      * @param password password needed for authentication
      */
-    public ASConnection(String host, int port, String user, String password) {
+    public ASConnection(String host, int port, boolean secureConnection, String user, String password) {
         if (host == null) {
             throw new IllegalArgumentException("Management host cannot be null.");
         }
@@ -94,9 +96,17 @@ public class ASConnection {
         }
         this.host = host;
         this.port = port;
+        this.secureConnection = secureConnection;
 
         try {
-            url = new URL("http", host, port, MANAGEMENT);
+            String protocol;
+            if (this.secureConnection) {
+                protocol = "https";
+            } else {
+                protocol = "http";
+            }
+
+            url = new URL(protocol, host, port, MANAGEMENT);
             urlString = url.toString();
         } catch (MalformedURLException e) {
             throw new IllegalArgumentException(e.getMessage());

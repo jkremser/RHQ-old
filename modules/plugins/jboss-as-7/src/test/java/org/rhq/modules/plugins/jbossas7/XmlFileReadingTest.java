@@ -25,6 +25,7 @@ public class XmlFileReadingTest {
         System.out.println(hp);
         assert hp.host.equals("127.0.0.70") : "Host is " + hp.host;
         assert hp.port==19990 : "Port is " + hp.port;
+        assert hp.isSecureConnection == false : "Secure connection is " + hp.isSecureConnection;
     }
 
     public void hostPort71() throws Exception {
@@ -36,6 +37,29 @@ public class XmlFileReadingTest {
         // hp : HostPort{host='localhost', port=9990, isLocal=true}
         assert hp.host.equals("127.0.0.71") : "Host is " + hp.host;
         assert hp.port==29990 : "Port is " + hp.port;
+        assert hp.isSecureConnection == false : "Secure connection is " + hp.isSecureConnection;
+    }
+
+    public void secureConnectionOnly() throws Exception {
+        URL url = getClass().getClassLoader().getResource("secure-only-standalone.xml");
+        HostConfiguration hostConfig = new HostConfiguration(new File(url.getPath()));
+        HostPort hp = hostConfig.getManagementHostPort(new AS7CommandLine(new String[] { "java", "foo.Main",
+            "org.jboss.as.standalone" }), AS7Mode.STANDALONE);
+        System.out.println(hp);
+        assert hp.host.equals("127.0.0.172") : "Host is " + hp.host;
+        assert hp.port == (19444 + 124) : "Port is " + hp.port;
+        assert hp.isSecureConnection == true : "Secure connection is " + hp.isSecureConnection;
+    }
+
+    public void secureConnectionAdditional() throws Exception {
+        URL url = getClass().getClassLoader().getResource("secure-standalone.xml");
+        HostConfiguration hostConfig = new HostConfiguration(new File(url.getPath()));
+        HostPort hp = hostConfig.getManagementHostPort(new AS7CommandLine(new String[] { "java", "foo.Main",
+            "org.jboss.as.standalone" }), AS7Mode.STANDALONE);
+        System.out.println(hp);
+        assert hp.host.equals("127.0.0.171") : "Host is " + hp.host;
+        assert hp.port == (19443 + 123) : "Port is " + hp.port;
+        assert hp.isSecureConnection == true : "Secure connection is " + hp.isSecureConnection;
     }
 
     public void domainController1() throws Exception {
@@ -53,6 +77,7 @@ public class XmlFileReadingTest {
                 "org.jboss.as.host-controller"}));
         assert "192.168.100.1".equals(hp.host) : "DC is at " + hp.host;
         assert hp.port == 9559 : "DC port is at " + hp.port;
+        assert hp.isSecureConnection == false : "Secure connection is " + hp.isSecureConnection;
     }
 
     public void domainController3() throws Exception {
@@ -62,6 +87,7 @@ public class XmlFileReadingTest {
                 "org.jboss.as.host-controller", "--master-address=192.168.123.123"}));
         assert "192.168.123.123".equals(hp.host) : "DC is at " + hp.host;
         assert hp.port == 1234 : "DC port is at " + hp.port;
+        assert hp.isSecureConnection == false : "Secure connection is " + hp.isSecureConnection;
     }
 
 

@@ -167,7 +167,7 @@ public abstract class AbstractConfigurationHandlingTest {
         JsonNode content;
 
         public FakeConnection() {
-            super("localhost", 1234, "fake", "fake");
+            super("localhost", 1234, false, "fake", "fake");
         }
 
         public void setContent(JsonNode content) {
