@@ -108,6 +108,7 @@ import org.rhq.core.pluginapi.event.EventContext;
 import org.rhq.core.pluginapi.inventory.ClassLoaderFacet;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
+import org.rhq.core.pluginapi.inventory.InventoryContext;
 import org.rhq.core.pluginapi.inventory.ManualAddFacet;
 import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
@@ -577,6 +578,12 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
     public void executeServiceScanDeferred() {
         inventoryThreadPoolExecutor.submit((Callable<InventoryReport>) this.serviceScanExecutor);
+    }
+
+    public void executeServiceScanDeferred(Resource resource) {
+        RuntimeDiscoveryExecutor runtimeDiscoveryExecutor = new RuntimeDiscoveryExecutor(this, this.configuration,
+            resource);
+        inventoryThreadPoolExecutor.submit((Callable<InventoryReport>) runtimeDiscoveryExecutor);
     }
 
     /** this will NOT send a availability report up to the server! */
@@ -1296,7 +1303,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
     /**
      * Get the parent resource's children, ensuring we use the resource container version of the resource, because
      * the container's resource is guaranteed to be up to date.
-     *  
+     *
      * @param parentResource
      * @return the children. parentResouce children if there is no container. May be empty. Not null.
      */
@@ -1784,6 +1791,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             getOperationContext(resource), // for operation manager access
             getContentContext(resource), // for content manager access
             getAvailabilityContext(resource, this.availabilityCollectors), // for components that want to perform async avail checking
+            getInventoryContext(resource),
             this.configuration.getPluginContainerDeployment()); // helps components make determinations of what to do
     }
 
@@ -1803,6 +1811,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             getOperationContext(resource), // for operation manager access
             getContentContext(resource), // for content manager access
             getAvailabilityContext(resource, this.availabilityCollectors), // for components that want avail manager access
+            getInventoryContext(resource),
             this.configuration.getPluginContainerDeployment()); // helps components make determinations of what to do
     }
 
@@ -2642,6 +2651,21 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
         AvailabilityContext availabilityContext = new AvailabilityContextImpl(resource, availCollectionThreadPool);
         return availabilityContext;
+    }
+
+    /**
+     * Create inventory context for a resource.
+     *
+     * @param resource the resource
+     * @return the inventory context
+     */
+    private InventoryContext getInventoryContext(Resource resource) {
+        if (null == resource.getUuid() || resource.getUuid().isEmpty()) {
+            log.error("RESOURCE UUID IS NOT SET! Inventory features may not work!");
+        }
+
+        InventoryContext inventoryContext = new InventoryContextImpl(resource);
+        return inventoryContext;
     }
 
     private void updateResourceVersion(Resource resource, String version) {
