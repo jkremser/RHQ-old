@@ -540,7 +540,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
                 + " server with key [" + context.getResourceKey() + "].");
 
         context.getAvailabilityContext().requestAvailabilityCheck();
-        context.getInventoryContext().discoverChildResources();
+        context.getInventoryContext().requestDeferredChildResourcesDiscovery();
 
         return result;
     }

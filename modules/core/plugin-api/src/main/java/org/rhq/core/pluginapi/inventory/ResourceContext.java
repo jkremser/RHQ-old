@@ -507,10 +507,10 @@ public class ResourceContext<T extends ResourceComponent<?>> {
     }
 
     /**
-      * Returns an {@link InventoryContext} that allows the plugin to access the run a defferred discovery functionality provided by the
+      * Returns an {@link InventoryContext} that allows the plugin to access inventory related functionality provided by the
       * plugin container.
       *
-      * @return the inventoryContext
+      * @return the inventory context
       */
     public InventoryContext getInventoryContext() {
         return inventoryContext;

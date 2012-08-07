@@ -576,14 +576,27 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
     }
 
+    @NotNull
+    public InventoryReport executeServiceScanImmediately(Resource resource) {
+        try {
+            RuntimeDiscoveryExecutor discoveryExecutor = new RuntimeDiscoveryExecutor(this, this.configuration,
+                resource);
+            return inventoryThreadPoolExecutor.submit((Callable<InventoryReport>) discoveryExecutor).get();
+        } catch (InterruptedException e) {
+            throw new RuntimeException("Service scan execution was interrupted", e);
+        } catch (ExecutionException e) {
+            // Should never happen, reports are always generated, even if they're just to report the error
+            throw new RuntimeException("Unexpected exception", e);
+        }
+    }
+
     public void executeServiceScanDeferred() {
         inventoryThreadPoolExecutor.submit((Callable<InventoryReport>) this.serviceScanExecutor);
     }
 
     public void executeServiceScanDeferred(Resource resource) {
-        RuntimeDiscoveryExecutor runtimeDiscoveryExecutor = new RuntimeDiscoveryExecutor(this, this.configuration,
-            resource);
-        inventoryThreadPoolExecutor.submit((Callable<InventoryReport>) runtimeDiscoveryExecutor);
+        RuntimeDiscoveryExecutor discoveryExecutor = new RuntimeDiscoveryExecutor(this, this.configuration, resource);
+        inventoryThreadPoolExecutor.submit((Callable<InventoryReport>) discoveryExecutor);
     }
 
     /** this will NOT send a availability report up to the server! */
@@ -1311,13 +1324,13 @@ public class InventoryManager extends AgentService implements ContainerService, 
         return getContainerChildren(parentResource, getResourceContainer(parentResource));
     }
 
-    /** 
+    /**
      * Get the parent resource's children, ensuring we use the resource container version of the resource, because
      * the container's resource is guaranteed to be up to date.
-     *  
+     *
      * @param parentResource
      * @param parentContainer
-     * @return the children, empty if parentContainer is null or there are no children. not null. 
+     * @return the children, empty if parentContainer is null or there are no children. not null.
      * @return the children, may be empty, not null.
      */
     public Set<Resource> getContainerChildren(Resource parentResource, ResourceContainer container) {
@@ -1862,7 +1875,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                     return this.platform;
                 }
             } else {
-                // don't use container children here, the caller is providing the desired resources 
+                // don't use container children here, the caller is providing the desired resources
                 for (Resource child : parent.getChildResources()) {
                     if (child != null && matches(resource, child)) {
                         return child;
@@ -2385,7 +2398,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
     /**
      * The resource upgrade should only occur during the {@link #initialize()} method and should be
      * switched off at all other times.
-     * 
+     *
      * @return true if resource upgrade is currently active, false otherwise
      */
     public boolean isResourceUpgradeActive() {

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright 2011, Red Hat Middleware LLC, and individual contributors
+ * Copyright 2012, Red Hat Middleware LLC, and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -20,6 +20,7 @@
 
 package org.rhq.core.pc.inventory;
 
+import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pluginapi.inventory.InventoryContext;
@@ -43,7 +44,15 @@ public class InventoryContextImpl implements InventoryContext {
      * @see org.rhq.core.pluginapi.inventory.InventoryContext#discoverChildResources()
      */
     @Override
-    public void discoverChildResources() {
+    public void requestDeferredChildResourcesDiscovery() {
         PluginContainer.getInstance().getInventoryManager().executeServiceScanDeferred(resource);
+    }
+
+    /* (non-Javadoc)
+     * @see org.rhq.core.pluginapi.inventory.InventoryContext#requestChildResourcesDiscovery()
+     */
+    @Override
+    public InventoryReport requestChildResourcesDiscovery() {
+        return PluginContainer.getInstance().getInventoryManager().executeServiceScanImmediately(resource);
     }
 }
