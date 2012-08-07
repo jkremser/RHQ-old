@@ -20,7 +20,6 @@
 
 package org.rhq.core.pluginapi.inventory;
 
-import org.rhq.core.clientapi.server.discovery.InventoryReport;
 
 /**
  * @author Stefan Negrea
@@ -46,14 +45,14 @@ public interface InventoryContext {
 
     /**
      * This method requests a service discovery process for children of the resource. It schedules the discovery
-     * process and returns the results of the discovery. The discovery process inventories all discovered
+     * process and blocks until the discovery finishes. The discovery process inventories all discovered
      * resources, so no further action is required.
      *
      * This method should be used by resources following an action (outside of create/delete children) that results
      * in having additional children discoverable. A good example is an operation execution that enables extra functionality
-     * on the managed resource which in turn translates into having additional children available for management. This method returns
-     * the results of the discovery to allow for additional processing, however all discovered resources are already
-     * committed to the inventory before returning the results.
+     * on the managed resource which in turn translates into having additional children available for management. This method blocks
+     * until the discovery processes finishes, this includes committing resources to inventory. For additional processing,
+     * the calling resource can then request the list of child resources (it will include newly discovered resources too).
      *
      * Note: All resources are discovered by the regular platform level discovery process that runs every 24 hours. This method allows
      * a resource to request a discovery for child resources to be run immediately, rather than wait for the scheduled platform
@@ -61,6 +60,6 @@ public interface InventoryContext {
      *
      * @return discovered child resources
      */
-    public InventoryReport requestChildResourcesDiscovery();
+    public void requestChildResourcesDiscovery();
 
 }

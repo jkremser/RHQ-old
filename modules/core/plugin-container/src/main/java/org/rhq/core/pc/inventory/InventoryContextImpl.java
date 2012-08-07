@@ -20,7 +20,6 @@
 
 package org.rhq.core.pc.inventory;
 
-import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pluginapi.inventory.InventoryContext;
@@ -52,7 +51,7 @@ public class InventoryContextImpl implements InventoryContext {
      * @see org.rhq.core.pluginapi.inventory.InventoryContext#requestChildResourcesDiscovery()
      */
     @Override
-    public InventoryReport requestChildResourcesDiscovery() {
-        return PluginContainer.getInstance().getInventoryManager().executeServiceScanImmediately(resource);
+    public void requestChildResourcesDiscovery() {
+        PluginContainer.getInstance().getInventoryManager().executeServiceScanImmediately(resource);
     }
 }
