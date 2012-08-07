@@ -28,25 +28,25 @@ package org.rhq.core.pluginapi.inventory;
 public interface InventoryContext {
 
     /**
-     * This method requests a deferred service discovery process for children of the resource. It request the discovery
-     * process and returns immediately without waiting for results. The discovery process inventories all discovered
-     * resources, so no further action is required.
+     * This method requests a deferred service discovery process for children of the resource. It requests the discovery
+     * process and returns immediately without waiting for results. The discovery process imports into inventory all discovered
+     * resources, so no further action is required from the caller.
      *
      * This method should be used by resources following an action (outside of create/delete children) that results
      * in having additional children discoverable. A good example is an operation execution that enables extra functionality
-     * on managed resource which in turn translates into having additional children available for management.
+     * on the managed resource which in turn translates into having additional children available for management.
      *
-     * Note: All resources are discovered by the regular platform level discovery process that runs every 24 hours. This method allows
-     * a resource to request a discovery for child resources to be run immediately, rather than wait for the scheduled platform
-     * discovery.
+     * Note: All services are discovered by the regular discovery process that runs every 24 hours. This method allows
+     * a resource to request an immediate run of the discovery process for child resources, rather than wait for the scheduled
+     * service discovery.
      */
     public void requestDeferredChildResourcesDiscovery();
 
 
     /**
      * This method requests a service discovery process for children of the resource. It schedules the discovery
-     * process and blocks until the discovery finishes. The discovery process inventories all discovered
-     * resources, so no further action is required.
+     * process and blocks until the discovery finishes. The discovery process imports into inventory all discovered
+     * resources, so no further action is required from the caller.
      *
      * This method should be used by resources following an action (outside of create/delete children) that results
      * in having additional children discoverable. A good example is an operation execution that enables extra functionality
@@ -54,9 +54,9 @@ public interface InventoryContext {
      * until the discovery processes finishes, this includes committing resources to inventory. For additional processing,
      * the calling resource can then request the list of child resources (it will include newly discovered resources too).
      *
-     * Note: All resources are discovered by the regular platform level discovery process that runs every 24 hours. This method allows
-     * a resource to request a discovery for child resources to be run immediately, rather than wait for the scheduled platform
-     * discovery.
+     * Note: All services are discovered by the regular discovery process that runs every 24 hours. This method allows
+     * a resource to request an immediate run of the discovery process for child resources, rather than wait for the scheduled
+     * service discovery.
      *
      * @return discovered child resources
      */
