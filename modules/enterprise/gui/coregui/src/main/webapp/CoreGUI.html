@@ -53,6 +53,26 @@
     </div>
 </div>
 
+<!-- In order for the browser auto-complete feature to work, -->
+<!-- we must define the login form in the original HTML markup -->
+<div id="loginDiv" style="display:none">
+<form action="login" id="loginForm" autocomplete="on">
+<table id="loginTable" valign="top">
+  <tr>
+  <td id="loginLabel">Username:</td>
+  <td><input id="loginUsername" name="u" style="margin-top:0px"></td>
+  </tr>
+  <tr>
+  <td id="loginLabel">Password:</td>
+  <td><input id="loginPassword" name="pw" type="password" style="margin:0px"></td>
+  </tr>
+  <tr>
+  <td><button id="loginSubmit" type="submit">Login</button></td>
+  <td id="loginRememberMe"></td>
+  </tr>
+</table></form>
+</div>
+
 <iframe src="javascript:''" id="__gwt_historyFrame" style="width:0;height:0;border:0"></iframe>
 
 </body>

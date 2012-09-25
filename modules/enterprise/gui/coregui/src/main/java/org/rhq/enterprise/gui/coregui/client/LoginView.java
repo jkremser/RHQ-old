@@ -28,6 +28,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
@@ -35,6 +37,7 @@ import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.Response;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.ui.FormPanel;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.FormErrorOrientation;
 import com.smartgwt.client.types.VerticalAlignment;
@@ -106,6 +109,11 @@ public class LoginView extends LocatableCanvas {
     private static final String PHONE = "phone";
     private static final String DEPARTMENT = "department";
     private static final String SESSIONID = "ldap.sessionid";
+    private static final String LOGINFORM_ID = "loginForm";
+    private static final String LOGINBUTTON_ID = "loginSubmit";
+    private static final String USERNAME_ID = "loginUsername";
+    private static final String PASSWORD_ID = "loginPassword";
+
     static final String PASSWORD = "ldap.password";
     private ProductInfo productInfo;
 
@@ -156,13 +164,19 @@ public class LoginView extends LocatableCanvas {
                     }
                 }
             });
+            
+            // Get a handle to the form and set its action to __gwt_login() method
+            final FormPanel fakeForm = FormPanel.wrap(Document.get().getElementById(LOGINFORM_ID), false);
+            fakeForm.setAction("javascript:__gwt_login()");
+            // export the JSNI function
+            injectLoginFunction(this);
 
             password.addKeyPressHandler(new KeyPressHandler() {
                 public void onKeyPress(KeyPressEvent event) {
                     if ((event.getCharacterValue() != null) && (event.getCharacterValue() == KeyCodes.KEY_ENTER)) {
                         form.submit();
                     }
-                }
+                }       
             });
 
             form.setFields(logo, header, new RowSpacerItem(), user, password, loginButton);
@@ -192,10 +206,16 @@ public class LoginView extends LocatableCanvas {
             form.addSubmitValuesHandler(new SubmitValuesHandler() {
                 public void onSubmitValues(SubmitValuesEvent submitValuesEvent) {
                     if (form.validate()) {
-                        login(form.getValueAsString("user"), form.getValueAsString("password"));
+//                        login(form.getValueAsString("user"), form.getValueAsString("password"));
+                        setUsername(form.getValueAsString("user"));
+                        setPassword(form.getValueAsString("password"));
+                        fakeForm.submit();
                     }
                 }
             });
+            form.setValue("user", getUsername());
+            form.setValue("password", getPassword());
+            
         }
     }
 
@@ -586,5 +606,37 @@ public class LoginView extends LocatableCanvas {
         }
         loginButton.setDisabled(false);
     }
+    
+    private void doSubmitForm() {
+        form.submit();
+    }
+    
+    private void doLogin() {
+        login(getUsername(), getPassword());
+    }
+    
+    private String getPassword() {
+        return ((InputElement) Document.get().getElementById(PASSWORD_ID)).getValue();
+    }
+    
+    private String getUsername() {
+        return ((InputElement) Document.get().getElementById(USERNAME_ID)).getValue();
+    }
+    
+    private void setPassword(String password) {
+        ((InputElement) Document.get().getElementById(PASSWORD_ID)).setValue(password);
+    }
+    
+    private void setUsername(String username) {
+        ((InputElement) Document.get().getElementById(USERNAME_ID)).setValue(username);
+    }
+
+    // This is our JSNI method that will be called on form submit
+    private native void injectLoginFunction(LoginView view) /*-{
+        $wnd.__gwt_login = $entry(function(){
+           view.@org.rhq.enterprise.gui.coregui.client.LoginView::doLogin()();
+        });
+    }-*/;
+
 
 }
