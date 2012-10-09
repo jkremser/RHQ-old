@@ -215,6 +215,16 @@
         <!--</init-param>-->
     </servlet>
 
+    <servlet>
+        <servlet-name>ErraiServlet</servlet-name>
+        <servlet-class>org.jboss.errai.bus.server.servlet.DefaultBlockingServlet</servlet-class>
+        <init-param>
+            <param-name>auto-discover-services</param-name>
+            <param-value>true</param-value>
+        </init-param>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
 
     <servlet-mapping>
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI RoleGWTService</servlet-name>
@@ -381,6 +391,11 @@
     <servlet-mapping>
         <servlet-name>Resteasy</servlet-name>
         <url-pattern>/reports/*</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>ErraiServlet</servlet-name>
+        <url-pattern>*.erraiBus</url-pattern>
     </servlet-mapping>
 
 

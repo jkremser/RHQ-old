@@ -21,11 +21,12 @@
         <!-- dependency versions -->
     <gwt.version>2.4.0</gwt.version>
     <smartgwt.version>3.0</smartgwt.version>
+    <errai.version>2.0.2.Final</errai.version>
 
         <!--  If this is too much memory to allocate to your gwt:debug process then override this property in
               in your settings.xml -->
     <gwt-plugin.extraJvmArgs>-Xms512M -Xmx512M -XX:PermSize=128M -XX:MaxPermSize=256M</gwt-plugin.extraJvmArgs>
-    <gwt-plugin.localWorkers>4</gwt-plugin.localWorkers>
+    <gwt-plugin.localWorkers>2</gwt-plugin.localWorkers>
 
     <coreGuiParams/>
     <coreGuiRunTarget>'http://localhost:7080/coregui/CoreGUI.html${coreGuiParams}'</coreGuiRunTarget>
@@ -134,6 +135,30 @@
       <groupId>com.smartgwt</groupId>
       <artifactId>smartgwt</artifactId>
       <version>${smartgwt.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.jboss.errai</groupId>
+      <artifactId>errai-common</artifactId>
+      <version>${errai.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.jboss.errai</groupId>
+      <artifactId>errai-bus</artifactId>
+      <version>${errai.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.jboss.errai</groupId>
+      <artifactId>errai-ioc</artifactId>
+      <version>${errai.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.jboss.errai</groupId>
+      <artifactId>errai-tools</artifactId>
+      <version>${errai.version}</version>
     </dependency>
 
 

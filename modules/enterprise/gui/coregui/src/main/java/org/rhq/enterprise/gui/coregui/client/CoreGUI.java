@@ -20,7 +20,8 @@ package org.rhq.enterprise.gui.coregui.client;
 
 import java.util.List;
 
-import com.google.gwt.core.client.EntryPoint;
+import javax.annotation.PostConstruct;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
@@ -42,6 +43,8 @@ import com.smartgwt.client.util.Page;
 import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.layout.VLayout;
+
+import org.jboss.errai.ioc.client.api.EntryPoint;
 
 import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
@@ -72,7 +75,8 @@ import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.NativePreviewHandler {
+@EntryPoint
+public class CoreGUI implements ValueChangeHandler<String>, Event.NativePreviewHandler {
 
     public static final String CONTENT_CANVAS_ID = "BaseContent";
 
@@ -124,6 +128,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
     private int rpcTimeout;
     private ProductInfo productInfo;
 
+    @PostConstruct
     public void onModuleLoad() {
         String hostPageBaseURL = GWT.getHostPageBaseURL();
         if (hostPageBaseURL.indexOf("/coregui/") == -1) {

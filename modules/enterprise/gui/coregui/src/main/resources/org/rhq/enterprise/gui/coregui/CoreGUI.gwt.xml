@@ -11,6 +11,8 @@
     <inherits name='com.smartgwt.SmartGwt' />
     <inherits name="com.smartgwt.tools.SmartGwtTools"/>
 
+    <inherits name="org.jboss.errai.bus.ErraiBus"/>
+    <inherits name="org.jboss.errai.ioc.Container"/>
 
     <inherits name='ca.nanometrics.gflot.GFlot'/>
 
@@ -103,6 +105,6 @@
                                an element that GWT 2.x supports. -->
     <set-property-fallback name="locale" value="${gwt.fallback.locale}"/>
 
-    <entry-point class='org.rhq.enterprise.gui.coregui.client.CoreGUI'/>
+    <entry-point class='org.rhq.enterprise.gui.coregui.client.CoreGUI'/> 
 
 </module>
