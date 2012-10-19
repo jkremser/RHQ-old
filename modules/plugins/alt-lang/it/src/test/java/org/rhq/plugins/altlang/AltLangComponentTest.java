@@ -1,0 +1,230 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
+
+package org.rhq.plugins.altlang;
+
+import org.apache.commons.io.FileUtils;
+import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.measurement.Availability;
+import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.pc.PluginContainer;
+import org.rhq.core.pc.PluginContainerConfiguration;
+import org.rhq.core.pc.inventory.InventoryManager;
+import org.rhq.core.pc.inventory.ResourceContainer;
+import org.rhq.core.pc.plugin.PluginFinder;
+import org.rhq.core.pc.plugin.PluginManager;
+import org.rhq.core.pc.util.FacetLockType;
+import org.rhq.core.pluginapi.operation.OperationFacet;
+import org.rhq.core.pluginapi.operation.OperationResult;
+import org.testng.annotations.BeforeSuite;
+
+import java.io.File;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
+
+public abstract class AltLangComponentTest {
+    private static final File ITEST_DIR = new File("target/itest");
+    private static final String M2_REPO_DIR = System.getProperty("user.home") + "/.m2/repository";
+    protected Resource testServer;
+
+    @BeforeSuite
+    public static void initSuite() throws Exception {
+        cleanTestDir();
+        startPluginContainer();
+    }
+
+    private static void startPluginContainer() throws Exception {
+        PluginContainerConfiguration pcContainerConfig = createPluginContainerConfiguration();
+
+        PluginContainer pluginContainer = PluginContainer.getInstance();
+        pluginContainer.setConfiguration(pcContainerConfig);
+        pluginContainer.initialize();
+
+        Set<String> pluginNames = pluginContainer.getPluginManager().getMetadataManager().getPluginNames();
+        System.out.println("Plugin container started with the following plugins: " + pluginNames);
+    }
+
+    private static PluginContainerConfiguration createPluginContainerConfiguration()
+            throws IOException {
+        PluginContainerConfiguration pcConfig = new PluginContainerConfiguration();
+
+        File pluginsDir = new File(ITEST_DIR, "plugins");
+        pluginsDir.mkdirs();
+
+        pcConfig.setPluginFinder(new GroovyComponentTest.M2RepoPluginFinder());
+        pcConfig.setPluginDirectory(pluginsDir);
+        pcConfig.setInsideAgent(false);
+        pcConfig.setCreateResourceClassloaders(true);
+
+        File tmpDir = new File(ITEST_DIR, "tmp");
+        tmpDir.mkdirs();
+        if (!tmpDir.isDirectory() || !tmpDir.canWrite()) {
+            throw new IOException("Failed to create temporary directory (" + tmpDir + ").");
+        }
+        pcConfig.setTemporaryDirectory(tmpDir);
+        return pcConfig;
+    }
+
+    private static void cleanTestDir() throws IOException {
+        File testDir = getTestDir();
+        FileUtils.deleteDirectory(testDir);
+        boolean created = testDir.mkdir();
+
+        assertTrue(created, "Failed to recreate " + testDir.getName());
+    }
+
+    protected static File getTestDir() {
+        return new File(System.getProperty("java.io.tmpdir"), "altlang");
+    }
+
+    protected void verifyDiscoveryScriptCalled() {
+        executeServerScanImmediately();
+        testServer = findResourceInInventory(getServerName());
+        assertNotNull(testServer, "Failed to discover " + getServerName());
+    }
+
+    protected void verifyResourceComponentStarted() {
+        File testDir = getTestDir();
+        File startFile = new File(testDir, getServerName() + ".start");
+
+        assertTrue(startFile.exists(), "Resource component script may not have been called. Failed to find " +
+            startFile.getName() + " which should have been generated by the script.");
+    }
+
+    protected void verifyResourceComponentStopped() {
+        InventoryManager inventoryMgr = PluginContainer.getInstance().getInventoryManager();
+        inventoryMgr.removeResource(testServer.getId());
+
+        File testDir = getTestDir();
+        File stopFile = new File(testDir, getServerName() + ".stop");
+
+        assertTrue(stopFile.exists(), "Resource component script may not have been called. Failed to find " +
+            stopFile.getName() + " which should have been generated by the script");
+    }
+
+    protected void verifyResourceAvailability() {
+        InventoryManager inventoryMgr = PluginContainer.getInstance().getInventoryManager();
+        Availability availability = inventoryMgr.getCurrentAvailability(testServer);
+
+        assertEquals(
+            availability.getAvailabilityType(),
+            AvailabilityType.UP,
+            "Resource component script may not have been called. Expected resource to be available."
+        );
+    }
+
+    protected void verifyOperationInvoked() throws Exception {
+        PropertySimple msg = new PropertySimple("msg", "hello world");
+        Configuration params = new Configuration();
+        params.put(msg);
+
+        String operationName = "echo";
+
+        OperationResult result = invokeOperation(testServer.getId(), operationName, params);
+
+        assertEquals(
+            result.getSimpleResult(),
+            msg.getStringValue(),
+            "Operations script may not have been called. Got back the wrong results"
+        );
+    }
+
+    protected abstract String getServerName();
+    
+    protected Resource findResourceInInventory(String resourceTypeName) {
+        InventoryManager inventoryMgr = PluginContainer.getInstance().getInventoryManager();
+        ResourceType resourceType = getResourceType(resourceTypeName, "AltLangTest");
+        Set<Resource> resources = inventoryMgr.getResourcesWithType(resourceType);
+
+        for (Resource resource : resources) {
+            if (resource.getName().equals(resourceTypeName)) {
+                return resource;
+            }
+        }
+
+        return null;
+    }
+
+    protected ResourceType getResourceType(String resourceTypeName, String pluginName) {
+        PluginManager pluginManager = PluginContainer.getInstance().getPluginManager();
+        PluginMetadataManager pluginMetadataManager = pluginManager.getMetadataManager();
+        return pluginMetadataManager.getType(resourceTypeName, pluginName);
+    }
+
+    protected void executeServerScanImmediately() {
+        InventoryManager inventoryMgr = PluginContainer.getInstance().getInventoryManager();
+        inventoryMgr.executeServerScanImmediately();
+    }
+
+    protected OperationResult invokeOperation(int resourceId, String name, Configuration parameters) throws Exception {
+        InventoryManager inventoryMgr = PluginContainer.getInstance().getInventoryManager();
+        ResourceContainer container = inventoryMgr.getResourceContainer(resourceId);
+
+        OperationFacet facet = container.createResourceComponentProxy(OperationFacet.class, FacetLockType.WRITE,
+            3000L, false, true);
+
+        return facet.invokeOperation(name, parameters);
+    }
+
+    static class M2RepoPluginFinder implements PluginFinder {
+        String version = "1.4.0-SNAPSHOT";
+
+
+        public Collection<URL> findPlugins() {
+            List<URL> pluginURLs = new ArrayList<URL>();
+            pluginURLs.add(toURL("org/rhq/rhq-platform-plugin/" + version + "/rhq-platform-plugin-" + version + ".jar"));
+            pluginURLs.add(toURL("org/rhq/plugins/altlang/rhq-alt-lang-plugin/" + version + "/rhq-alt-lang-plugin-" +
+                version + ".jar"));
+            pluginURLs.add(toURL("org/rhq/plugins/altlang/rhq-alt-lang-test-plugin/" + version +
+                "/rhq-alt-lang-test-plugin-" + version + ".jar"));
+
+            return pluginURLs;
+        }
+
+        URL toURL(String path) {
+            try {
+                File file = new File(M2_REPO_DIR, path);
+                if (!file.exists()) {
+                    throw new RuntimeException(file.getAbsolutePath() + " does not exist");
+                }
+                return new File(M2_REPO_DIR, path).toURI().toURL();
+            }
+            catch (MalformedURLException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+}
