@@ -38,20 +38,8 @@ import org.apache.commons.logging.LogFactory;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.container.test.api.RunAsClient;
-import org.jboss.arquillian.testng.Arquillian;
-import org.jboss.shrinkwrap.api.ArchivePaths;
-import org.jboss.shrinkwrap.api.ShrinkWrap;
-import org.jboss.shrinkwrap.api.asset.EmptyAsset;
-import org.jboss.shrinkwrap.api.spec.EnterpriseArchive;
-import org.jboss.shrinkwrap.api.spec.JavaArchive;
-import org.jboss.shrinkwrap.resolver.api.DependencyResolvers;
-import org.jboss.shrinkwrap.resolver.api.maven.MavenDependencyResolver;
-
 import org.rhq.bindings.StandardScriptPermissions;
 import org.rhq.scripting.javascript.JsEngineProvider;
-import org.rhq.scripting.python.PythonScriptEngineProvider;
 
 /**
  * 
