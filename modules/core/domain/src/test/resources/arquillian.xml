@@ -17,4 +17,10 @@
       <property name="jbossHome">${jboss.unzip.location}</property>
     </configuration>
   </container>
+
+  <extension qualifier="jacoco">
+    <property name="destFile">jacoco-unit-test.exec</property>
+    <property name="includes">org.rhq.*</property>
+  </extension>
+        
 </arquillian>

@@ -1286,6 +1286,27 @@
              <name>code-coverage</name>
           </property>
        </activation>
+
+       <!-- Enable this once Arquillian Jacoco extension has released a new version with our
+          patches. -->
+       <!--
+       <dependencies>
+          <dependency>
+             <groupId>org.jboss.arquillian.extension</groupId>
+             <artifactId>arquillian-jacoco</artifactId>
+             <scope>test</scope>
+             <version>1.0.0.Final-SNAPSHOT</version>
+          </dependency>
+ 
+          <dependency>
+             <groupId>org.jacoco</groupId>
+             <artifactId>org.jacoco.core</artifactId>
+             <version>${jacoco.version}</version>
+             <scope>test</scope>
+          </dependency>
+       </dependencies>
+       -->
+
        <build>
           <plugins>
              <!-- This definition creates the 2 independent coverage reports -
