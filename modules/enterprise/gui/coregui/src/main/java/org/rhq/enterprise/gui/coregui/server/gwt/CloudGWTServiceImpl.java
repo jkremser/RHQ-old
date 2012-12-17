@@ -47,6 +47,7 @@ import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.cloud.AffinityGroupManagerLocal;
 import org.rhq.enterprise.server.cloud.CloudManagerLocal;
 import org.rhq.enterprise.server.cloud.PartitionEventManagerLocal;
+import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -64,6 +65,8 @@ public class CloudGWTServiceImpl extends AbstractGWTServiceImpl implements Cloud
     private PartitionEventManagerLocal partitionEventManager = LookupUtil.getPartitionEventManager();
 
     private AffinityGroupManagerLocal affinityGroupManager = LookupUtil.getAffinityGroupManager();
+    
+    private ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
 
     @Override
     public PageList<ServerWithAgentCountComposite> getServers(PageControl pc) throws RuntimeException {
@@ -337,6 +340,15 @@ public class CloudGWTServiceImpl extends AbstractGWTServiceImpl implements Cloud
     public void updateAffinityGroup(AffinityGroup affinityGroup) throws RuntimeException {
         try {
             affinityGroupManager.update(getSessionSubject(), affinityGroup);
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+    
+    @Override
+    public void purgeAgentSecurityToken(int agentId) throws RuntimeException {
+        try {
+            configurationManager.purgeAgentSecurityToken(agentId);
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

@@ -31,8 +31,12 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.VisibilityMode;
+import com.smartgwt.client.util.BooleanCallback;
 import com.smartgwt.client.util.SC;
+import com.smartgwt.client.widgets.form.fields.FormItemIcon;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
+import com.smartgwt.client.widgets.form.fields.events.IconClickEvent;
+import com.smartgwt.client.widgets.form.fields.events.IconClickHandler;
 import com.smartgwt.client.widgets.layout.SectionStack;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
 
@@ -158,8 +162,16 @@ public class AgentDetailView extends LocatableVLayout {
         StaticTextItem portItem = new StaticTextItem(FIELD_PORT.propertyName(), FIELD_PORT.title());
         portItem.setValue(agent.getPort());
 
-        StaticTextItem tokenItem = new StaticTextItem(FIELD_AGENT_TOKEN.propertyName(), FIELD_AGENT_TOKEN.title());
+        FormItemIcon removeTokenIcon = new FormItemIcon();
+        removeTokenIcon.setSrc("[SKIN]/actions/remove.png");
+        final StaticTextItem tokenItem = new StaticTextItem(FIELD_AGENT_TOKEN.propertyName(), FIELD_AGENT_TOKEN.title());
         tokenItem.setValue(agent.getAgentToken());
+        tokenItem.setIcons(removeTokenIcon);
+        tokenItem.addIconClickHandler(new IconClickHandler() {
+            public void onIconClick(IconClickEvent event) {
+                removeToken(tokenItem);
+            }
+        });
 
         StaticTextItem lastAvailabilityItem = new StaticTextItem(FIELD_LAST_AVAILABILITY_REPORT.propertyName(),
             FIELD_LAST_AVAILABILITY_REPORT.title());
@@ -199,5 +211,25 @@ public class AgentDetailView extends LocatableVLayout {
 
         detailsSection = section;
         ++initSectionCount;
+    }
+
+    private void removeToken(final StaticTextItem tokenItem) {
+        SC.ask("really?", new BooleanCallback() {
+
+            @Override
+            public void execute(Boolean value) {
+                if (value) {
+                    GWTServiceLookup.getCloudService().purgeAgentSecurityToken(agentId, new AsyncCallback<Void>() {
+                        public void onSuccess(Void result) {
+                            tokenItem.setValue(Agent.SECURITY_TOKEN_RESET);
+                        }
+
+                        public void onFailure(Throwable caught) {
+                            //todo: handle
+                        }
+                    });
+                }
+            }
+        });
     }
 }

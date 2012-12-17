@@ -134,16 +134,24 @@ public class CoreServerServiceImpl implements CoreServerService {
                     }
                 }
             } else {
+                boolean ok = false;
                 if (agentByName != null) {
-                    // the agent request provided a name that already is in use by an agent. However, the request
-                    // provided a security token that was not assigned to any agent! How can this be? Something is fishy.
-                    String msg = "The agent asking for registration under the name [" + request.getName()
-                        + "] provided an invalid security token. This request will fail. " + securityTokenMessage();
-                    throw new AgentRegistrationException(msg);
+                    // if the token in the DB for the agent with this name is set to Agent.SECURITY_TOKEN_RESET,
+                    // allow registration of this agent again with his existing token
+                    if (Agent.SECURITY_TOKEN_RESET.equals(agentByName.getAgentToken())) {
+                        agentByName.setAgentToken(request.getOriginalToken());
+                        ok = true;
+                    } else {
+                        // the agent request provided a name that already is in use by an agent. However, the request
+                        // provided a security token that was not assigned to any agent! How can this be? Something is fishy.
+                        String msg = "The agent asking for registration under the name [" + request.getName()
+                            + "] provided an invalid security token. This request will fail. " + securityTokenMessage();
+                        throw new AgentRegistrationException(msg);
+                    }
                 }
                 Agent agentByAddressPort = getAgentManager().getAgentByAddressAndPort(request.getAddress(),
                     request.getPort());
-                if (agentByAddressPort != null) {
+                if (!ok && agentByAddressPort != null) {
                     // The agent is requesting to register an unused agent name - so this is considered a new agent.
                     // It provided a security token but it is an unknown/obsolete/bogus token (usually due to the
                     // fact that someone purged the platform/agent from the server database but the old agent is

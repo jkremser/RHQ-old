@@ -89,7 +89,6 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.ResourceErrorType;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
@@ -2728,5 +2727,12 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         }
 
         return true;
+    }
+
+    @Override
+    public void purgeAgentSecurityToken(int agentId) {
+        Agent agent = agentManager.getAgentByID(agentId);
+        agent.setAgentToken(Agent.SECURITY_TOKEN_RESET);
+        agentManager.updateAgent(agent);
     }
 }

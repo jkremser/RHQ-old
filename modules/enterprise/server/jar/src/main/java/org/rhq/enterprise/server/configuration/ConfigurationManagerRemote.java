@@ -189,4 +189,6 @@ public interface ConfigurationManagerRemote {
 
     Configuration translateResourceConfiguration(Subject subject, int resourceId, Configuration configuration,
         boolean fromStructured) throws ResourceNotFoundException;
+    
+    void purgeAgentSecurityToken(int agentId);
 }

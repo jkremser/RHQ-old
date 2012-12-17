@@ -109,4 +109,6 @@ public interface CloudGWTService extends RemoteService {
     void addAgentsToGroup(int affinityGroupId, Integer[] agentIds) throws RuntimeException;
 
     void removeAgentsFromGroup(Integer[] agentIds) throws RuntimeException;
+    
+    void purgeAgentSecurityToken(int agentId) throws RuntimeException;
 }

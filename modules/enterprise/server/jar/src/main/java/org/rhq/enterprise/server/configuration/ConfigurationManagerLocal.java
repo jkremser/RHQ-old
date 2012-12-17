@@ -473,4 +473,6 @@ public interface ConfigurationManagerLocal extends ConfigurationManagerRemote {
 
     ConfigurationDefinition getOptionsForConfigurationDefinition(Subject subject, int resourceId,
         ConfigurationDefinition def);
+    
+    void purgeAgentSecurityToken(int agentId);
 }
