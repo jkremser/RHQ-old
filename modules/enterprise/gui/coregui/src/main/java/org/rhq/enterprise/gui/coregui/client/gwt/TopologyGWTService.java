@@ -234,4 +234,6 @@ public interface TopologyGWTService extends RemoteService {
      * @throws RuntimeException
      */
     void removeAgentsFromGroup(Integer[] agentIds) throws RuntimeException;
+    
+    void purgeAgentSecurityToken(int agentId) throws RuntimeException;
 }

@@ -21,4 +21,10 @@
     <justification>Removed already deprecated web services in this release, this file was used for WS client-server
       compatibility</justification>
   </difference>
+  <difference>
+    <className>org/rhq/enterprise/server/configuration/ConfigurationManagerRemote</className>
+    <differenceType>7012</differenceType> <!-- method added to an interface -->
+    <method>void purgeAgentSecurityToken(org.rhq.core.domain.auth.Subject, int)</method>
+    <justification>Adding a method to a remote API interface is safe. This class is never to be implemented by users.</justification>
+  </difference>
 </differences>

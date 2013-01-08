@@ -31,7 +31,12 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.VisibilityMode;
+import com.smartgwt.client.util.BooleanCallback;
+import com.smartgwt.client.util.SC;
+import com.smartgwt.client.widgets.form.fields.FormItemIcon;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
+import com.smartgwt.client.widgets.form.fields.events.IconClickEvent;
+import com.smartgwt.client.widgets.form.fields.events.IconClickHandler;
 import com.smartgwt.client.widgets.layout.SectionStack;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
 
@@ -43,6 +48,7 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableSectionStack;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.LocatableVLayout;
@@ -170,8 +176,17 @@ public class AgentDetailView extends LocatableVLayout {
         StaticTextItem portItem = new StaticTextItem(FIELD_PORT.propertyName(), FIELD_PORT.title());
         portItem.setValue(agent.getPort());
 
-        StaticTextItem tokenItem = new StaticTextItem(FIELD_AGENT_TOKEN.propertyName(), FIELD_AGENT_TOKEN.title());
+        FormItemIcon removeTokenIcon = new FormItemIcon();
+        removeTokenIcon.setSrc("[SKIN]/actions/remove.png");
+        removeTokenIcon.setPrompt(MSG.view_adminTopology_message_agentsTokenTooltip());
+        final StaticTextItem tokenItem = new StaticTextItem(FIELD_AGENT_TOKEN.propertyName(), FIELD_AGENT_TOKEN.title());
         tokenItem.setValue(agent.getAgentToken());
+        tokenItem.setIcons(removeTokenIcon);
+        tokenItem.addIconClickHandler(new IconClickHandler() {
+            public void onIconClick(IconClickEvent event) {
+                removeToken(tokenItem);
+            }
+        });
 
         StaticTextItem lastAvailabilityItem = new StaticTextItem(FIELD_LAST_AVAILABILITY_REPORT.propertyName(),
             FIELD_LAST_AVAILABILITY_REPORT.title());
@@ -202,8 +217,8 @@ public class AgentDetailView extends LocatableVLayout {
         }
         currentServerItem.setValue(serverValue);
 
-        form.setItems(nameItem, addressItem, portItem, tokenItem, lastAvailabilityItem, affinityGroupItem,
-            currentServerItem);
+        form.setItems(nameItem, addressItem, portItem, tokenItem, lastAvailabilityItem,
+            affinityGroupItem, currentServerItem);
 
         SectionStackSection section = new SectionStackSection(MSG.common_title_details());
         section.setExpanded(true);
@@ -211,5 +226,30 @@ public class AgentDetailView extends LocatableVLayout {
 
         detailsSection = section;
         ++initSectionCount;
+    }
+
+    private void removeToken(final StaticTextItem tokenItem) {
+        SC.ask(MSG.view_adminTopology_message_agentsTokenConfirm(), new BooleanCallback() {
+
+            @Override
+            public void execute(Boolean value) {
+                if (value) {
+                    GWTServiceLookup.getTopologyService().purgeAgentSecurityToken(agentId, new AsyncCallback<Void>() {
+                        public void onSuccess(Void result) {
+                            tokenItem.setValue(Agent.SECURITY_TOKEN_RESET);
+                            Message msg = new Message(MSG.view_adminTopology_message_agentsTokenSuccess(),
+                                Message.Severity.Info);
+                            CoreGUI.getMessageCenter().notify(msg);
+                        }
+
+                        public void onFailure(Throwable caught) {
+                            CoreGUI.getErrorHandler().handleError(
+                                MSG.view_adminTopology_message_agentsTokenFail(String.valueOf(agentId)) + " " + caught.getMessage(),
+                                caught);
+                        }
+                    });
+                }
+            }
+        });
     }
 }

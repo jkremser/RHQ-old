@@ -78,6 +78,7 @@ import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.criteria.AbstractConfigurationUpdateCriteria;
+import org.rhq.core.domain.criteria.AgentCriteria;
 import org.rhq.core.domain.criteria.GroupPluginConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.GroupResourceConfigurationUpdateCriteria;
 import org.rhq.core.domain.criteria.PluginConfigurationUpdateCriteria;
@@ -89,7 +90,6 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.ResourceErrorType;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
@@ -110,6 +110,7 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.auth.prefs.SubjectPreferences;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
+import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.configuration.job.AbstractGroupConfigurationUpdateJob;
 import org.rhq.enterprise.server.configuration.job.GroupPluginConfigurationUpdateJob;
 import org.rhq.enterprise.server.configuration.job.GroupResourceConfigurationUpdateJob;
@@ -2728,5 +2729,19 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         }
 
         return true;
+    }
+
+    @Override
+    @RequiredPermission(Permission.MANAGE_SECURITY)
+    public void purgeAgentSecurityToken(Subject subject, int agentId) {
+        AgentCriteria criteria = new AgentCriteria();
+        criteria.addFilterId(agentId);
+        PageList<Agent> agents = agentManager.findAgentsByCriteria(subject, criteria);
+        if (agents == null || agents.size() != 1) {
+            throw new IllegalStateException("Cannot retrieve 1 unique agent for agent id [" + agentId + "]");
+        }
+        Agent agent = agents.get(0);
+        agent.setAgentToken(Agent.SECURITY_TOKEN_RESET);
+        agentManager.updateAgent(agent);
     }
 }

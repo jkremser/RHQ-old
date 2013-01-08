@@ -189,4 +189,15 @@ public interface ConfigurationManagerRemote {
 
     Configuration translateResourceConfiguration(Subject subject, int resourceId, Configuration configuration,
         boolean fromStructured) throws ResourceNotFoundException;
+    
+    /**
+     * This method deletes the agent's security token in order to make the new registration possible (and obtain newly
+     * generated token during next agent registration phase).
+     *  
+     * The subject needs to have MANAGE_SECURITY permission.
+     *  
+     * @param subject                the user who is requesting the purge
+     * @param agentId                the id of the agent which security token should be purged
+     */
+    void purgeAgentSecurityToken(Subject subject, int agentId);
 }
