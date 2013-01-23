@@ -289,10 +289,10 @@ public class Table<DS extends RPCDataSource> extends LocatableHLayout implements
      * @param grid
      */
     protected void configureListGrid(ListGrid grid) {
-        listGrid.setWidth100();
-        listGrid.setHeight100();
-        listGrid.setLoadingDataMessage("${loadingImage}&nbsp;" + MSG.common_msg_loading());
-        listGrid.setEmptyMessage(MSG.common_msg_noItemsToShow());
+        grid.setWidth100();
+        grid.setHeight100();
+        grid.setLoadingDataMessage("${loadingImage}&nbsp;" + MSG.common_msg_loading());
+        grid.setEmptyMessage(MSG.common_msg_noItemsToShow());
     }
 
     @Override
