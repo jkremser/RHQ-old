@@ -42,6 +42,7 @@ import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.SortDirection;
+import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
 import com.smartgwt.client.widgets.grid.CellFormatter;
@@ -49,15 +50,23 @@ import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+import com.smartgwt.client.widgets.grid.events.FieldStateChangedEvent;
+import com.smartgwt.client.widgets.grid.events.FieldStateChangedHandler;
+import com.smartgwt.client.widgets.grid.events.SortChangedHandler;
+import com.smartgwt.client.widgets.grid.events.SortEvent;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.search.SearchSubsystem;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.components.ReportExporter;
 import org.rhq.enterprise.gui.coregui.client.components.table.EscapedHtmlCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.components.table.IconField;
@@ -71,11 +80,13 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellForma
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.report.DriftComplianceReportResourceSearchView;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.TableUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
+import org.rhq.enterprise.gui.coregui.client.util.preferences.UserPreferences;
 import org.rhq.enterprise.gui.coregui.client.util.selenium.SeleniumUtility;
 
 /**
@@ -163,6 +174,47 @@ public class ResourceSearchView extends Table {
         return ResourceDatasource.getInstance();
     }
 
+    @Override
+    protected void onInit() {
+        final int sid = UserSessionManager.getSessionSubject().getId();
+        SubjectCriteria criteria = new SubjectCriteria();
+        criteria.addFilterId(sid);
+        GWTServiceLookup.getSubjectService().findSubjectsByCriteria(criteria, new AsyncCallback<PageList<Subject>>() {
+            public void onSuccess(PageList<Subject> result) {
+                if (result.size() > 0) {
+                    UserPreferences userPreferences = new UserPreferences(result.get(0));
+                    // do the stuff
+                    SC.say(userPreferences.getConfiguration().toString(true));
+                } else {
+                    Log.trace("Error obtaining subject with id:" + sid);
+                }
+                ResourceSearchView.super.onInit();
+            }
+
+            public void onFailure(Throwable caught) {
+                Log.trace("Error obtaining subject with id:" + sid, caught);
+                ResourceSearchView.super.onInit();
+            }
+        });
+    }
+    
+    @Override
+    protected void configureListGrid(ListGrid grid) {
+        super.configureListGrid(grid);
+        grid.addFieldStateChangedHandler(new FieldStateChangedHandler() {
+            public void onFieldStateChanged(FieldStateChangedEvent event) {
+                SC.say("got it1");
+                // save to prefs
+            }
+        });
+        grid.addSortChangedHandler(new SortChangedHandler() {
+            public void onSortChanged(SortEvent event) {
+                SC.say("got it2");
+                // save to prefs
+            }
+        });
+    }
+    
     @Override
     protected void configureTable() {
         List<ListGridField> fields = createFields();
