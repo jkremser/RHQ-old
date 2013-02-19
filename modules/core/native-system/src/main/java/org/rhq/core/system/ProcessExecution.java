@@ -52,6 +52,9 @@ public class ProcessExecution {
     private boolean captureOutput = false;
     private boolean killOnTimeout = false;
     private boolean checkExecutableExists = true;
+    
+    // SIGINT and other signals coming from the parent process won't kill the child process
+    private boolean separatedFromParent = false;
 
     /**
      * Constructor for {@link ProcessExecution} that defines the full path to the executable that will be run. See the
@@ -237,6 +240,23 @@ public class ProcessExecution {
     public void setCheckExecutableExists(boolean checkExecutableExists) {
         this.checkExecutableExists = checkExecutableExists;
     }
+    
+    /**
+     * If <code>true</code>, then the executed process is run as a background process and no signals
+     * from parent are relayed to the new spawned process. If the agent is run in interactive mode, 
+     * the <code>CTRL+C</code> shortcut <code>(SIGINT)</code> may eventually kill the processes which
+     * were run by the agent. If this flag is set to <code>true</code>, it shouldn't happen. It basically
+     * concatenates the <code>" & wait $!"</code> string at the end of the command.
+     *
+     * @return separatedFromParent Should the process run in background (default is <code>false</code>)
+     */
+    public boolean isSeparatedFromParent() {
+        return separatedFromParent;
+    }
+
+    public void setSeparatedFromParent(boolean separatedProcess) {
+        this.separatedFromParent = separatedProcess;
+    }
 
     @Override
     public String toString() {
@@ -248,6 +268,7 @@ public class ProcessExecution {
         buf.append("], working-dir=[").append(this.workingDirectory);
         buf.append("], wait=[").append(this.waitForCompletion);
         buf.append("], capture-output=[").append(this.captureOutput);
+        buf.append("], separated-from-parent=[").append(this.separatedFromParent);
         buf.append("], kill-on-timeout=[").append(this.killOnTimeout);
         buf.append("], executable-is-command=[").append(this.checkExecutableExists);
         buf.append("]");

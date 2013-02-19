@@ -53,6 +53,7 @@ import org.rhq.core.util.UtilI18NResourceKeys;
 public class ProcessExecutor {
 
     private static ExecutorService threadPool = Executors.newCachedThreadPool();
+    private static String RUN_IN_BACKGROUND_SUFFIX = " & wait $!";
 
     /**
      * This executes any operating system process as described in the given start command. When this method returns, it
@@ -473,12 +474,17 @@ public class ProcessExecutor {
         // build the command line
         String[] args = process.getArguments();
         int numArgs = (args != null) ? args.length : 0;
-        String[] retCmdline = new String[numArgs + 1]; // +1 for the program executable path
+        // +1 for the program executable path and possibly +1 for the RUN_IN_BACKGROUND_SUFFIX
+        String[] retCmdline = new String[numArgs + 1 + (process.isSeparatedFromParent() ? 1 : 0)];
 
         retCmdline[0] = fullProgramPath;
 
         if (numArgs > 0) {
             System.arraycopy(args, 0, retCmdline, 1, numArgs);
+        }
+        
+        if (process.isSeparatedFromParent()) {
+            retCmdline[numArgs + 1] = RUN_IN_BACKGROUND_SUFFIX;
         }
 
         return retCmdline;

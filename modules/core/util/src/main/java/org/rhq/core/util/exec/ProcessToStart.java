@@ -52,6 +52,7 @@ public class ProcessToStart {
     private static final String PARAM_WAIT_FOR_EXIT = "waitForExit";
     private static final String PARAM_KILL_ON_TIMEOUT = "killOnTimeout";
     private static final String PARAM_CHECK_EXECUTABLE_EXISTS = "checkExecutableExists";
+    private static final String PARAM_SEPARATED_FROM_PARENT = "separatedFromParent";
 
     private Map<String, Object> map = new HashMap<String, Object>();
 
@@ -602,6 +603,41 @@ public class ProcessToStart {
             map.put(PARAM_CHECK_EXECUTABLE_EXISTS, value);
         } else {
             map.remove(PARAM_CHECK_EXECUTABLE_EXISTS);
+        }
+    }
+    
+    /**
+     * If <code>true</code>, then the executed process is run as a background process and no signals
+     * from parent are relayed to the new spawned process. If the agent is run in interactive mode, 
+     * the <code>CTRL+C</code> shortcut <code>(SIGINT)</code> may eventually kill the processes which
+     * were run by the agent. If this flag is set to <code>true</code>, it shouldn't happen. It basically
+     * concatenates the <code>" & wait $!"</code> string at the end of the command.
+     *
+     * @return separatedFromParent Should the process run in background (default is <code>false</code>)
+     */
+    public Boolean isSeparatedFromParent() {
+        Boolean flag = (Boolean) map.get(PARAM_SEPARATED_FROM_PARENT);
+
+        if (flag == null) {
+            flag = Boolean.FALSE;
+        }
+
+        return flag;
+    }
+
+    /**
+     * Sets the flag to indicate if the executable should be separated from the parent process.
+     *
+     * @param value the separation flag
+     *
+     * @see   #isSeparatedFromParent()
+     */
+    public void setSeparatedFromParent(Boolean value) {
+        // flag is optional, but non-nullable; remove it if null is passed in
+        if (value != null) {
+            map.put(PARAM_SEPARATED_FROM_PARENT, value);
+        } else {
+            map.remove(PARAM_SEPARATED_FROM_PARENT);
         }
     }
 }
