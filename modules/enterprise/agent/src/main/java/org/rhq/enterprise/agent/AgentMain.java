@@ -200,7 +200,7 @@ public class AgentMain {
     /**
      * The directory where this agent is installed.
      */
-    private static String m_agentHomeDirectory;
+    private String m_agentHomeDirectory;
 
     /**
      * The command line arguments specified by the user.
@@ -526,7 +526,7 @@ public class AgentMain {
      * 
      * @return agent home directory, or empty string if it cannot be determined
      */
-    public static String getAgentHomeDirectory() {
+    public String getAgentHomeDirectory() {
         if (m_agentHomeDirectory != null) {
             return m_agentHomeDirectory;
         }
