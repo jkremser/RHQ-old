@@ -636,6 +636,11 @@ public class ProcessToStart {
         // flag is optional, but non-nullable; remove it if null is passed in
         if (value != null) {
             map.put(PARAM_SEPARATED_FROM_PARENT, value);
+            String[] envProps = getEnvironment();
+            String[] newEnvProps = new String[envProps.length + 1];
+            System.arraycopy(envProps, 0, newEnvProps, 0, envProps.length);
+            newEnvProps[envProps.length] = "RHQ_CONTROL_WAIT=true";
+            setEnvironment(newEnvProps);
         } else {
             map.remove(PARAM_SEPARATED_FROM_PARENT);
         }

@@ -53,7 +53,9 @@ import org.rhq.core.util.UtilI18NResourceKeys;
 public class ProcessExecutor {
 
     private static ExecutorService threadPool = Executors.newCachedThreadPool();
-    private static String RUN_IN_BACKGROUND_SUFFIX = " & wait $!";
+    
+    // HC
+    private static String RUN_IN_BACKGROUND_PREFIX = " /home/jkremser/background.sh";
 
     /**
      * This executes any operating system process as described in the given start command. When this method returns, it
@@ -477,10 +479,15 @@ public class ProcessExecutor {
         // +1 for the program executable path and possibly +1 for the RUN_IN_BACKGROUND_SUFFIX
         String[] retCmdline = new String[numArgs + 1 + (process.isSeparatedFromParent() ? 1 : 0)];
 
-        retCmdline[0] = fullProgramPath;
-
         if (numArgs > 0) {
-            System.arraycopy(args, 0, retCmdline, 1, numArgs);
+            System.arraycopy(args, 0, retCmdline, (process.isSeparatedFromParent() ? 2 : 1), numArgs);
+        }
+        
+        if (process.isSeparatedFromParent()) {
+            retCmdline[0] = RUN_IN_BACKGROUND_PREFIX;
+            retCmdline[1] = fullProgramPath;
+        } else {
+            retCmdline[0] = fullProgramPath;
         }
         
         if (process.isSeparatedFromParent()) {
