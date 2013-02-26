@@ -1594,6 +1594,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
             if (!this.configuration.isInsideAgent()) {
                 // Auto-sync if the PC is running within the embedded JBossAS console.
                 resourceContainer.setSynchronizationState(ResourceContainer.SynchronizationState.SYNCHRONIZED);
+                
+                //TODO: register listener
+//                resourceContainer.
             }
             this.resourceContainers.put(resource.getUuid(), resourceContainer);
         } else {
@@ -1845,39 +1848,47 @@ public class InventoryManager extends AgentService implements ContainerService, 
     private <T extends ResourceComponent<?>> ResourceContext<T> createResourceContext(Resource resource,
         T parentComponent, ResourceContext<?> parentResourceContext, ResourceDiscoveryComponent<T> discoveryComponent) {
         File pluginDataDir = new File(this.configuration.getDataDirectory(), resource.getResourceType().getPlugin());
-
-        return new ResourceContext<T>(resource, // the resource itself
-            parentComponent, // its parent component
-            parentResourceContext, //the resource context of the parent
-            discoveryComponent, // the discovery component (this is actually the proxy to it)
-            SystemInfoFactory.createSystemInfo(), // for native access
-            this.configuration.getTemporaryDirectory(), // location for plugin to write temp files
-            pluginDataDir, // location for plugin to write data files
-            this.configuration.getContainerName(), // the name of the agent/PC
-            getEventContext(resource), // for event access
-            getOperationContext(resource), // for operation manager access
-            getContentContext(resource), // for content manager access
-            getAvailabilityContext(resource, this.availabilityCollectors), // for components that want to perform async avail checking
-            getInventoryContext(resource), this.configuration.getPluginContainerDeployment()); // helps components make determinations of what to do
+        File binDir = new File(this.configuration.getDataDirectory(), resource.getResourceType().getPlugin() + File.separator + "bin");
+        
+        return new ResourceContext.Builder().withResource(resource) // the resource itself
+            .withParentResourceComponent(parentComponent) // its parent component
+            .withParentResourceContext(parentResourceContext) //the resource context of the parent
+            .withResourceDiscoveryComponent(discoveryComponent) // the discovery component (this is actually the proxy to it)
+            .withSystemInformation(SystemInfoFactory.createSystemInfo()) // for native access
+            .withTemporaryDirectory(this.configuration.getTemporaryDirectory()) // location for plugin to write temp files
+            .withDataDirectory(pluginDataDir) // location for plugin to write data files
+            .withBinDirectory(binDir) // location for plugin to store its bin files
+            .withPluginContainerName(this.configuration.getContainerName()) // the name of the agent/PC
+            .withEventContext(getEventContext(resource)) // for event access
+            .withOperationContext(getOperationContext(resource)) // for operation manager access
+            .withContentContext(getContentContext(resource)) // for content manager access
+            .withAvailabilityContext(getAvailabilityContext(resource, this.availabilityCollectors)) // for components that want to perform async avail checking
+            .withInventoryContext(getInventoryContext(resource))// helps components make determinations of what to do
+            .withPluginContainerDeployment(this.configuration.getPluginContainerDeployment()) 
+            .build();
     }
 
     public <T extends ResourceComponent<?>> ResourceUpgradeContext<T> createResourceUpgradeContext(Resource resource,
         ResourceContext<?> parentResourceContext, T parentComponent, ResourceDiscoveryComponent<T> discoveryComponent) {
         File pluginDataDir = new File(this.configuration.getDataDirectory(), resource.getResourceType().getPlugin());
+        File binDir = new File(this.configuration.getDataDirectory(), resource.getResourceType().getPlugin() + File.separator + "bin");
 
-        return new ResourceUpgradeContext<T>(resource, // the resource itself
-            parentResourceContext, //the context of its parent resource
-            parentComponent, // its parent component
-            discoveryComponent, // the discovery component (this is actually the proxy to it)
-            SystemInfoFactory.createSystemInfo(), // for native access
-            this.configuration.getTemporaryDirectory(), // location for plugin to write temp files
-            pluginDataDir, // location for plugin to write data files
-            this.configuration.getContainerName(), // the name of the agent/PC
-            getEventContext(resource), // for event access
-            getOperationContext(resource), // for operation manager access
-            getContentContext(resource), // for content manager access
-            getAvailabilityContext(resource, this.availabilityCollectors), // for components that want avail manager access
-            getInventoryContext(resource), this.configuration.getPluginContainerDeployment()); // helps components make determinations of what to do
+        return new ResourceUpgradeContext.Builder().withResource(resource) // the resource itself
+        .withParentResourceComponent(parentComponent) // its parent component
+        .withParentResourceContext(parentResourceContext) //the resource context of the parent
+        .withResourceDiscoveryComponent(discoveryComponent) // the discovery component (this is actually the proxy to it)
+        .withSystemInformation(SystemInfoFactory.createSystemInfo()) // for native access
+        .withTemporaryDirectory(this.configuration.getTemporaryDirectory()) // location for plugin to write temp files
+        .withDataDirectory(pluginDataDir) // location for plugin to write data files
+        .withBinDirectory(binDir) // location for plugin to store its bin files
+        .withPluginContainerName(this.configuration.getContainerName()) // the name of the agent/PC
+        .withEventContext(getEventContext(resource)) // for event access
+        .withOperationContext(getOperationContext(resource)) // for operation manager access
+        .withContentContext(getContentContext(resource)) // for content manager access
+        .withAvailabilityContext(getAvailabilityContext(resource, this.availabilityCollectors)) // for components that want to perform async avail checking
+        .withInventoryContext(getInventoryContext(resource))// helps components make determinations of what to do
+        .withPluginContainerDeployment(this.configuration.getPluginContainerDeployment())
+        .build();
     }
 
     /**

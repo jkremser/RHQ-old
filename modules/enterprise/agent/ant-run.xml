@@ -184,6 +184,12 @@ Ant Script that provides ways to package the Agent.
     </copy>
     <chmod dir="${agent.distro.dir}/bin" perm="ug+rx" includes="*.sh"/>
 
+    <copy todir="${agent.distro.dir}/bin/plugin-scripts">
+       <fileset dir="${basedir}/src/etc/plugin-scripts"
+                includes="*.bat,*.sh"/>
+    </copy>
+    <chmod dir="${agent.distro.dir}/bin/plugin-scripts" perm="ug+rx" includes="*.sh"/>
+
     <copy todir="${agent.distro.dir}/bin/wrapper">
        <fileset dir="${basedir}/src/etc/java-service-wrapper"
                 includes="rhq-agent-wrapper.conf"/>

@@ -351,7 +351,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         processExecution.setCaptureOutput(true);
         processExecution.setWaitForCompletion(15000L); // 15 seconds // TODO: Should we wait longer than 15 seconds?
         processExecution.setKillOnTimeout(false);
-        processExecution.setSeparatedFromParent(true);
+        processExecution.setDefaultBackgroundScript(context.getBinDirectory());
 
         if (log.isDebugEnabled()) {
             log.debug("About to execute the following process: [" + processExecution + "]");

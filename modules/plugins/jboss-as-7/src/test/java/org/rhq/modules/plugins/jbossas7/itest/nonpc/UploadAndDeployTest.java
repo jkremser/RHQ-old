@@ -36,6 +36,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
+import org.rhq.core.system.SystemInfoFactory;
 import org.rhq.modules.plugins.jbossas7.ASConnection;
 import org.rhq.modules.plugins.jbossas7.BaseComponent;
 import org.rhq.modules.plugins.jbossas7.StandaloneASComponent;
@@ -345,8 +346,10 @@ public class UploadAndDeployTest extends AbstractIntegrationTest {
         resource.setUuid(UUID.randomUUID().toString());
         StandaloneASComponent parentComponent = new StandaloneASComponent();
         parentComponent.setConnection(getASConnection());
-        ResourceContext context = new ResourceContext(resource, parentComponent, null, null, null, null, null, null,
-            null, null, null, null, null, null);
+        
+        
+        ResourceContext<?> context = new ResourceContext.Builder().withResource(resource)
+            .withParentResourceComponent(parentComponent).build();
         bc.start(context);
 
         String bytes_value = uploadToAs(TEST_WAR_PATH);
@@ -380,8 +383,8 @@ public class UploadAndDeployTest extends AbstractIntegrationTest {
         resource.setUuid(UUID.randomUUID().toString());
         StandaloneASComponent parentComponent = new StandaloneASComponent();
         parentComponent.setConnection(getASConnection());
-        ResourceContext context = new ResourceContext(resource, parentComponent, null, null, null, null, null, null,
-            null, null, null, null, null, null);
+        ResourceContext context = new ResourceContext.Builder().withResource(resource)
+            .withParentResourceComponent(parentComponent).build();
         bc.start(context);
 
         String bytes_value = uploadToAs(TEST_WAR_PATH);

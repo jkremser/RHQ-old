@@ -397,7 +397,7 @@ public class BundleManagerTest {
             idResourceContainerMap.put(serverRC.getId(), serverContainerRC);
             idResourceContainerMap.put(serverMT.getId(), serverContainerMT);
 
-            bundleHandlerContainer.setResourceContext(new MockResourceContext(bundleHandler));
+            bundleHandlerContainer.setResourceContext(new ResourceContext.Builder().withResource(bundleHandler).build());
 
             // each different resource type that supports bundle deployments needs to define its
             // bundle configuration to denote where the base directory location is found.
@@ -472,13 +472,6 @@ public class BundleManagerTest {
             Set<MeasurementData> values = new HashSet<MeasurementData>();
             values.add(data);
             return values;
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    private static class MockResourceContext extends ResourceContext {
-        public MockResourceContext(Resource resource) {
-            super(resource, null, null, null, null, null, null, null, null, null, null, null, null, null);
         }
     }
 }

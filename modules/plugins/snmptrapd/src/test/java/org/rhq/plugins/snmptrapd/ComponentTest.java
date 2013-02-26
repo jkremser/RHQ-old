@@ -93,6 +93,7 @@ public abstract class ComponentTest {
         SystemInfo systemInfo = SystemInfoFactory.createSystemInfo();
         File temporaryDirectory = temp;
         File dataDirectory = temp;
+        File binDirectory = temp;
         String pluginContainerName = "rhq";
         EventContext eventContext = new EventContextImpl(resource);
         OperationContext operationContext = new OperationContextImpl(0);
@@ -100,9 +101,22 @@ public abstract class ComponentTest {
         PluginContainerDeployment pluginContainerDeployment = null;
         AvailabilityContext availContext = new AvailabilityContextImpl(resource, Executors.newCachedThreadPool());
         InventoryContext inventoryContext = new InventoryContextImpl(resource);
-        ResourceContext context = new ResourceContext(resource, parentResourceComponent, parentResourceContext,
-            resourceDiscoveryComponent, systemInfo, temporaryDirectory, dataDirectory, pluginContainerName,
-            eventContext, operationContext, contentContext, availContext, inventoryContext, pluginContainerDeployment);
+        ResourceContext context = new ResourceContext.Builder().withResource(resource)
+            .withParentResourceComponent(parentResourceComponent)
+            .withParentResourceContext(parentResourceContext)
+            .withResourceDiscoveryComponent(resourceDiscoveryComponent)
+            .withSystemInformation(systemInfo)
+            .withTemporaryDirectory(temporaryDirectory)
+            .withDataDirectory(dataDirectory)
+            .withBinDirectory(binDirectory)
+            .withPluginContainerName(pluginContainerName)
+            .withEventContext(eventContext)
+            .withOperationContext(operationContext)
+            .withContentContext(contentContext)
+            .withAvailabilityContext(availContext)
+            .withInventoryContext(inventoryContext)
+            .withPluginContainerDeployment(pluginContainerDeployment)
+            .build();
         Assert.assertNotNull(context.getEventContext());
         component.start(context);
     }

@@ -431,7 +431,7 @@ public class ConfigurationEditor extends LocatableVLayout {
             // No prop groups, so we just need a single form for the non-grouped props.
             List<PropertyDefinition> propertyDefinitions = new ArrayList<PropertyDefinition>(
                 configurationDefinition.getNonGroupedProperties());
-
+            Log.warn("@@## 11: " + configurationDefinition);
             DynamicForm form = buildPropertiesForm(layout.extendLocatorId("Props"), propertyDefinitions, configuration);
             form.setBorder("1px solid #AAA");
             form.validate();
@@ -573,6 +573,7 @@ public class ConfigurationEditor extends LocatableVLayout {
         addHeaderItems(fields);
         addItemsForPropertiesRecursively(locatorId, propertyDefinitions, propertyMap, fields);
         form.setFields(fields.toArray(new FormItem[fields.size()]));
+        Log.warn("@@## 22: " + fields);
 
         return form;
     }

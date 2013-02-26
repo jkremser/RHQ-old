@@ -83,6 +83,7 @@ public abstract class ComponentTest {
     ResourceDiscoveryComponent resourceDiscoveryComponent = new NothingDiscoveringDiscoveryComponent();
     File temporaryDirectory = temp;
     File dataDirectory = temp;
+    File binDirectory = temp;
     String pluginContainerName = "rhq";
     OperationContext operationContext = new OperationContextImpl(0);
     ContentContext contentContext = new ContentContextImpl(0);
@@ -136,10 +137,23 @@ public abstract class ComponentTest {
             EventContext eventContext = new EventContextImpl(resource);
             AvailabilityContext availContext = new AvailabilityContextImpl(resource, Executors.newCachedThreadPool());
             InventoryContext inventoryContext = new InventoryContextImpl(resource);
-            ResourceContext context = new ResourceContext(resource, parentResourceComponent, parentResourceContext,
-                resourceDiscoveryComponent, systemInfo, temporaryDirectory, dataDirectory, pluginContainerName,
-                eventContext, operationContext, contentContext, availContext, inventoryContext,
-                pluginContainerDeployment);
+            
+            ResourceContext context = new ResourceContext.Builder().withResource(resource)
+                .withParentResourceComponent(component)
+                .withParentResourceContext(parentResourceContext)
+                .withResourceDiscoveryComponent(resourceDiscoveryComponent)
+                .withSystemInformation(systemInfo)
+                .withTemporaryDirectory(temporaryDirectory)
+                .withDataDirectory(dataDirectory)
+                .withBinDirectory(binDirectory)
+                .withPluginContainerName(pluginContainerName)
+                .withEventContext(eventContext)
+                .withOperationContext(operationContext)
+                .withContentContext(contentContext)
+                .withAvailabilityContext(availContext)
+                .withInventoryContext(inventoryContext)
+                .withPluginContainerDeployment(pluginContainerDeployment)
+                .build();
             component.start(context);
 
             resourceDiscoveryContext = new ResourceDiscoveryContext(resourceType, parentResourceComponent, context,
@@ -174,9 +188,22 @@ public abstract class ComponentTest {
         EventContext eventContext = new EventContextImpl(resource);
         AvailabilityContext availContext = new AvailabilityContextImpl(resource, Executors.newCachedThreadPool());
         InventoryContext inventoryContext = new InventoryContextImpl(resource);
-        ResourceContext context = new ResourceContext(resource, component, parentContext, resourceDiscoveryComponent,
-            systemInfo, temporaryDirectory, dataDirectory, pluginContainerName, eventContext, operationContext,
-            contentContext, availContext, inventoryContext, pluginContainerDeployment);
+        ResourceContext context = new ResourceContext.Builder().withResource(resource)
+            .withParentResourceComponent(component)
+            .withParentResourceContext(parentContext)
+            .withResourceDiscoveryComponent(resourceDiscoveryComponent)
+            .withSystemInformation(systemInfo)
+            .withTemporaryDirectory(temporaryDirectory)
+            .withDataDirectory(dataDirectory)
+            .withBinDirectory(binDirectory)
+            .withPluginContainerName(pluginContainerName)
+            .withEventContext(eventContext)
+            .withOperationContext(operationContext)
+            .withContentContext(contentContext)
+            .withAvailabilityContext(availContext)
+            .withInventoryContext(inventoryContext)
+            .withPluginContainerDeployment(pluginContainerDeployment)
+            .build();
         ResourceDiscoveryContext resourceDiscoveryContext = new ResourceDiscoveryContext(resourceType, component,
             context, systemInfo, Collections.emptyList(), Collections.emptyList(), pluginContainerName,
             pluginContainerDeployment);
@@ -206,9 +233,22 @@ public abstract class ComponentTest {
         EventContext eventContext = new EventContextImpl(resource);
         AvailabilityContext availContext = new AvailabilityContextImpl(resource, Executors.newCachedThreadPool());
         InventoryContext inventoryContext = new InventoryContextImpl(resource);
-        ResourceContext context = new ResourceContext(cresource, parentComponent, parentContext,
-            resourceDiscoveryComponent, systemInfo, temporaryDirectory, dataDirectory, pluginContainerName,
-            eventContext, operationContext, contentContext, availContext, inventoryContext, pluginContainerDeployment);
+        ResourceContext context = new ResourceContext.Builder().withResource(resource)
+            .withParentResourceComponent(parentComponent)
+            .withParentResourceContext(parentContext)
+            .withResourceDiscoveryComponent(resourceDiscoveryComponent)
+            .withSystemInformation(systemInfo)
+            .withTemporaryDirectory(temporaryDirectory)
+            .withDataDirectory(dataDirectory)
+            .withBinDirectory(binDirectory)
+            .withPluginContainerName(pluginContainerName)
+            .withEventContext(eventContext)
+            .withOperationContext(operationContext)
+            .withContentContext(contentContext)
+            .withAvailabilityContext(availContext)
+            .withInventoryContext(inventoryContext)
+            .withPluginContainerDeployment(pluginContainerDeployment)
+            .build();
 
         component.start(context);
         components.put(component, cresource);

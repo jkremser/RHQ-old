@@ -52,7 +52,11 @@ public class ProcessToStart {
     private static final String PARAM_WAIT_FOR_EXIT = "waitForExit";
     private static final String PARAM_KILL_ON_TIMEOUT = "killOnTimeout";
     private static final String PARAM_CHECK_EXECUTABLE_EXISTS = "checkExecutableExists";
+<<<<<<< HEAD
     private static final String PARAM_SEPARATED_FROM_PARENT = "separatedFromParent";
+=======
+    private static final String PARAM_BACKGROUND_SCRIPT = "backgroundScript";
+>>>>>>> 3141e02... adding support for backgrouhd.sh script and changing the way the ResourceContext instances are created
 
     private Map<String, Object> map = new HashMap<String, Object>();
 
@@ -607,42 +611,33 @@ public class ProcessToStart {
     }
     
     /**
+     * 
+     * todo:
      * If <code>true</code>, then the executed process is run as a background process and no signals
      * from parent are relayed to the new spawned process. If the agent is run in interactive mode, 
      * the <code>CTRL+C</code> shortcut <code>(SIGINT)</code> may eventually kill the processes which
      * were run by the agent. If this flag is set to <code>true</code>, it shouldn't happen. It basically
      * concatenates the <code>" & wait $!"</code> string at the end of the command.
      *
-     * @return separatedFromParent Should the process run in background (default is <code>false</code>)
+     * @return path to the background script
      */
-    public Boolean isSeparatedFromParent() {
-        Boolean flag = (Boolean) map.get(PARAM_SEPARATED_FROM_PARENT);
-
-        if (flag == null) {
-            flag = Boolean.FALSE;
-        }
-
-        return flag;
+    public String getBackgroundScript() {
+        return (String) map.get(PARAM_BACKGROUND_SCRIPT);
     }
 
     /**
-     * Sets the flag to indicate if the executable should be separated from the parent process.
+     * todo:
      *
-     * @param value the separation flag
+     * @param value path to the background script
      *
-     * @see   #isSeparatedFromParent()
+     * @see   #getBackgroundScript()
      */
-    public void setSeparatedFromParent(Boolean value) {
+    public void setBackgroundScript(String value) {
         // flag is optional, but non-nullable; remove it if null is passed in
         if (value != null) {
-            map.put(PARAM_SEPARATED_FROM_PARENT, value);
-            String[] envProps = getEnvironment();
-            String[] newEnvProps = new String[envProps.length + 1];
-            System.arraycopy(envProps, 0, newEnvProps, 0, envProps.length);
-            newEnvProps[envProps.length] = "RHQ_CONTROL_WAIT=true";
-            setEnvironment(newEnvProps);
+            map.put(PARAM_BACKGROUND_SCRIPT, value);
         } else {
-            map.remove(PARAM_SEPARATED_FROM_PARENT);
+            map.remove(PARAM_BACKGROUND_SCRIPT);
         }
     }
 }

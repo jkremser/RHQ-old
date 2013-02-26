@@ -476,22 +476,18 @@ public class ProcessExecutor {
         // build the command line
         String[] args = process.getArguments();
         int numArgs = (args != null) ? args.length : 0;
-        // +1 for the program executable path and possibly +1 for the RUN_IN_BACKGROUND_SUFFIX
-        String[] retCmdline = new String[numArgs + 1 + (process.isSeparatedFromParent() ? 1 : 0)];
+        // +1 for the program executable path and possibly +1 for the background script
+        String[] retCmdline = new String[numArgs + 1 + (process.getBackgroundScript() != null ? 1 : 0)];
 
         if (numArgs > 0) {
-            System.arraycopy(args, 0, retCmdline, (process.isSeparatedFromParent() ? 2 : 1), numArgs);
+            System.arraycopy(args, 0, retCmdline, (process.getBackgroundScript() != null ? 2 : 1), numArgs);
         }
         
-        if (process.isSeparatedFromParent()) {
-            retCmdline[0] = RUN_IN_BACKGROUND_PREFIX;
+        if (process.getBackgroundScript() != null) {
+            retCmdline[0] = process.getBackgroundScript();
             retCmdline[1] = fullProgramPath;
         } else {
             retCmdline[0] = fullProgramPath;
-        }
-        
-        if (process.isSeparatedFromParent()) {
-            retCmdline[numArgs + 1] = RUN_IN_BACKGROUND_SUFFIX;
         }
 
         return retCmdline;

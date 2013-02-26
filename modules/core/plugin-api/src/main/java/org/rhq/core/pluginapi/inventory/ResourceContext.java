@@ -78,6 +78,7 @@ public class ResourceContext<T extends ResourceComponent<?>> {
     private final ResourceDiscoveryComponent<T> resourceDiscoveryComponent;
     private final File temporaryDirectory;
     private final File dataDirectory;
+    private final File binDirectory;
     private final String pluginContainerName;
     private final EventContext eventContext;
     private final OperationContext operationContext;
@@ -122,71 +123,43 @@ public class ResourceContext<T extends ResourceComponent<?>> {
     private static Map<Children, ResourceTypeProcesses> PROCESSES_PER_PARENT_PER_RESOURCE_TYPE = new HashMap<Children, ResourceTypeProcesses>();
 
     /**
-     * Creates a new {@link ResourceContext} object.
-     *
-     * <b>NOTE:</b> The plugin container is responsible for instantiating these objects; plugin writers should never
-     * have to actually create context objects.
-     *
-     * @param resource                   the resource whose {@link org.rhq.core.pluginapi.inventory.ResourceComponent}
-     *                                   will be given this context object of the plugin
-     * @param parentResourceComponent    the parent component of the context's associated resource component (or null if parent resource is null)
-     * @param parentResourceContext      the resource context of the parent resource (or null if parent resource is null)
-     * @param resourceDiscoveryComponent the discovery component that can be used to detect other resources of the same
-     *                                   type as this resource (may be <code>null</code>)
-     * @param systemInfo                 information about the system on which the plugin and its plugin container are
-     *                                   running
-     * @param temporaryDirectory         a temporary directory for plugin use that is destroyed at plugin container shutdown
-     * @param dataDirectory              a directory where plugins can store persisted data that survives plugin container restarts
-     * @param pluginContainerName        the name of the plugin container in which the discovery component is running.
-     *                                   Components can be assured this name is unique across <b>all</b> plugin
-     *                                   containers/agents running in the RHQ environment.
-     * @param eventContext               an {@link EventContext}, if the resource supports one or more types of
-     *                                   {@link org.rhq.core.domain.event.Event}s, or <code>null</code> otherwise
-     * @param operationContext           an {@link OperationContext} the plugin can use to interoperate with the
-     *                                   operation manager
-     * @param contentContext             a {@link ContentContext} the plugin can use to interoperate with the content
-     *                                   manager
-     * @param availabilityContext        a {@link AvailabilityContext} the plugin can use to interoperate with the
-     *                                   plugin container inventory manager
-     * @param pluginContainerDeployment  indicates where the plugin container is running
+     * Don't call it directly, use {@link ResourceContext.Builder} instead.
+     * @param builder the initialized builder instance
      */
-    public ResourceContext(Resource resource, T parentResourceComponent, ResourceContext<?> parentResourceContext,
-        ResourceDiscoveryComponent<T> resourceDiscoveryComponent, SystemInfo systemInfo, File temporaryDirectory,
-        File dataDirectory, String pluginContainerName, EventContext eventContext, OperationContext operationContext,
-        ContentContext contentContext, AvailabilityContext availabilityContext, InventoryContext inventoryContext,
-        PluginContainerDeployment pluginContainerDeployment) {
+    protected ResourceContext(Builder<T> builder) {
+        this.resourceKey = builder.resource.getResourceKey();
+        this.resourceType = builder.resource.getResourceType();
+        this.version = builder.resource.getVersion();
+        this.resourceUuid = builder.resource.getUuid();
 
-        this.resourceKey = resource.getResourceKey();
-        this.resourceType = resource.getResourceType();
-        this.version = resource.getVersion();
-        this.parentResourceComponent = parentResourceComponent;
-        this.parentResourceContext = parentResourceContext;
-        this.resourceDiscoveryComponent = resourceDiscoveryComponent;
-        this.systemInformation = systemInfo;
-        this.pluginConfiguration = resource.getPluginConfiguration();
-        this.dataDirectory = dataDirectory;
-        this.pluginContainerName = pluginContainerName;
-        this.pluginContainerDeployment = pluginContainerDeployment;
-        if (temporaryDirectory == null) {
+        this.pluginConfiguration = builder.resource.getPluginConfiguration();
+        this.parentResourceComponent = builder.parentResourceComponent;
+        this.parentResourceContext = builder.parentResourceContext;
+        this.resourceDiscoveryComponent = builder.resourceDiscoveryComponent;
+        this.systemInformation = builder.systemInformation;
+
+        this.dataDirectory = builder.dataDirectory;
+        this.binDirectory = builder.binDirectory;
+        this.pluginContainerName = builder.pluginContainerName;
+        this.pluginContainerDeployment = builder.pluginContainerDeployment;
+        if (builder.temporaryDirectory == null) {
             this.temporaryDirectory = new File(System.getProperty("java.io.tmpdir"), "AGENT_TMP");
             this.temporaryDirectory.mkdirs();
         } else {
-            this.temporaryDirectory = temporaryDirectory;
+            this.temporaryDirectory = builder.temporaryDirectory;
         }
 
-        this.eventContext = eventContext;
-        this.operationContext = operationContext;
-        this.contentContext = contentContext;
-        this.availabilityContext = availabilityContext;
-        this.inventoryContext = inventoryContext;
+        this.eventContext = builder.eventContext;
+        this.operationContext = builder.operationContext;
+        this.contentContext = builder.contentContext;
+        this.availabilityContext = builder.availabilityContext;
+        this.inventoryContext = builder.inventoryContext;
 
         String parentResourceUuid = "";
-        if (resource.getParentResource() != null) {
-            parentResourceUuid = resource.getParentResource().getUuid();
+        if (builder.resource.getParentResource() != null) {
+            parentResourceUuid = builder.resource.getParentResource().getUuid();
         }
         this.trackedProcesses = getTrackedProcesses(parentResourceUuid, resourceType);
-
-        this.resourceUuid = resource.getUuid();
     }
 
     /**
@@ -259,6 +232,13 @@ public class ResourceContext<T extends ResourceComponent<?>> {
         }
 
         return childResourceDataDirectory;
+    }
+    
+    public File getBinDirectory() {
+        if (!binDirectory.exists()) {
+            binDirectory.mkdirs();
+        }
+        return binDirectory;
     }
 
     /**
@@ -561,5 +541,182 @@ public class ResourceContext<T extends ResourceComponent<?>> {
         }
 
         return messageDigest.getDigestString();
+    }
+    
+    /**
+     * Creates a new {@link ResourceContext} object.
+     *
+     * <b>NOTE:</b> The plugin container is responsible for instantiating these objects; plugin writers should never
+     * have to actually create context objects.
+     */
+    public static class Builder<T extends ResourceComponent<?>> {
+        protected Resource resource;
+        protected T parentResourceComponent;
+        protected ResourceContext<?> parentResourceContext;
+        protected SystemInfo systemInformation;
+        protected ResourceDiscoveryComponent<T> resourceDiscoveryComponent;
+        protected File temporaryDirectory;
+        protected File dataDirectory;
+        protected File binDirectory;
+        protected String pluginContainerName;
+        protected EventContext eventContext;
+        protected OperationContext operationContext;
+        protected ContentContext contentContext;
+        protected AvailabilityContext availabilityContext;
+        protected InventoryContext inventoryContext;
+        protected PluginContainerDeployment pluginContainerDeployment;        
+        
+        /**
+         * Don't forget to initialize the state before calling this method.
+         * 
+         * @return the ResourceContext instance
+         */
+        public ResourceContext<T> build() {
+            return new ResourceContext<T>(this);
+        }
+        
+        /**
+         * @param resource                   the resource whose {@link org.rhq.core.pluginapi.inventory.ResourceComponent}
+         *                                   will be given this context object of the plugin
+         * @return builder instance
+         */
+        public Builder<T> withResource(Resource resource) {
+            this.resource = resource;
+            return this;
+        }
+        
+        /**
+         * @param parentResourceComponent    the parent component of the context's associated resource component (or null if parent resource is null)
+         * @return builder instance
+         */
+        public Builder<T> withParentResourceComponent(T parentResourceComponent) {
+            this.parentResourceComponent = parentResourceComponent;
+            return this;
+        }
+        
+        /**
+         * @param parentResourceContext      the resource context of the parent resource (or null if parent resource is null)
+         * @return builder instance
+         */
+        public Builder<T> withParentResourceContext(ResourceContext<?> parentResourceContext) {
+            this.parentResourceContext = parentResourceContext;
+            return this;
+        }
+        
+        /**
+         * @param systemInfo                 information about the system on which the plugin and its plugin container are
+         *                                   running
+         * @return builder instance
+         */
+        public Builder<T> withSystemInformation(SystemInfo systemInformation) {
+            this.systemInformation = systemInformation;
+            return this;
+        }
+        
+        /**
+         * @param resourceDiscoveryComponent the discovery component that can be used to detect other resources of the same
+         *                                   type as this resource (may be <code>null</code>)
+         * @return builder instance
+         */
+        public Builder<T> withResourceDiscoveryComponent(ResourceDiscoveryComponent<T> resourceDiscoveryComponent) {
+            this.resourceDiscoveryComponent = resourceDiscoveryComponent;
+            return this;
+        }
+        
+        /**
+         * @param temporaryDirectory         a temporary directory for plugin use that is destroyed at plugin container shutdown
+         * @return builder instance
+         */
+        public Builder<T> withTemporaryDirectory(File temporaryDirectory) {
+            this.temporaryDirectory = temporaryDirectory;
+            return this;
+        }
+        
+        /**
+         * @param dataDirectory              a directory where plugins can store persisted data that survives plugin container restarts
+         * @return builder instance
+         */
+        public Builder<T> withDataDirectory(File dataDirectory) {
+            this.dataDirectory = dataDirectory;
+            return this;
+        }
+        
+        /**
+         * @param binDirectory               a directory where plugins can store its own launch scripts
+         * @return builder instance
+         */
+        public Builder<T> withBinDirectory(File binDirectory) {
+            this.binDirectory = binDirectory;
+            return this;
+        }
+        
+        /**
+         * @param resourceDiscoveryComponent the discovery component that can be used to detect other resources of the same
+         *                                   type as this resource (may be <code>null</code>)
+         * @return builder instance
+         */
+        public Builder<T> withPluginContainerName(String pluginContainerName) {
+            this.pluginContainerName = pluginContainerName;
+            return this;
+        }
+        
+        /**
+         * @param eventContext               an {@link EventContext}, if the resource supports one or more types of
+         *                                   {@link org.rhq.core.domain.event.Event}s, or <code>null</code> otherwise
+         * @return builder instance
+         */
+        public Builder<T> withEventContext(EventContext eventContext) {
+            this.eventContext = eventContext;
+            return this;
+        }
+        
+        /**
+         * @param operationContext           an {@link OperationContext} the plugin can use to interoperate with the
+         *                                   operation manager
+         * @return builder instance
+         */
+        public Builder<T> withOperationContext(OperationContext operationContext) {
+            this.operationContext = operationContext;
+            return this;
+        }
+        
+        /**
+         * @param contentContext             a {@link ContentContext} the plugin can use to interoperate with the content
+         *                                   manager
+         * @return builder instance
+         */
+        public Builder<T> withContentContext(ContentContext contentContext) {
+            this.contentContext = contentContext;
+            return this;
+        }
+        
+        /**
+         * @param availabilityContext        a {@link AvailabilityContext} the plugin can use to interoperate with the
+         *                                   plugin container inventory manager
+         * @return builder instance
+         */
+        public Builder<T> withAvailabilityContext(AvailabilityContext availabilityContext) {
+            this.availabilityContext = availabilityContext;
+            return this;
+        }
+        
+        /**
+         * @param resourceDiscoveryComponent the discovery component that can be used to detect other resources of the same
+         *                                   type as this resource (may be <code>null</code>)
+         * @return builder instance
+         */
+        public Builder<T> withInventoryContext(InventoryContext inventoryContext) {
+            this.inventoryContext = inventoryContext;
+            return this;
+        }
+        
+        /**
+         * @param pluginContainerDeployment  indicates where the plugin container is running
+         * @return builder instance
+         */
+        public Builder<T> withPluginContainerDeployment(PluginContainerDeployment pluginContainerDeployment) {
+            this.pluginContainerDeployment = pluginContainerDeployment;
+            return this;
+        }
     }
 }

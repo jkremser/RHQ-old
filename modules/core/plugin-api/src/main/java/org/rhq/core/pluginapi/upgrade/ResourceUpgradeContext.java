@@ -34,6 +34,7 @@ import org.rhq.core.pluginapi.inventory.PluginContainerDeployment;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
+import org.rhq.core.pluginapi.inventory.ResourceContext.Builder;
 import org.rhq.core.pluginapi.operation.OperationContext;
 import org.rhq.core.system.SystemInfo;
 
@@ -44,6 +45,7 @@ import org.rhq.core.system.SystemInfo;
  *
  * @since 3.0
  * @author Lukas Krejci
+ * @author Jiri Kremser
  */
 public class ResourceUpgradeContext<T extends ResourceComponent<?>> extends ResourceContext<T> {
 
@@ -52,23 +54,17 @@ public class ResourceUpgradeContext<T extends ResourceComponent<?>> extends Reso
     private final String description;
 
     /**
+     * Don't call it directly, use {@link ResourceContext.Builder} instead.
+     * @param builder the initialized builder instance
      * @see ResourceContext#ResourceContext(org.rhq.core.domain.resource.Resource, org.rhq.core.pluginapi.inventory.ResourceComponent, org.rhq.core.pluginapi.inventory.ResourceContext, org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent, org.rhq.core.system.SystemInfo, java.io.File, java.io.File, String, org.rhq.core.pluginapi.event.EventContext, org.rhq.core.pluginapi.operation.OperationContext, org.rhq.core.pluginapi.content.ContentContext, java.util.concurrent.Executor, org.rhq.core.pluginapi.inventory.PluginContainerDeployment)
      *
      * @since 4.0
      */
-    public ResourceUpgradeContext(Resource resource, ResourceContext<?> parentResourceContext,
-        T parentResourceComponent, ResourceDiscoveryComponent<T> resourceDiscoveryComponent, SystemInfo systemInfo,
-        File temporaryDirectory, File dataDirectory, String pluginContainerName, EventContext eventContext,
-        OperationContext operationContext, ContentContext contentContext, AvailabilityContext availabilityContext,
-        InventoryContext inventoryContext, PluginContainerDeployment pluginContainerDeployment) {
-
-        super(resource, parentResourceComponent, parentResourceContext, resourceDiscoveryComponent, systemInfo,
-            temporaryDirectory, dataDirectory, pluginContainerName, eventContext, operationContext, contentContext,
-            availabilityContext, inventoryContext, pluginContainerDeployment);
-
-        this.resourceConfiguration = resource.getResourceConfiguration();
-        this.name = resource.getName();
-        this.description = resource.getDescription();
+    private ResourceUpgradeContext(Builder<T> builder) {
+        super(builder);
+        this.resourceConfiguration = builder.resourceConfiguration;
+        this.name = builder.name;
+        this.description = builder.description;
     }
 
     /**
@@ -93,6 +89,103 @@ public class ResourceUpgradeContext<T extends ResourceComponent<?>> extends Reso
 
     public String getDescription() {
         return description;
+    }
+    
+    /**
+     * Creates a new {@link ResourceUpgradeContext} object.
+     */
+    public static class Builder<T extends ResourceComponent<?>> extends ResourceContext.Builder<T> {
+        private Configuration resourceConfiguration;
+        private String name;
+        private String description;
+        
+        @Override
+        public Builder<T> withAvailabilityContext(AvailabilityContext availabilityContext) {
+            return (Builder<T>) super.withAvailabilityContext(availabilityContext);
+        }
+        
+        @Override
+        public Builder<T> withBinDirectory(File binDirectory) {
+            return (Builder<T>) super.withBinDirectory(binDirectory);
+        }
+        
+        @Override
+        public Builder<T> withContentContext(ContentContext contentContext) {
+            return (Builder<T>) super.withContentContext(contentContext);
+        }
+        
+        @Override
+        public Builder<T> withDataDirectory(File dataDirectory) {
+            return (Builder<T>) super.withDataDirectory(dataDirectory);
+        }
+        
+        @Override
+        public Builder<T> withEventContext(EventContext eventContext) {
+            return (Builder<T>) super.withEventContext(eventContext);
+        }
+        
+        @Override
+        public Builder<T> withInventoryContext(InventoryContext inventoryContext) {
+            return (Builder<T>) super.withInventoryContext(inventoryContext);
+        }
+        
+        @Override
+        public Builder<T> withOperationContext(OperationContext operationContext) {
+            return (Builder<T>) super.withOperationContext(operationContext);
+        }
+        
+        @Override
+        public Builder<T> withParentResourceComponent(T parentResourceComponent) {
+            return (Builder<T>) super.withParentResourceComponent(parentResourceComponent);
+        }
+        
+        @Override
+        public Builder<T> withParentResourceContext(ResourceContext<?> parentResourceContext) {
+            return (Builder<T>) super.withParentResourceContext(parentResourceContext);
+        }
+        
+        @Override
+        public Builder<T> withPluginContainerDeployment(PluginContainerDeployment pluginContainerDeployment) {
+            return (Builder<T>) super.withPluginContainerDeployment(pluginContainerDeployment);
+        }
+        
+        @Override
+        public Builder<T> withPluginContainerName(String pluginContainerName) {
+            return (Builder<T>) super.withPluginContainerName(pluginContainerName);
+        }
+        
+        @Override
+        public Builder<T> withResource(Resource resource) {
+            return (Builder<T>) super.withResource(resource);
+        }
+        
+        @Override
+        public Builder<T> withResourceDiscoveryComponent(ResourceDiscoveryComponent<T> resourceDiscoveryComponent) {
+            return (Builder<T>) super.withResourceDiscoveryComponent(resourceDiscoveryComponent);
+        }
+        
+        @Override
+        public Builder<T> withSystemInformation(SystemInfo systemInformation) {
+            return (Builder<T>) super.withSystemInformation(systemInformation);
+        }
+        
+        @Override
+        public Builder<T> withTemporaryDirectory(File temporaryDirectory) {
+            return (Builder<T>) super.withTemporaryDirectory(temporaryDirectory);
+        }
+        
+        /**
+         * Don't forget to initialize the state before calling this method.
+         * 
+         * @return the ResourceUpgradeContext instance
+         */
+        @Override
+        public ResourceUpgradeContext<T> build() {
+            this.resourceConfiguration = resource.getResourceConfiguration();
+            this.name = resource.getName();
+            this.description = resource.getDescription();
+            return new ResourceUpgradeContext<T>(this);
+        }
     }
 
 }

@@ -100,9 +100,9 @@ public class AntBundlePluginComponentTest {
         Resource resource = new Resource("antBundleTestKey", "antBundleTestName", type);
         resource.setUuid(UUID.randomUUID().toString());
         @SuppressWarnings({ "rawtypes", "unchecked" })
-        ResourceContext<?> context = new ResourceContext(resource, null, null, null,
-            SystemInfoFactory.createJavaSystemInfo(), tmpDir, null, "antBundleTestPC", null, null, null, null, null,
-            null);
+        ResourceContext<?> context = new ResourceContext.Builder().withResource(resource)
+            .withSystemInformation(SystemInfoFactory.createJavaSystemInfo()).withTemporaryDirectory(tmpDir)
+            .withPluginContainerName("antBundleTestPC").build();
         this.plugin.start(context);
     }
 

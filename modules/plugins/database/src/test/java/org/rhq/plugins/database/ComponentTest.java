@@ -133,6 +133,7 @@ public abstract class ComponentTest {
     private final PluginMetadataManager pmm = new PluginMetadataManager();
     private final File temporaryDirectory = temp;
     private final File dataDirectory = temp;
+    private final File binDirectory = temp;
     private final String pluginContainerName = "rhq";
     private final OperationContext operationContext = new OperationContextImpl(0);
     private final ContentContext contentContext = new ContentContextImpl(0);
@@ -283,10 +284,16 @@ public abstract class ComponentTest {
         inventoryContext = new InventoryContextImpl(cresource);
 
         EventContext eventContext = new EventContextImpl(resource);
-        ResourceContext context = new ResourceContext(cresource, parentComponent,
-                null, rdc, systemInfo, temporaryDirectory, dataDirectory,
-                pluginContainerName, eventContext, operationContext, contentContext,
-                availabilityContext, inventoryContext, pluginContainerDeployment);
+        ResourceContext context = new ResourceContext.Builder()
+            .withResource(cresource).withParentResourceComponent(parentComponent) 
+            .withResourceDiscoveryComponent(rdc)
+            .withSystemInformation(systemInfo)
+            .withTemporaryDirectory(temporaryDirectory).withDataDirectory(dataDirectory).withBinDirectory(binDirectory)
+            .withPluginContainerName(pluginContainerName)
+            .withEventContext(eventContext).withOperationContext(operationContext).withContentContext(contentContext)
+            .withAvailabilityContext(availabilityContext).withInventoryContext(inventoryContext)
+            .withPluginContainerDeployment(pluginContainerDeployment) 
+            .build(); 
 
         component.start(context);
         components.put(component, cresource);

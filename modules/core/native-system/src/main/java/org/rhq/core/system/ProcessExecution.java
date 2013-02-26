@@ -22,6 +22,7 @@
  */
 package org.rhq.core.system;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -52,9 +53,10 @@ public class ProcessExecution {
     private boolean captureOutput = false;
     private boolean killOnTimeout = false;
     private boolean checkExecutableExists = true;
+    private static String RUN_IN_BACKGROUND_DEFAULT_SCRIPT = "background.sh";
     
-    // SIGINT and other signals coming from the parent process won't kill the child process
-    private boolean separatedFromParent = false;
+    // SIGINT and other signals coming from the parent process won't kill the child process if using backgroundScript
+    private String backgroundScript;
 
     /**
      * Constructor for {@link ProcessExecution} that defines the full path to the executable that will be run. See the
@@ -248,14 +250,18 @@ public class ProcessExecution {
      * were run by the agent. If this flag is set to <code>true</code>, it shouldn't happen. It basically
      * concatenates the <code>" & wait $!"</code> string at the end of the command.
      *
-     * @return separatedFromParent Should the process run in background (default is <code>false</code>)
+     * @return backgroundScript Path to the background script
      */
-    public boolean isSeparatedFromParent() {
-        return separatedFromParent;
+    public String getBackgroundScript() {
+        return backgroundScript;
     }
 
-    public void setSeparatedFromParent(boolean separatedProcess) {
-        this.separatedFromParent = separatedProcess;
+    public void setDefaultBackgroundScript(File binDirectory) {
+        setBackgroundScript(binDirectory.getAbsolutePath() + File.separator + RUN_IN_BACKGROUND_DEFAULT_SCRIPT);
+    }
+    
+    public void setBackgroundScript(String backgroundScript) {
+        this.backgroundScript = backgroundScript;
     }
 
     @Override
@@ -268,7 +274,7 @@ public class ProcessExecution {
         buf.append("], working-dir=[").append(this.workingDirectory);
         buf.append("], wait=[").append(this.waitForCompletion);
         buf.append("], capture-output=[").append(this.captureOutput);
-        buf.append("], separated-from-parent=[").append(this.separatedFromParent);
+        buf.append("], background-script=[").append(this.backgroundScript);
         buf.append("], kill-on-timeout=[").append(this.killOnTimeout);
         buf.append("], executable-is-command=[").append(this.checkExecutableExists);
         buf.append("]");

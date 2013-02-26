@@ -187,9 +187,7 @@ public class JavaSystemInfo implements SystemInfo {
         process.setWaitForExit(Long.valueOf(processExecution.getWaitForCompletion()));
         process.setCaptureOutput(Boolean.valueOf(processExecution.isCaptureOutput()));
         process.setKillOnTimeout(Boolean.valueOf(processExecution.isKillOnTimeout()));
-        if (OperatingSystemType.WINDOWS != getOperatingSystemType()) {
-            process.setSeparatedFromParent(Boolean.valueOf(processExecution.isSeparatedFromParent()));
-        }
+        process.setBackgroundScript(processExecution.getBackgroundScript());
 
         if (processExecution.isCaptureOutput()) {
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();

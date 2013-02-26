@@ -85,8 +85,9 @@ public class ResourceContextTest {
         File mockDataDirectory = mock(File.class);
 
         //create object to test and inject required dependencies
-        ResourceContext<?> objectUnderTest = new ResourceContext(mockResource, null, parentResourceContext, null, null,
-            mockTemporaryDirectory, mockDataDirectory, null, null, null, null, null, null, null);
+        ResourceContext<?> objectUnderTest = new ResourceContext.Builder().withResource(mockResource)
+            .withParentResourceContext(parentResourceContext).withTemporaryDirectory(mockTemporaryDirectory)
+            .withDataDirectory(mockDataDirectory).build();
 
         //run code under test
         File result = objectUnderTest.getResourceDataDirectory();
@@ -151,8 +152,9 @@ public class ResourceContextTest {
         File mockDataDirectory = mock(File.class);
 
         //create object to test and inject required dependencies
-        ResourceContext<?> objectUnderTest = new ResourceContext(mockResource, null, parent1ResourceContext, null,
-            null, mockTemporaryDirectory, mockDataDirectory, null, null, null, null, null, null, null);
+        ResourceContext<?> objectUnderTest = new ResourceContext.Builder().withResource(mockResource)
+            .withParentResourceContext(parent1ResourceContext).withTemporaryDirectory(mockTemporaryDirectory)
+            .withDataDirectory(mockDataDirectory).build();
 
         //run code under test
         File result = objectUnderTest.getResourceDataDirectory();
@@ -205,8 +207,9 @@ public class ResourceContextTest {
         File mockDataDirectory = mock(File.class);
 
         //create object to test and inject required dependencies
-        ResourceContext<?> objectUnderTest = new ResourceContext(mockResource, null, parentResourceContext, null, null,
-            mockTemporaryDirectory, mockDataDirectory, null, null, null, null, null, null, null);
+        ResourceContext<?> objectUnderTest = new ResourceContext.Builder().withResource(mockResource)
+            .withParentResourceContext(parentResourceContext).withTemporaryDirectory(mockTemporaryDirectory)
+            .withDataDirectory(mockDataDirectory).build();
 
         //run code under test
         File result = objectUnderTest.getResourceDataDirectory();
@@ -259,8 +262,9 @@ public class ResourceContextTest {
         File mockDataDirectory = mock(File.class);
 
         //create object to test and inject required dependencies
-        ResourceContext<?> objectUnderTest = new ResourceContext(mockResource, null, parentResourceContext, null, null,
-            mockTemporaryDirectory, mockDataDirectory, null, null, null, null, null, null, null);
+        ResourceContext<?> objectUnderTest = new ResourceContext.Builder().withResource(mockResource)
+            .withParentResourceContext(parentResourceContext).withTemporaryDirectory(mockTemporaryDirectory)
+            .withDataDirectory(mockDataDirectory).build();
 
         //run code under test
         File result = objectUnderTest.getResourceDataDirectory();
@@ -313,8 +317,9 @@ public class ResourceContextTest {
         File mockDataDirectory = mock(File.class);
 
         //create object to test and inject required dependencies
-        ResourceContext<?> objectUnderTest = new ResourceContext(mockResource, null, parentResourceContext, null, null,
-            mockTemporaryDirectory, mockDataDirectory, null, null, null, null, null, null, null);
+        ResourceContext<?> objectUnderTest = new ResourceContext.Builder().withResource(mockResource)
+            .withParentResourceContext(parentResourceContext).withTemporaryDirectory(mockTemporaryDirectory)
+            .withDataDirectory(mockDataDirectory).build();
 
         //run code under test
         File result = objectUnderTest.getResourceDataDirectory();
@@ -376,8 +381,9 @@ public class ResourceContextTest {
         File mockDataDirectory = mock(File.class);
 
         //create object to test and inject required dependencies
-        ResourceContext<?> objectUnderTest = new ResourceContext(mockResource, null, parent1ResourceContext, null,
-            null, mockTemporaryDirectory, mockDataDirectory, null, null, null, null, null, null, null);
+        ResourceContext<?> objectUnderTest = new ResourceContext.Builder().withResource(mockResource)
+            .withParentResourceContext(parent1ResourceContext).withTemporaryDirectory(mockTemporaryDirectory)
+            .withDataDirectory(mockDataDirectory).build();
 
         //run code under test
         File result = objectUnderTest.getFutureChildResourceDataDirectory(inputChildResourceKey);
