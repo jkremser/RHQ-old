@@ -45,8 +45,6 @@ public class AlertDefinitionCriteria extends Criteria {
     public static final String SORT_FIELD_RESOURCE_ID = "resourceId";
     public static final String SORT_FIELD_RESOURCE_NAME = "resourceName";
 
-    private Integer filterId;
-    private List<Integer> filterIds;
     private String filterName;
     private String filterDescription;
     private AlertPriority filterPriority;
@@ -96,14 +94,6 @@ public class AlertDefinitionCriteria extends Criteria {
     @Override
     public Class<AlertDefinition> getPersistentClass() {
         return AlertDefinition.class;
-    }
-
-    public void addFilterId(Integer filterId) {
-        this.filterId = filterId;
-    }
-
-    public void addFilterIds(Integer... filterIds) {
-        this.filterIds = Arrays.asList(filterIds);
     }
 
     public void addFilterName(String filterName) {

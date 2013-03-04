@@ -21,6 +21,7 @@ package org.rhq.core.domain.criteria;
 
 import static org.rhq.core.domain.util.CriteriaUtils.getListIgnoringNulls;
 
+import java.util.Arrays;
 import java.util.List;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -96,7 +97,6 @@ public class JPADriftChangeSetCriteria extends Criteria implements DriftChangeSe
             this.addFilterCreatedBefore(changeSetCriteria.getFilterCreatedBefore());
             this.addFilterDriftDefinitionId(changeSetCriteria.getFilterDriftDefinitionId());
             this.addFilterEndVersion(changeSetCriteria.getFilterEndVersion());
-            this.addFilterId(changeSetCriteria.getFilterId());
             this.addFilterResourceId(changeSetCriteria.getFilterResourceId());
             this.addFilterStartVersion(changeSetCriteria.getFilterStartVersion());
             this.addFilterVersion(changeSetCriteria.getFilterVersion());
@@ -115,18 +115,6 @@ public class JPADriftChangeSetCriteria extends Criteria implements DriftChangeSe
     @Override
     public Class<JPADriftChangeSet> getPersistentClass() {
         return JPADriftChangeSet.class;
-    }
-
-    @Override
-    public void addFilterId(String filterId) {
-        if (filterId != null) {
-            this.filterId = Integer.parseInt(filterId);
-        }
-    }
-
-    @Override
-    public String getFilterId() {
-        return filterId == null ? null : filterId.toString();
     }
 
     public void addFilterVersion(Integer filterVersion) {
@@ -292,5 +280,17 @@ public class JPADriftChangeSetCriteria extends Criteria implements DriftChangeSe
     @Override
     public PageOrdering getSortVersion() {
         return sortVersion;
+    }
+
+    @Override
+    public void addFilterId(String filterId) {
+        if (filterId != null) {
+            this.filterId = Integer.parseInt(filterId);
+        }
+    }
+
+    @Override
+    public String getFilterId() {
+        return filterId == null ? null : filterId.toString();
     }
 }
