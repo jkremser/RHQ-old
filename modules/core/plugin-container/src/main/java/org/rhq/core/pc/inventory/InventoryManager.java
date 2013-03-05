@@ -65,6 +65,7 @@ import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.clientapi.server.discovery.StaleTypeException;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.discovery.AvailabilityReport;
+import org.rhq.core.domain.discovery.MergeInventoryReportResults;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.measurement.Availability;
@@ -1062,7 +1063,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
             long startTime = System.currentTimeMillis();
             DiscoveryServerService discoveryServerService = configuration.getServerServices()
                 .getDiscoveryServerService();
-            syncInfo = discoveryServerService.mergeInventoryReport(report);
+            MergeInventoryReportResults results = discoveryServerService.mergeInventoryReport(report);
+            syncInfo = results.getResourceSyncInfo();
             if (log.isDebugEnabled()) {
                 log.debug(String.format("Server DONE merging inventory report [%d] ms.",
                     (System.currentTimeMillis() - startTime)));

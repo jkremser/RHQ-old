@@ -32,7 +32,6 @@ import java.util.Random;
 import java.util.UUID;
 
 import javax.ejb.EJBException;
-import javax.management.MBeanServer;
 import javax.persistence.Query;
 
 import org.dbunit.database.DatabaseConfig;
@@ -55,6 +54,7 @@ import org.xml.sax.InputSource;
 import org.rhq.core.clientapi.agent.discovery.DiscoveryAgentService;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.discovery.MergeInventoryReportResults;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.resource.Agent;
@@ -77,8 +77,6 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
     private SubjectManagerLocal subjectManager;
 
     private ResourceManagerLocal resourceManager;
-
-    private MBeanServer dummyJBossMBeanServer;
 
     private ResourceType platformType;
 
@@ -157,7 +155,10 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
 
         inventoryReport.addAddedRoot(platform);
 
-        ResourceSyncInfo syncInfo = discoveryBoss.mergeInventoryReport(serialize(inventoryReport));
+        MergeInventoryReportResults results = discoveryBoss.mergeInventoryReport(serialize(inventoryReport));
+        assert results != null;
+        assert results.getIgnoredResourceTypes() == null : "nothing should have been ignored in this test";
+        ResourceSyncInfo syncInfo = results.getResourceSyncInfo();
         assert syncInfo != null;
     }
 
@@ -168,7 +169,10 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
         Resource platform = new Resource("alpha", "platform", platformType);
         platform.setUuid("" + new Random().nextInt());
         inventoryReport.addAddedRoot(platform);
-        ResourceSyncInfo syncInfo = discoveryBoss.mergeInventoryReport(serialize(inventoryReport));
+        MergeInventoryReportResults results = discoveryBoss.mergeInventoryReport(serialize(inventoryReport));
+        assert results != null;
+        assert results.getIgnoredResourceTypes() == null : "nothing should have been ignored in this test";
+        ResourceSyncInfo syncInfo = results.getResourceSyncInfo();
         assert syncInfo != null;
 
         platform.setId(syncInfo.getId());
@@ -188,7 +192,10 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
 
         inventoryReport.addAddedRoot(server);
 
-        syncInfo = discoveryBoss.mergeInventoryReport(serialize(inventoryReport));
+        results = discoveryBoss.mergeInventoryReport(serialize(inventoryReport));
+        assert results != null;
+        assert results.getIgnoredResourceTypes() == null : "nothing should have been ignored in this test";
+        syncInfo = results.getResourceSyncInfo();
         assert syncInfo != null;
     }
 
@@ -208,7 +215,10 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
 
         inventoryReport.addAddedRoot(platform);
 
-        ResourceSyncInfo syncInfo = discoveryBoss.mergeInventoryReport(serialize(inventoryReport));
+        MergeInventoryReportResults results = discoveryBoss.mergeInventoryReport(serialize(inventoryReport));
+        assert results != null;
+        assert results.getIgnoredResourceTypes() == null : "nothing should have been ignored in this test";
+        ResourceSyncInfo syncInfo = results.getResourceSyncInfo();
         assert syncInfo != null;
 
         ResourceSyncInfo serverSyncInfo = syncInfo.getChildSyncInfos().iterator().next();

@@ -35,6 +35,7 @@ import org.rhq.core.clientapi.server.discovery.InvalidInventoryReportException;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.discovery.MergeInventoryReportResults;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.resource.Agent;
@@ -60,7 +61,7 @@ public interface DiscoveryBossLocal extends DiscoveryBossRemote {
      *
      * @throws InvalidInventoryReportException if the inventory report is invalid
      */
-    ResourceSyncInfo mergeInventoryReport(InventoryReport report) throws InvalidInventoryReportException;
+    MergeInventoryReportResults mergeInventoryReport(InventoryReport report) throws InvalidInventoryReportException;
 
     /**
      * <p>Exists for transactional boundary reasons only.</p>

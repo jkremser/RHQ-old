@@ -64,6 +64,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.discovery.MergeInventoryReportResults;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.resource.Agent;
@@ -151,7 +152,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 
     // Do not start in a transaction.  A single transaction may timeout if the report size is too large
     @TransactionAttribute(TransactionAttributeType.NEVER)
-    public ResourceSyncInfo mergeInventoryReport(InventoryReport report) throws InvalidInventoryReportException {
+    public MergeInventoryReportResults mergeInventoryReport(InventoryReport report)
+        throws InvalidInventoryReportException {
         validateInventoryReport(report);
 
         DeletedResourceTypeFilter filter = new DeletedResourceTypeFilter(subjectManager, resourceTypeManager,
@@ -222,7 +224,9 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             log.debug("Inventory merge completed in (" + (System.currentTimeMillis() - start) + ")ms");
         }
 
-        return syncInfo;
+        MergeInventoryReportResults results = new MergeInventoryReportResults(syncInfo, null);
+
+        return results;
     }
 
     @Override
@@ -1076,7 +1080,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
      * recursively assign (detached) ResourceType entities to the resource tree
      * @param resource
      * @param loadedTypeMap Empty map to start, filled as we go to minimize DB fetches
-     * @return
+     * @return false if a resource's type is unknown; true if all types were successfully loaded
      */
     private boolean initResourceTypes(Resource resource, Map<String, ResourceType> loadedTypeMap) {
 
