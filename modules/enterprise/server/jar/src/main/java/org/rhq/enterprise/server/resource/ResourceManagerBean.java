@@ -657,6 +657,12 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 + "] has not yet been committed.");
         }
 
+        if (newStatus == InventoryStatus.COMMITTED
+            && ((resource.getResourceType() == null) || (resource.getResourceType().isIgnored()))) {
+            log.debug("Not commiting resource [" + resource + "] to inventory because its type is ignored");
+            return resource;
+        }
+
         long now = System.currentTimeMillis();
         updateInventoryStatus(resource, newStatus, now);
         resource = entityManager.merge(resource);

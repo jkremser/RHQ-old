@@ -770,12 +770,23 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
     }
 
     private List<Resource> treeToBreadthFirstList(Resource resource) {
+        // if we are to ignore this resource's type, don't bother doing anything since all is to be ignored
+        if (resource.getResourceType() == null || resource.getResourceType().isIgnored()) {
+            return new ArrayList<Resource>(0);
+        }
+
         List<Resource> result = new ArrayList<Resource>(MERGE_BATCH_SIZE);
 
         LinkedList<Resource> queue = new LinkedList<Resource>();
         queue.add(resource);
         while (!queue.isEmpty()) {
             Resource node = queue.remove();
+
+            // if this node is to be ignored, don't bother traversing into it
+            if (node.getResourceType() == null || node.getResourceType().isIgnored()) {
+                continue;
+            }
+
             result.add(node);
             for (Resource child : node.getChildResources()) {
                 queue.add(child);
@@ -1092,6 +1103,11 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         }
 
         resource.setResourceType(resourceType);
+
+        // don't bother looking at the children if we are just going to ignore this resource
+        if (resourceType.isIgnored()) {
+            return true;
+        }
 
         for (Iterator<Resource> childIterator = resource.getChildResources().iterator(); childIterator.hasNext();) {
             Resource child = childIterator.next();
