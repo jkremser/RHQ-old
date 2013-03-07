@@ -42,6 +42,7 @@ import org.mockito.stubbing.Answer;
 import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeRequest;
 import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeResponse;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
+import org.rhq.core.domain.discovery.MergeInventoryReportResults;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.measurement.DataType;
@@ -212,10 +213,11 @@ public class FakeServerInventory {
         };
     }
 
-    public synchronized Answer<ResourceSyncInfo> mergeInventoryReport(final InventoryStatus requiredInventoryStatus) {
-        return new Answer<ResourceSyncInfo>() {
+    public synchronized Answer<MergeInventoryReportResults> mergeInventoryReport(
+        final InventoryStatus requiredInventoryStatus) {
+        return new Answer<MergeInventoryReportResults>() {
             @Override
-            public ResourceSyncInfo answer(InvocationOnMock invocation) throws Throwable {
+            public MergeInventoryReportResults answer(InvocationOnMock invocation) throws Throwable {
                 synchronized (FakeServerInventory.this) {
                     InventoryReport inventoryReport = (InventoryReport) invocation.getArguments()[0];
 
@@ -229,7 +231,7 @@ public class FakeServerInventory {
                                 platform = persisted;
                             }
                         }
-                        return getSyncInfo();
+                        return new MergeInventoryReportResults(getSyncInfo(), null);
                     } finally {
                         if (discoveryChecker != null && !inventoryReport.getAddedRoots().isEmpty()) {
                             discoveryChecker.setDepth(getResourceTreeDepth());

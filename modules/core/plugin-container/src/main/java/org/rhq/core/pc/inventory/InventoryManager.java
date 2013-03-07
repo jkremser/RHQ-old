@@ -1064,7 +1064,11 @@ public class InventoryManager extends AgentService implements ContainerService, 
             DiscoveryServerService discoveryServerService = configuration.getServerServices()
                 .getDiscoveryServerService();
             MergeInventoryReportResults results = discoveryServerService.mergeInventoryReport(report);
-            syncInfo = results.getResourceSyncInfo();
+            if (results != null) {
+                syncInfo = results.getResourceSyncInfo();
+            } else {
+                syncInfo = null;
+            }
             if (log.isDebugEnabled()) {
                 log.debug(String.format("Server DONE merging inventory report [%d] ms.",
                     (System.currentTimeMillis() - startTime)));

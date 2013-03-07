@@ -220,11 +220,16 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         // a chance yet to send us its full inventory report.
         ResourceSyncInfo syncInfo = discoveryBoss.getResourceSyncInfo(knownAgent);
 
+        MergeInventoryReportResults results;
+        if (syncInfo != null) {
+            results = new MergeInventoryReportResults(syncInfo, null);
+        } else {
+            results = null;
+        }
+
         if (log.isDebugEnabled()) {
             log.debug("Inventory merge completed in (" + (System.currentTimeMillis() - start) + ")ms");
         }
-
-        MergeInventoryReportResults results = new MergeInventoryReportResults(syncInfo, null);
 
         return results;
     }

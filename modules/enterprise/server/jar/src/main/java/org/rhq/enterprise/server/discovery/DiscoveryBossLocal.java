@@ -57,8 +57,9 @@ public interface DiscoveryBossLocal extends DiscoveryBossRemote {
      *
      * @param  report the inventory report to be merged
      *
-     * @return the server's response, which will include the true IDs for new resources that were found
-     *
+     * @return the server's response, which will include the true IDs for new resources that were found.
+     *         This can return null in one specific case - if this is a brand new agent and it is currently initializing
+     *         for the very first time.
      * @throws InvalidInventoryReportException if the inventory report is invalid
      */
     MergeInventoryReportResults mergeInventoryReport(InventoryReport report) throws InvalidInventoryReportException;

@@ -57,7 +57,9 @@ public interface DiscoveryServerService {
      * @param  inventoryReport a report containing updated inventory data
      *
      * @return response that contains information the plugin container will need in order to sync itself up with new
-     *         data that the server had to create in order to merge the report into its inventory
+     *         data that the server had to create in order to merge the report into its inventory.
+     *         This can return null in one specific case - if this is a brand new agent and it is currently initializing
+     *         for the very first time.
      *
      * @throws InvalidInventoryReportException if the inventory report contains invalid data
      */
