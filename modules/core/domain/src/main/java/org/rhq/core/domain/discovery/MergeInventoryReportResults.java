@@ -66,7 +66,7 @@ public class MergeInventoryReportResults implements Serializable {
      * A small class encapsulating the primary key of a resource type.
      * Make this as small as possible to reduce over-the-wire size of this object.
      */
-    static class ResourceTypeFlyweight implements Serializable {
+    public static class ResourceTypeFlyweight implements Serializable {
         private static final long serialVersionUID = 1L;
 
         private final String plugin;
@@ -77,6 +77,9 @@ public class MergeInventoryReportResults implements Serializable {
         }
 
         public ResourceTypeFlyweight(String plugin, String name) {
+            if (plugin == null || name == null) {
+                throw new NullPointerException("plugin and name must not be null");
+            }
             this.plugin = plugin;
             this.name = name;
         }
@@ -88,5 +91,26 @@ public class MergeInventoryReportResults implements Serializable {
         public String getName() {
             return name;
         }
+
+        @Override
+        public int hashCode() {
+            int result = 1;
+            result = 31 * result + name.hashCode();
+            result = 31 * result + plugin.hashCode();
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (!(obj instanceof ResourceTypeFlyweight)) {
+                return false;
+            }
+            ResourceTypeFlyweight other = (ResourceTypeFlyweight) obj;
+            return (this.name.equals(other.name)) && (this.plugin.equals(other.plugin));
+        }
+
     }
 }

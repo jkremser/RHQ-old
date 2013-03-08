@@ -25,6 +25,7 @@ package org.rhq.core.pc.inventory;
 import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
@@ -66,6 +67,7 @@ import org.rhq.core.clientapi.server.discovery.StaleTypeException;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.discovery.MergeInventoryReportResults;
+import org.rhq.core.domain.discovery.MergeInventoryReportResults.ResourceTypeFlyweight;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.measurement.Availability;
@@ -1057,6 +1059,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
 
         ResourceSyncInfo syncInfo;
+        Collection<ResourceTypeFlyweight> ignoredTypes;
         try {
             String reportType = (report.isRuntimeReport()) ? "runtime" : "server";
             log.info("Sending [" + reportType + "] inventory report to Server...");
@@ -1066,8 +1069,10 @@ public class InventoryManager extends AgentService implements ContainerService, 
             MergeInventoryReportResults results = discoveryServerService.mergeInventoryReport(report);
             if (results != null) {
                 syncInfo = results.getResourceSyncInfo();
+                ignoredTypes = results.getIgnoredResourceTypes();
             } else {
                 syncInfo = null;
+                ignoredTypes = null;
             }
             if (log.isDebugEnabled()) {
                 log.debug(String.format("Server DONE merging inventory report [%d] ms.",
@@ -1100,7 +1105,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         //would change.
         //In either case, let's sync up with the server - if it's got nothing, neither should the agent.
         if (syncInfo != null) {
-            synchInventory(syncInfo);
+            synchInventory(syncInfo, ignoredTypes);
         } else {
             purgeObsoleteResources(Collections.<String> emptySet());
 
@@ -1116,9 +1121,11 @@ public class InventoryManager extends AgentService implements ContainerService, 
      * This assumes the resource sync infos passed in represent the full inventory tree.
      *
      * @param syncInfo information on all resources in the entire inventory tree
+     * @param ignoredTypes if non-null, a collection of resource type flyweights that tell
+     *                     you what types of resources should be ignored.
      */
-    private void synchInventory(ResourceSyncInfo syncInfo) {
-        synchInventory(syncInfo, false);
+    private void synchInventory(ResourceSyncInfo syncInfo, Collection<ResourceTypeFlyweight> ignoredTypes) {
+        synchInventory(syncInfo, false, ignoredTypes);
     }
 
     /**
@@ -1127,8 +1134,11 @@ public class InventoryManager extends AgentService implements ContainerService, 
      * @param syncInfo the resources' sync data
      * @param partialInventory if true, syncInfo represents only a partial inventory.
      *                         if false, syncInfo represents the full inventory tree of all resources
+     * @param ignoredTypes if non-null, a collection of resource type flyweights that tell
+     *                     you what types of resources should be ignored.
      */
-    private void synchInventory(ResourceSyncInfo syncInfo, boolean partialInventory) {
+    private void synchInventory(ResourceSyncInfo syncInfo, boolean partialInventory,
+        Collection<ResourceTypeFlyweight> ignoredTypes) {
         log.info("Syncing local inventory with Server inventory...");
         long startTime = System.currentTimeMillis();
         Set<Resource> syncedResources = new LinkedHashSet<Resource>();
@@ -1148,7 +1158,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             }
 
             log.debug("Processing Server sync info...");
-            processSyncInfo(syncInfo, syncedResources, unknownResourceSyncInfos, modifiedResourceIds,
+            processSyncInfo(syncInfo, ignoredTypes, syncedResources, unknownResourceSyncInfos, modifiedResourceIds,
                 deletedResourceIds, newlyCommittedResources);
             if (log.isDebugEnabled()) {
                 log.debug(String.format("DONE Processing sync info - took [%d] ms - synced [%d] Resources "
@@ -2243,7 +2253,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             + "] and its descendants...");
 
         // Get the latest resource data rooted at the given id.
-        synchInventory(syncInfo, true); // this method assumes we only get a single resource and its children (BZ 887411)
+        synchInventory(syncInfo, true, null); // this method assumes we only get a single resource and its children (BZ 887411)
         performServiceScan(syncInfo.getId()); // NOTE: This will block (the initial scan blocks).
     }
 
@@ -2769,9 +2779,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
         return versionUpdated;
     }
 
-    private void processSyncInfo(ResourceSyncInfo syncInfo, Set<Resource> syncedResources,
-        Set<ResourceSyncInfo> unknownResourceSyncInfos, Set<Integer> modifiedResourceIds,
-        Set<Integer> deletedResourceIds, Set<Resource> newlyCommittedResources) {
+    private void processSyncInfo(ResourceSyncInfo syncInfo, Collection<ResourceTypeFlyweight> ignoredTypes,
+        Set<Resource> syncedResources, Set<ResourceSyncInfo> unknownResourceSyncInfos,
+        Set<Integer> modifiedResourceIds, Set<Integer> deletedResourceIds, Set<Resource> newlyCommittedResources) {
         if (InventoryStatus.DELETED == syncInfo.getInventoryStatus()) {
             // A previously deleted resource still being reported by the server. Support for this option can
             // be removed if the server is ever modified to not report deleted resources. It is happening currently
@@ -2782,8 +2792,13 @@ public class InventoryManager extends AgentService implements ContainerService, 
             ResourceContainer container = this.resourceContainers.get(syncInfo.getUuid());
             if (container == null) {
                 // Either a manually added Resource or just something we haven't discovered.
-                unknownResourceSyncInfos.add(syncInfo);
-                log.info("Got unknown resource: " + syncInfo.getId());
+                // If this unknown resource is to be ignored, then don't bother to do anything.
+                if (InventoryStatus.IGNORED != syncInfo.getInventoryStatus()) {
+                    unknownResourceSyncInfos.add(syncInfo);
+                    log.info("Got unknown resource: " + syncInfo.getId());
+                } else {
+                    log.info("Got an unknown but ignored resource - ignoring it: " + syncInfo.getId());
+                }
             } else {
                 Resource resource = container.getResource();
                 // Ensure the Resource classloader is initialized on the Resource container.
@@ -2796,40 +2811,45 @@ public class InventoryManager extends AgentService implements ContainerService, 
                         + ", mtime=" + syncInfo.getMtime());
                 }
 
-                if (resource.getInventoryStatus() != InventoryStatus.COMMITTED
-                    && syncInfo.getInventoryStatus() == InventoryStatus.COMMITTED) {
-                    newlyCommittedResources.add(resource);
-                }
-
-                if (resource.getId() == 0) {
-                    // This must be a Resource we just reported to the server. Just update its id, mtime, and status.
-                    resource.setId(syncInfo.getId());
-                    resource.setMtime(syncInfo.getMtime());
-                    resource.setInventoryStatus(syncInfo.getInventoryStatus());
-                    refreshResourceComponentState(container, true);
-                    syncedResources.add(resource);
+                if (InventoryStatus.IGNORED == syncInfo.getInventoryStatus()) {
+                    // a resource has been tagged to be ignored - we need to remove it from our inventory
+                    deletedResourceIds.add(syncInfo.getId());
                 } else {
-                    // It's a resource that was already synced at least once.
-                    if (resource.getId() != syncInfo.getId()) {
-                        // This really should never happen, but check for it just to be bulletproof.
-                        log.error("PC Resource id (" + resource.getId() + ") does not match Server Resource id ("
-                            + syncInfo.getId() + ") for Resource with uuid " + resource.getUuid() + ": " + resource);
-                        modifiedResourceIds.add(syncInfo.getId());
+                    if (resource.getInventoryStatus() != InventoryStatus.COMMITTED
+                        && syncInfo.getInventoryStatus() == InventoryStatus.COMMITTED) {
+                        newlyCommittedResources.add(resource);
                     }
-                    // See if it's been modified on the Server since the last time we synced.
-                    else if (resource.getMtime() < syncInfo.getMtime()) {
-                        modifiedResourceIds.add(resource.getId());
+
+                    if (resource.getId() == 0) {
+                        // This must be a Resource we just reported to the server. Just update its id, mtime, and status.
+                        resource.setId(syncInfo.getId());
+                        resource.setMtime(syncInfo.getMtime());
+                        resource.setInventoryStatus(syncInfo.getInventoryStatus());
+                        refreshResourceComponentState(container, true);
+                        syncedResources.add(resource);
                     } else {
-                        // Only try to start up the component if the Resource has *not* been modified on the Server.
-                        // Otherwise, hold off until we've synced the Resource with the Server.
-                        refreshResourceComponentState(container, false);
+                        // It's a resource that was already synced at least once.
+                        if (resource.getId() != syncInfo.getId()) {
+                            // This really should never happen, but check for it just to be bulletproof.
+                            log.error("PC Resource id (" + resource.getId() + ") does not match Server Resource id ("
+                                + syncInfo.getId() + ") for Resource with uuid " + resource.getUuid() + ": " + resource);
+                            modifiedResourceIds.add(syncInfo.getId());
+                        }
+                        // See if it's been modified on the Server since the last time we synced.
+                        else if (resource.getMtime() < syncInfo.getMtime()) {
+                            modifiedResourceIds.add(resource.getId());
+                        } else {
+                            // Only try to start up the component if the Resource has *not* been modified on the Server.
+                            // Otherwise, hold off until we've synced the Resource with the Server.
+                            refreshResourceComponentState(container, false);
+                        }
                     }
                 }
 
                 // Recurse...
                 for (ResourceSyncInfo childSyncInfo : syncInfo.getChildSyncInfos()) {
-                    processSyncInfo(childSyncInfo, syncedResources, unknownResourceSyncInfos, modifiedResourceIds,
-                        deletedResourceIds, newlyCommittedResources);
+                    processSyncInfo(childSyncInfo, ignoredTypes, syncedResources, unknownResourceSyncInfos,
+                        modifiedResourceIds, deletedResourceIds, newlyCommittedResources);
                 }
             }
         }

@@ -191,11 +191,14 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         Set<Resource> roots = report.getAddedRoots();
         log.debug(report);
 
+        final Map<String, ResourceType> allTypes = new HashMap<String, ResourceType>();
+        final Set<ResourceType> ignoredTypes = new HashSet<ResourceType>();
+
         for (Resource root : roots) {
             // Make sure all platform, server, and service types are valid. Also, make sure they're fetched - otherwise
             // we'll get persistence exceptions when we try to merge OR persist the platform.
             long rootStart = System.currentTimeMillis();
-            if (!initResourceTypes(root)) {
+            if (!initResourceTypes(root, allTypes, ignoredTypes)) {
                 continue;
             }
 
@@ -212,6 +215,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             }
         }
 
+        allTypes.clear(); // help GC, we don't need this anymore
+
         // Prepare the ResourceSyncInfo tree which contains all the info the PC needs to sync itself up with us.
         // The platform can be null in only one scenario.. a brand new agent has connected to the server
         // and that agent is currently trying to upgrade its resources. For that it asks us to send down
@@ -222,7 +227,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 
         MergeInventoryReportResults results;
         if (syncInfo != null) {
-            results = new MergeInventoryReportResults(syncInfo, null);
+            results = new MergeInventoryReportResults(syncInfo, ignoredTypes);
         } else {
             results = null;
         }
@@ -752,6 +757,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         // We don't merge the entire resource tree. Instead we batch them in order to reduce transaction overhead
         // while ensuring no transaction is too big (and thus risks timeout). To do this we need to flatten the
         // tree and chunk through it.  Parents must be merged before children, so use a breadth first approach.
+        // NOTE: this will also strip out all resources that are to be ignored; thus, ignored resources won't get merged
         List<Resource> resourceList = treeToBreadthFirstList(resource);
 
         if (log.isDebugEnabled()) {
@@ -780,7 +786,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 
     private List<Resource> treeToBreadthFirstList(Resource resource) {
         // if we are to ignore this resource's type, don't bother doing anything since all is to be ignored
-        if (resource.getResourceType() == null || resource.getResourceType().isIgnored()) {
+        if (resource.getResourceType().isIgnored()) {
             return new ArrayList<Resource>(0);
         }
 
@@ -791,8 +797,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         while (!queue.isEmpty()) {
             Resource node = queue.remove();
 
-            // if this node is to be ignored, don't bother traversing into it
-            if (node.getResourceType() == null || node.getResourceType().isIgnored()) {
+            // if this node is to be ignored, don't traverse it and don't add it to the returned results
+            if (node.getResourceType().isIgnored()) {
                 continue;
             }
 
@@ -1080,7 +1086,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
     private boolean initResourceTypes(Resource resource) {
         final HashMap<String, ResourceType> types = new HashMap<String, ResourceType>();
         try {
-            return initResourceTypes(resource, types);
+            return initResourceTypes(resource, types, null);
         } finally {
             types.clear(); // help GC
         }
@@ -1090,9 +1096,13 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
      * recursively assign (detached) ResourceType entities to the resource tree
      * @param resource
      * @param loadedTypeMap Empty map to start, filled as we go to minimize DB fetches
+     * @param ignoredTypes If the caller wants to be told about resource types that are to be ignored,
+     *                     pass in a set to be filled in. This is optional - if the caller passes in null,
+     *                     the ignored types are not captured for the caller.
      * @return false if a resource's type is unknown; true if all types were successfully loaded
      */
-    private boolean initResourceTypes(Resource resource, Map<String, ResourceType> loadedTypeMap) {
+    private boolean initResourceTypes(Resource resource, Map<String, ResourceType> loadedTypeMap,
+        Set<ResourceType> ignoredTypes) {
 
         String plugin = resource.getResourceType().getPlugin();
         String name = resource.getResourceType().getName();
@@ -1122,12 +1132,15 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 
         // don't bother looking at the children if we are just going to ignore this resource
         if (resourceType.isIgnored()) {
+            if (ignoredTypes != null) {
+                ignoredTypes.add(resourceType);
+            }
             return true;
         }
 
         for (Iterator<Resource> childIterator = resource.getChildResources().iterator(); childIterator.hasNext();) {
             Resource child = childIterator.next();
-            if (!initResourceTypes(child, loadedTypeMap)) {
+            if (!initResourceTypes(child, loadedTypeMap, ignoredTypes)) {
                 childIterator.remove();
             }
         }
