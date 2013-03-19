@@ -260,7 +260,10 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
         inventoryReport.addAddedRoot(platform);
 
         // Merge this inventory report
-        ResourceSyncInfo platformSyncInfo = discoveryBoss.mergeInventoryReport(serialize(inventoryReport));
+        MergeInventoryReportResults mergeResults = discoveryBoss.mergeInventoryReport(serialize(inventoryReport));
+        assert mergeResults != null;
+        ResourceSyncInfo platformSyncInfo = mergeResults.getResourceSyncInfo();
+        assert platformSyncInfo != null;
 
         // Check merge result
         assertEquals(InventoryStatus.NEW, platformSyncInfo.getInventoryStatus());
