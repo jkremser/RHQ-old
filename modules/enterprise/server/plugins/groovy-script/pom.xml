@@ -29,7 +29,6 @@
         <dependency>
             <groupId>quartz</groupId>
             <artifactId>quartz</artifactId>
-            <version>1.5.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>

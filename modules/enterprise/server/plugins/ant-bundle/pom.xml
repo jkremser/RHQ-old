@@ -94,7 +94,6 @@
                                 <artifactItem>
                                     <groupId>ant-contrib</groupId>
                                     <artifactId>ant-contrib</artifactId>
-                                    <version>1.0b3</version>
                                 </artifactItem>
 
                                 <artifactItem>
