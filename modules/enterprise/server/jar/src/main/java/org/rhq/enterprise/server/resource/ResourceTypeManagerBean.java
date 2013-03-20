@@ -42,6 +42,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.InventoryStatus;
@@ -55,6 +56,7 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
+import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.util.QueryUtility;
@@ -81,6 +83,21 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
     @EJB
     //@IgnoreDependency
     private ResourceManagerLocal resourceManager;
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public void setResourceTypeIgnoreFlag(Subject subject, int resourceTypeId, boolean ignoreFlag) {
+        ResourceType resourceType = getResourceTypeById(subject, resourceTypeId);
+
+        // don't bother to do anything if the type's ignore flag is already set to the value the caller wants
+        if (resourceType.isIgnored() == ignoreFlag) {
+            return;
+        }
+
+        resourceType.setIgnored(ignoreFlag);
+
+        // if the type is being ignored, we need to do things like uninventory resources of that type
+        return;
+    }
 
     public ResourceType getResourceTypeById(Subject subject, int id) throws ResourceTypeNotFoundException {
         // this operation does not need to be secured; types are data side-effects of authorized resources
