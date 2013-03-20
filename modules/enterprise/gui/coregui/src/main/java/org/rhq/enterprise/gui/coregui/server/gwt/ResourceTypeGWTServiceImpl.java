@@ -24,7 +24,8 @@ public class ResourceTypeGWTServiceImpl extends AbstractGWTServiceImpl implement
     public void setResourceTypeIgnoreFlag(int resourceTypeId, boolean ignoreFlag) throws RuntimeException {
         try {
             ResourceTypeManagerLocal typeManager = LookupUtil.getResourceTypeManager();
-            typeManager.setResourceTypeIgnoreFlag(getSessionSubject(), resourceTypeId, ignoreFlag);
+            typeManager.setResourceTypeIgnoreFlagAndUninventoryResources(getSessionSubject(), resourceTypeId,
+                ignoreFlag);
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

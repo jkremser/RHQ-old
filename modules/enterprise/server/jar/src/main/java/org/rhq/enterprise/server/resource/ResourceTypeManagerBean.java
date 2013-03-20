@@ -33,6 +33,8 @@ import java.util.TreeSet;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
@@ -81,8 +83,24 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
     private AuthorizationManagerLocal authorizationManager;
 
     @EJB
-    //@IgnoreDependency
     private ResourceManagerLocal resourceManager;
+
+    @EJB
+    private ResourceTypeManagerLocal resourceTypeManager; // self-reference
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @TransactionAttribute(TransactionAttributeType.NEVER)
+    public void setResourceTypeIgnoreFlagAndUninventoryResources(Subject subject, int resourceTypeId, boolean ignoreFlag) {
+        // if we are to ignore the type, we first must successfully uninventory all resources of that type
+        if (ignoreFlag == true) {
+            resourceManager.uninventoryResourcesOfResourceType(subject, resourceTypeId);
+        }
+
+        // now we simply flip the ignore setting on the type
+        resourceTypeManager.setResourceTypeIgnoreFlag(subject, resourceTypeId, ignoreFlag);
+
+        return;
+    }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public void setResourceTypeIgnoreFlag(Subject subject, int resourceTypeId, boolean ignoreFlag) {
@@ -94,8 +112,6 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
         }
 
         resourceType.setIgnored(ignoreFlag);
-
-        // if the type is being ignored, we need to do things like uninventory resources of that type
         return;
     }
 

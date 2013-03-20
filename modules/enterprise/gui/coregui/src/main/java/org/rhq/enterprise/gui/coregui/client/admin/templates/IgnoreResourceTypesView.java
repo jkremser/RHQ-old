@@ -48,6 +48,7 @@ import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.gwt.ResourceTypeGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
@@ -113,26 +114,32 @@ public class IgnoreResourceTypesView extends ResourceTypeTreeView {
                     public void execute(Boolean value) {
                         if (Boolean.TRUE.equals(value)) {
                             // call server to flip ignore flag on type
-                            GWTServiceLookup.getResourceTypeGWTService().setResourceTypeIgnoreFlag(type.getId(),
-                                newIgnoreFlag, new AsyncCallback<Void>() {
-                                    public void onSuccess(Void result) {
-                                        type.setIgnored(newIgnoreFlag); // this type reference is inside our cache so make sure we update it
+                            // if we are going to ignore a type, then increase the timeout since this might take a while if there are lots of resources of the type
+                            ResourceTypeGWTServiceAsync service;
+                            if (newIgnoreFlag) {
+                                service = GWTServiceLookup.getResourceTypeGWTService(300000); // arbitrarily picking 5m
+                            } else {
+                                service = GWTServiceLookup.getResourceTypeGWTService();
+                            }
+                            service.setResourceTypeIgnoreFlag(type.getId(), newIgnoreFlag, new AsyncCallback<Void>() {
+                                public void onSuccess(Void result) {
+                                    type.setIgnored(newIgnoreFlag); // this type reference is inside our cache so make sure we update it
 
-                                        String msg = newIgnoreFlag ? MSG
-                                            .view_adminConfig_ignoreResourceTypes_successIgnore(type.getName()) : MSG
-                                            .view_adminConfig_ignoreResourceTypes_successUnignore(type.getName());
-                                        CoreGUI.getMessageCenter().notify(new Message(msg));
+                                    String msg = newIgnoreFlag ? MSG
+                                        .view_adminConfig_ignoreResourceTypes_successIgnore(type.getName()) : MSG
+                                        .view_adminConfig_ignoreResourceTypes_successUnignore(type.getName());
+                                    CoreGUI.getMessageCenter().notify(new Message(msg));
 
-                                        // refresh the listgrid
-                                        // (note: try as I might, could not figure out how to get the 1 listgrid to refresh, so do all of them here)
-                                        CoreGUI.refresh();
-                                    }
+                                    // refresh the listgrid
+                                    // (note: try as I might, could not figure out how to get the 1 listgrid to refresh, so do all of them here)
+                                    CoreGUI.refresh();
+                                }
 
-                                    public void onFailure(Throwable caught) {
-                                        CoreGUI.getErrorHandler().handleError(
-                                            MSG.view_adminConfig_ignoreResourceTypes_failure(), caught);
-                                    }
-                                });
+                                public void onFailure(Throwable caught) {
+                                    CoreGUI.getErrorHandler().handleError(
+                                        MSG.view_adminConfig_ignoreResourceTypes_failure(), caught);
+                                }
+                            });
                         }
                     }
                 });

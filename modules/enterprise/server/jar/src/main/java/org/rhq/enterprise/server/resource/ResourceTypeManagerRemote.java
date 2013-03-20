@@ -28,7 +28,7 @@ import org.rhq.core.domain.util.PageList;
 @Remote
 public interface ResourceTypeManagerRemote {
 
-    void setResourceTypeIgnoreFlag(Subject subject, int resourceTypeId, boolean ignoreFlag);
+    void setResourceTypeIgnoreFlagAndUninventoryResources(Subject subject, int resourceTypeId, boolean ignoreFlag);
 
     ResourceType getResourceTypeById(Subject subject, int resourceTypeId) throws ResourceTypeNotFoundException;
 

@@ -249,6 +249,18 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return entityManager.merge(persistedResource);
     }
 
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @TransactionAttribute(TransactionAttributeType.NEVER)
+    public void uninventoryResourcesOfResourceType(Subject subject, int resourceTypeId) {
+        List<Integer> typeIds = new ArrayList<Integer>(1);
+        typeIds.add(resourceTypeId);
+
+        List<Integer> resourceIds = resourceManager.findIdsByTypeIds(typeIds);
+        for (Integer resourceId : resourceIds) {
+            resourceManager.uninventoryResourceInNewTransaction(resourceId);
+        }
+    }
+
     @TransactionAttribute(TransactionAttributeType.NEVER)
     public void uninventoryAllResourcesByAgent(Subject user, Agent doomedAgent) {
         Resource platform = resourceManager.getPlatform(doomedAgent);
