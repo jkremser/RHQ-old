@@ -118,6 +118,8 @@ public class IgnoreResourceTypesView extends ResourceTypeTreeView {
                             ResourceTypeGWTServiceAsync service;
                             if (newIgnoreFlag) {
                                 service = GWTServiceLookup.getResourceTypeGWTService(300000); // arbitrarily picking 5m
+                                CoreGUI.getMessageCenter().notify(
+                                    new Message(MSG.view_adminConfig_ignoreResourceTypes_pleaseWait()));
                             } else {
                                 service = GWTServiceLookup.getResourceTypeGWTService();
                             }
