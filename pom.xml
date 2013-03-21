@@ -441,6 +441,12 @@
         <version>${commons-configuration.version}</version>
       </dependency>
 
+      <dependency>
+        <groupId>commons-httpclient</groupId>
+        <artifactId>commons-httpclient</artifactId>
+        <version>${commons-httpclient.version}</version>
+      </dependency>
+
       <!-- GNU GetOpt (any modules that need to do command-line argument parsing should use this) -->
       <dependency>
         <groupId>gnu-getopt</groupId>
@@ -1010,6 +1016,18 @@
             <groupId>org.jacoco</groupId>
             <artifactId>jacoco-maven-plugin</artifactId>
             <version>${jacoco.version}</version>
+         </plugin>
+
+         <plugin>
+           <groupId>com.sun.tools.xjc.maven2</groupId>
+           <artifactId>maven-jaxb-plugin</artifactId>
+           <version>1.1</version>
+         </plugin>
+
+         <plugin>
+           <groupId>org.antlr</groupId>
+           <artifactId>antlr3-maven-plugin</artifactId>
+           <version>3.2</version>
          </plugin>
        </plugins>
      </pluginManagement>
