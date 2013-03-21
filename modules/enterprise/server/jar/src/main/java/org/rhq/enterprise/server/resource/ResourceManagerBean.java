@@ -256,9 +256,17 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         typeIds.add(resourceTypeId);
 
         List<Integer> resourceIds = resourceManager.findIdsByTypeIds(typeIds);
-        for (Integer resourceId : resourceIds) {
-            resourceManager.uninventoryResourceInNewTransaction(resourceId);
+
+        if (resourceIds != null && !resourceIds.isEmpty()) {
+            log.info("Uninventorying all [" + resourceIds.size() + "] resources with resource type ID of ["
+                + resourceTypeId + "]");
+
+            for (Integer resourceId : resourceIds) {
+                resourceManager.uninventoryResourceInNewTransaction(resourceId);
+            }
         }
+
+        return;
     }
 
     @TransactionAttribute(TransactionAttributeType.NEVER)

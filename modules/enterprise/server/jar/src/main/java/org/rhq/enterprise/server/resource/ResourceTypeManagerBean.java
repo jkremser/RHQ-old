@@ -111,6 +111,9 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
             return;
         }
 
+        log.info("Changing ignore flag to [" + ignoreFlag + "] for resource type [" + resourceType.getName()
+            + "] with id=[" + resourceTypeId + "]");
+
         resourceType.setIgnored(ignoreFlag);
         return;
     }
