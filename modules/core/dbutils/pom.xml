@@ -79,7 +79,6 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
-                <version>1.2</version>
                 <dependencies>
                     <dependency>
                         <groupId>postgresql</groupId>
@@ -451,7 +450,6 @@
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>exec-maven-plugin</artifactId>
-                        <version>1.2</version>
                     </plugin>
                 </plugins>
             </build>

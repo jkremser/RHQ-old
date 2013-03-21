@@ -155,11 +155,14 @@
     <commons-codec.version>1.4</commons-codec.version>
     <commons-validator.version>1.1.4</commons-validator.version>
     <commons-collections.version>3.2.1</commons-collections.version>
+    <commons-configuration.version>1.6</commons-configuration.version>
 
     <junit.version>4.8.2</junit.version>
     <liquibase-core.version>1.9.5</liquibase-core.version>
     <jbpm.version>3.1.1</jbpm.version>
     <servlet-api.version>2.4</servlet-api.version>
+
+    <mockito-core.version>1.9.0</mockito-core.version>
 
     <rhq.db.admin.username>rhqadmin</rhq.db.admin.username>
     <rhq.db.admin.password>rhqadmin</rhq.db.admin.password>
@@ -432,6 +435,12 @@
         <version>${commons-collections.version}</version>
       </dependency>
 
+      <dependency>
+        <groupId>commons-configuration</groupId>
+        <artifactId>commons-configuration</artifactId>
+        <version>${commons-configuration.version}</version>
+      </dependency>
+
       <!-- GNU GetOpt (any modules that need to do command-line argument parsing should use this) -->
       <dependency>
         <groupId>gnu-getopt</groupId>
@@ -699,6 +708,12 @@
       </dependency>
 
       <dependency>
+         <groupId>org.mockito</groupId>
+         <artifactId>mockito-core</artifactId>
+         <version>${mockito-core.version}</version>
+      </dependency>
+
+      <dependency>
          <groupId>org.powermock</groupId>
          <artifactId>powermock-module-testng</artifactId>
          <version>${powermock.version}</version>
@@ -910,6 +925,10 @@
            <artifactId>maven-war-plugin</artifactId>
            <version>2.1</version>
          </plugin>
+         <plugin>
+            <artifactId>maven-surefire-report-plugin</artifactId>
+            <version>2.6</version>
+         </plugin>
 
          <!-- === Codehaus Mojo Plugins === -->
          <plugin>
@@ -927,7 +946,7 @@
            <artifactId>exec-maven-plugin</artifactId>
            <!-- NOTE: Version 1.2 of this plugin appears to be broken, so do not
                       upgrade to that version. -->
-           <version>1.1</version>
+           <version>1.2.1</version>
          </plugin>
          <plugin>
            <groupId>org.codehaus.mojo</groupId>
@@ -957,6 +976,12 @@
          <plugin>
             <groupId>org.codehaus.mojo</groupId>
            <artifactId>xml-maven-plugin</artifactId>
+           <version>1.0</version>
+         </plugin>
+
+         <plugin>
+           <groupId>org.codehaus.groovy.maven</groupId>
+           <artifactId>gmaven-plugin</artifactId>
            <version>1.0</version>
          </plugin>
 
@@ -1874,8 +1899,13 @@
               <reportSets>
               <reportSet>
               </reportSet>
-           </reportSets>
-      </plugin>
+              </reportSets>
+           </plugin>
+
+           <plugin>
+             <artifactId>maven-surefire-report-plugin</artifactId>
+             <version>2.6</version>
+           </plugin>
 
 <!--
             <plugin>
