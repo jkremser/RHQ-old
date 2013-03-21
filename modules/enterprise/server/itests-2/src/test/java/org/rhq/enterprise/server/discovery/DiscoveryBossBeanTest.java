@@ -28,6 +28,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.sql.Connection;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
@@ -57,6 +58,7 @@ import org.rhq.core.clientapi.agent.discovery.DiscoveryAgentService;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.discovery.MergeInventoryReportResults;
+import org.rhq.core.domain.discovery.MergeInventoryReportResults.ResourceTypeFlyweight;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.resource.Agent;
@@ -332,12 +334,43 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
         assert platformSyncInfo != null;
         assertNotNull(mergeResults.getIgnoredResourceTypes());
         assertEquals(mergeResults.getIgnoredResourceTypes().size(), 1);
-        assertEquals(mergeResults.getIgnoredResourceTypes().iterator().next().getName(), serverType.getName());
-        assertEquals(mergeResults.getIgnoredResourceTypes().iterator().next().getPlugin(), serverType.getPlugin());
+        assert mergeResults.getIgnoredResourceTypes().contains(new ResourceTypeFlyweight(serverType));
 
         // Check merge result - make sure we should not see any children under the platform (it should have been ignored)
         assertEquals(InventoryStatus.NEW, platformSyncInfo.getInventoryStatus());
         assertEquals(platformSyncInfo.getChildSyncInfos().size(), 0);
+    }
+
+    @Test(groups = "integration.ejb3")
+    public void testReturnAllIgnoredResourceTypes() throws Exception {
+
+        // ignore the service types immediately
+        resourceTypeManager.setResourceTypeIgnoreFlagAndUninventoryResources(subjectManager.getOverlord(),
+            serviceType1.getId(), true);
+        resourceTypeManager.setResourceTypeIgnoreFlagAndUninventoryResources(subjectManager.getOverlord(),
+            serviceType2.getId(), true);
+
+        // create an inventory report with just a platform and a server
+        InventoryReport inventoryReport = new InventoryReport(agent);
+        Resource platform = new Resource("platform", "platform", platformType);
+        platform.setUuid(String.valueOf(new Random().nextInt()));
+        Resource server = new Resource("server0", "server0", serverType);
+        server.setUuid(String.valueOf(new Random().nextInt()));
+        platform.addChildResource(server);
+        inventoryReport.addAddedRoot(platform);
+
+        // Merge this inventory report
+        MergeInventoryReportResults mergeResults = discoveryBoss.mergeInventoryReport(serialize(inventoryReport));
+        assert mergeResults != null;
+        ResourceSyncInfo platformSyncInfo = mergeResults.getResourceSyncInfo();
+        assert platformSyncInfo != null;
+
+        // now see that we were told about the service types being ignored (even though we had no resources of that type in the report)
+        Collection<ResourceTypeFlyweight> ignoredResourceTypes = mergeResults.getIgnoredResourceTypes();
+        assertNotNull(ignoredResourceTypes);
+        assertEquals(ignoredResourceTypes.size(), 2);
+        assert ignoredResourceTypes.contains(new ResourceTypeFlyweight(serviceType1));
+        assert ignoredResourceTypes.contains(new ResourceTypeFlyweight(serviceType2));
     }
 
     @Test(groups = "integration.ejb3")
@@ -402,8 +435,7 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
         assert platformSyncInfo != null;
         assertNotNull(mergeResults.getIgnoredResourceTypes());
         assertEquals(mergeResults.getIgnoredResourceTypes().size(), 1);
-        assertEquals(mergeResults.getIgnoredResourceTypes().iterator().next().getName(), serverType.getName());
-        assertEquals(mergeResults.getIgnoredResourceTypes().iterator().next().getPlugin(), serverType.getPlugin());
+        assert mergeResults.getIgnoredResourceTypes().contains(new ResourceTypeFlyweight(serverType));
 
         assertEquals(InventoryStatus.COMMITTED, platformSyncInfo.getInventoryStatus()); // notice platform is committed now
         assertEquals(platformSyncInfo.getChildSyncInfos().size(), 0); // notice there are no server children now

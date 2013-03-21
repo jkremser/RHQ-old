@@ -64,6 +64,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.discovery.MergeInventoryReportResults;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
@@ -192,13 +193,12 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         log.debug(report);
 
         final Map<String, ResourceType> allTypes = new HashMap<String, ResourceType>();
-        final Set<ResourceType> ignoredTypes = new HashSet<ResourceType>();
 
         for (Resource root : roots) {
             // Make sure all platform, server, and service types are valid. Also, make sure they're fetched - otherwise
             // we'll get persistence exceptions when we try to merge OR persist the platform.
             long rootStart = System.currentTimeMillis();
-            if (!initResourceTypes(root, allTypes, ignoredTypes)) {
+            if (!initResourceTypes(root, allTypes)) {
                 continue;
             }
 
@@ -224,6 +224,14 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         // agent just registered and is starting up for the very first time and therefore hasn't had
         // a chance yet to send us its full inventory report.
         ResourceSyncInfo syncInfo = discoveryBoss.getResourceSyncInfo(knownAgent);
+
+        // we need to also tell the agent if there were any ignored types - we must provide the agent with
+        // ALL types that are ignored, not just for those resources that were in the report
+        ResourceTypeCriteria ignoredTypesCriteria = new ResourceTypeCriteria();
+        ignoredTypesCriteria.addFilterIgnored(true);
+        ignoredTypesCriteria.setPageControl(PageControl.getUnlimitedInstance());
+        PageList<ResourceType> ignoredTypes = resourceTypeManager.findResourceTypesByCriteria(
+            subjectManager.getOverlord(), ignoredTypesCriteria);
 
         MergeInventoryReportResults results;
         if (syncInfo != null) {
@@ -1086,7 +1094,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
     private boolean initResourceTypes(Resource resource) {
         final HashMap<String, ResourceType> types = new HashMap<String, ResourceType>();
         try {
-            return initResourceTypes(resource, types, null);
+            return initResourceTypes(resource, types);
         } finally {
             types.clear(); // help GC
         }
@@ -1096,13 +1104,9 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
      * recursively assign (detached) ResourceType entities to the resource tree
      * @param resource
      * @param loadedTypeMap Empty map to start, filled as we go to minimize DB fetches
-     * @param ignoredTypes If the caller wants to be told about resource types that are to be ignored,
-     *                     pass in a set to be filled in. This is optional - if the caller passes in null,
-     *                     the ignored types are not captured for the caller.
      * @return false if a resource's type is unknown; true if all types were successfully loaded
      */
-    private boolean initResourceTypes(Resource resource, Map<String, ResourceType> loadedTypeMap,
-        Set<ResourceType> ignoredTypes) {
+    private boolean initResourceTypes(Resource resource, Map<String, ResourceType> loadedTypeMap) {
 
         String plugin = resource.getResourceType().getPlugin();
         String name = resource.getResourceType().getName();
@@ -1132,15 +1136,12 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 
         // don't bother looking at the children if we are just going to ignore this resource
         if (resourceType.isIgnored()) {
-            if (ignoredTypes != null) {
-                ignoredTypes.add(resourceType);
-            }
             return true;
         }
 
         for (Iterator<Resource> childIterator = resource.getChildResources().iterator(); childIterator.hasNext();) {
             Resource child = childIterator.next();
-            if (!initResourceTypes(child, loadedTypeMap, ignoredTypes)) {
+            if (!initResourceTypes(child, loadedTypeMap)) {
                 childIterator.remove();
             }
         }
