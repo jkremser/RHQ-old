@@ -58,6 +58,7 @@ import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
 import org.rhq.core.clientapi.agent.discovery.DiscoveryAgentService;
 import org.rhq.core.clientapi.agent.discovery.InvalidPluginConfigurationClientException;
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
+import org.rhq.core.clientapi.agent.metadata.ResourceTypeNotEnabledException;
 import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeRequest;
 import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeResponse;
 import org.rhq.core.clientapi.server.discovery.DiscoveryServerService;
@@ -1096,6 +1097,18 @@ public class InventoryManager extends AgentService implements ContainerService, 
             return false;
         }
 
+        // tell our metadata manager what resource types are to be ignored
+        PluginMetadataManager metadataMgr = this.pluginManager.getMetadataManager();
+        if (ignoredTypes != null && !ignoredTypes.isEmpty()) {
+            Collection<ResourceType> ignoredSet = new HashSet<ResourceType>(ignoredTypes.size());
+            for (ResourceTypeFlyweight ignoredType : ignoredTypes) {
+                ignoredSet.add(new ResourceType(ignoredType.getName(), ignoredType.getPlugin(), null, null));
+            }
+            metadataMgr.setIgnoredResourceTypes(ignoredSet);
+        } else {
+            metadataMgr.setIgnoredResourceTypes(null);
+        }
+
         //sync info can be null if the server hasn't received a full inventory report
         //from us yet. This can happen if this method is being invoked from inside the
         //resource upgrade executor to sync up with the server side inventory *JUST AFTER*
@@ -1105,7 +1118,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         //would change.
         //In either case, let's sync up with the server - if it's got nothing, neither should the agent.
         if (syncInfo != null) {
-            synchInventory(syncInfo, ignoredTypes);
+            synchInventory(syncInfo);
         } else {
             purgeObsoleteResources(Collections.<String> emptySet());
 
@@ -1121,11 +1134,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
      * This assumes the resource sync infos passed in represent the full inventory tree.
      *
      * @param syncInfo information on all resources in the entire inventory tree
-     * @param ignoredTypes if non-null, a collection of resource type flyweights that tell
-     *                     you what types of resources should be ignored.
      */
-    private void synchInventory(ResourceSyncInfo syncInfo, Collection<ResourceTypeFlyweight> ignoredTypes) {
-        synchInventory(syncInfo, false, ignoredTypes);
+    private void synchInventory(ResourceSyncInfo syncInfo) {
+        synchInventory(syncInfo, false);
     }
 
     /**
@@ -1134,11 +1145,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
      * @param syncInfo the resources' sync data
      * @param partialInventory if true, syncInfo represents only a partial inventory.
      *                         if false, syncInfo represents the full inventory tree of all resources
-     * @param ignoredTypes if non-null, a collection of resource type flyweights that tell
-     *                     you what types of resources should be ignored.
      */
-    private void synchInventory(ResourceSyncInfo syncInfo, boolean partialInventory,
-        Collection<ResourceTypeFlyweight> ignoredTypes) {
+    private void synchInventory(ResourceSyncInfo syncInfo, boolean partialInventory) {
         log.info("Syncing local inventory with Server inventory...");
         long startTime = System.currentTimeMillis();
         Set<Resource> syncedResources = new LinkedHashSet<Resource>();
@@ -1158,7 +1166,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             }
 
             log.debug("Processing Server sync info...");
-            processSyncInfo(syncInfo, ignoredTypes, syncedResources, unknownResourceSyncInfos, modifiedResourceIds,
+            processSyncInfo(syncInfo, syncedResources, unknownResourceSyncInfos, modifiedResourceIds,
                 deletedResourceIds, newlyCommittedResources);
             if (log.isDebugEnabled()) {
                 log.debug(String.format("DONE Processing sync info - took [%d] ms - synced [%d] Resources "
@@ -1604,7 +1612,6 @@ public class InventoryManager extends AgentService implements ContainerService, 
     private ResourceContainer initResourceContainer(Resource resource) {
         ResourceContainer resourceContainer = getResourceContainer(resource);
         if (resourceContainer == null) {
-            PluginComponentFactory factory = PluginContainer.getInstance().getPluginComponentFactory();
             ClassLoader classLoader = getResourceClassLoader(resource);
             resourceContainer = new ResourceContainer(resource, classLoader);
             if (!this.configuration.isInsideAgent()) {
@@ -1654,6 +1661,11 @@ public class InventoryManager extends AgentService implements ContainerService, 
     private boolean prepareResourceForActivation(Resource resource, @NotNull
     ResourceContainer container, boolean forceReinitialization) throws InvalidPluginConfigurationException,
         PluginContainerException {
+
+        // don't bother doing anything if this resource is of a disabled/ignored type
+        if (this.pluginManager.getMetadataManager().isDisabledOrIgnoredResourceType(resource.getResourceType())) {
+            return false;
+        }
 
         if (resourceUpgradeDelegate.hasUpgradeFailed(resource)) {
             if (log.isTraceEnabled()) {
@@ -1728,6 +1740,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 log.debug("Creating component for [" + resource + "]...");
             }
             try {
+                // should not throw ResourceTypeNotEnabledException because we checked for that above - if it does, just handle it as an error
                 component = PluginContainer.getInstance().getPluginComponentFactory().buildResourceComponent(resource);
             } catch (Throwable e) {
                 throw new PluginContainerException("Could not build component for Resource [" + resource + "]", e);
@@ -1743,11 +1756,12 @@ public class InventoryManager extends AgentService implements ContainerService, 
         if (isParentStarted) {
             PluginComponentFactory factory = PluginContainer.getInstance().getPluginComponentFactory();
             ResourceType type = resource.getResourceType();
-            ResourceDiscoveryComponent discoveryComponent = factory
-                .getDiscoveryComponent(type, parentResourceContainer);
 
             // wrap the discovery component in a proxy to allow us to timeout discovery invocations
+            ResourceDiscoveryComponent discoveryComponent;
             try {
+                // should not throw ResourceTypeNotEnabledException because we checked for that above - if it does, just handle it as an error
+                discoveryComponent = factory.getDiscoveryComponent(type, parentResourceContainer);
                 discoveryComponent = this.discoveryComponentProxyFactory.getDiscoveryComponentProxy(type,
                     discoveryComponent, getDiscoveryComponentTimeout(type), parentResourceContainer);
             } catch (Exception e) {
@@ -2144,10 +2158,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
      * @return The discovered platform (which might be a dummy in case of testing)
      */
     private Resource discoverPlatform() {
-        PluginManager pluginManager = PluginContainer.getInstance().getPluginManager();
         PluginComponentFactory componentFactory = PluginContainer.getInstance().getPluginComponentFactory();
         SystemInfo systemInfo = SystemInfoFactory.createSystemInfo();
-        Set<ResourceType> platformTypes = pluginManager.getMetadataManager().getTypesForCategory(
+        Set<ResourceType> platformTypes = this.pluginManager.getMetadataManager().getTypesForCategory(
             ResourceCategory.PLATFORM);
 
         // This should only ever have 1 or, at most, 2 Resources
@@ -2182,6 +2195,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
                     if (discoveredResources != null) {
                         allDiscoveredPlatforms.addAll(discoveredResources);
                     }
+                } catch (ResourceTypeNotEnabledException rtne) {
+                    log.debug("Skipping platform discovery - its type is disabled: " + platformType);
                 } catch (Throwable e) {
                     log.error("Error in platform discovery", e);
                 }
@@ -2234,7 +2249,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
      * @return A dummy platform for testing purposes only.
      */
     private Resource getTestPlatform() {
-        ResourceType type = PluginContainer.getInstance().getPluginManager().getMetadataManager().addTestPlatformType();
+        ResourceType type = this.pluginManager.getMetadataManager().addTestPlatformType();
         if (this.platform != null && this.platform.getResourceType() == type) {
             return this.platform;
         }
@@ -2253,7 +2268,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             + "] and its descendants...");
 
         // Get the latest resource data rooted at the given id.
-        synchInventory(syncInfo, true, null); // this method assumes we only get a single resource and its children (BZ 887411)
+        synchInventory(syncInfo, true); // this method assumes we only get a single resource and its children (BZ 887411)
         performServiceScan(syncInfo.getId()); // NOTE: This will block (the initial scan blocks).
     }
 
@@ -2315,7 +2330,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
     }
 
     private boolean supportsDriftManagement(Resource r) {
-        PluginMetadataManager metaDataMgr = PluginContainer.getInstance().getPluginManager().getMetadataManager();
+        PluginMetadataManager metaDataMgr = this.pluginManager.getMetadataManager();
         ResourceType type = metaDataMgr.getType(r.getResourceType());
         return type != null && type.getDriftDefinitionTemplates() != null
             && !type.getDriftDefinitionTemplates().isEmpty();
@@ -2779,9 +2794,10 @@ public class InventoryManager extends AgentService implements ContainerService, 
         return versionUpdated;
     }
 
-    private void processSyncInfo(ResourceSyncInfo syncInfo, Collection<ResourceTypeFlyweight> ignoredTypes,
-        Set<Resource> syncedResources, Set<ResourceSyncInfo> unknownResourceSyncInfos,
-        Set<Integer> modifiedResourceIds, Set<Integer> deletedResourceIds, Set<Resource> newlyCommittedResources) {
+    private void processSyncInfo(ResourceSyncInfo syncInfo, Set<Resource> syncedResources,
+        Set<ResourceSyncInfo> unknownResourceSyncInfos, Set<Integer> modifiedResourceIds,
+        Set<Integer> deletedResourceIds, Set<Resource> newlyCommittedResources) {
+
         if (InventoryStatus.DELETED == syncInfo.getInventoryStatus()) {
             // A previously deleted resource still being reported by the server. Support for this option can
             // be removed if the server is ever modified to not report deleted resources. It is happening currently
@@ -2789,7 +2805,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             // in the PC inventory, and so must be handled separately, and not as unknown resources.
             deletedResourceIds.add(syncInfo.getId());
         } else {
-            ResourceContainer container = this.resourceContainers.get(syncInfo.getUuid());
+            ResourceContainer container = getResourceContainer(syncInfo.getUuid());
             if (container == null) {
                 // Either a manually added Resource or just something we haven't discovered.
                 // If this unknown resource is to be ignored, then don't bother to do anything.
@@ -2811,8 +2827,11 @@ public class InventoryManager extends AgentService implements ContainerService, 
                         + ", mtime=" + syncInfo.getMtime());
                 }
 
-                if (InventoryStatus.IGNORED == syncInfo.getInventoryStatus()) {
-                    // a resource has been tagged to be ignored - we need to remove it from our inventory
+                final boolean ignoreResource = (InventoryStatus.IGNORED == syncInfo.getInventoryStatus());
+                final boolean ignoreResourceType = this.pluginManager.getMetadataManager()
+                    .isDisabledOrIgnoredResourceType(resource.getResourceType());
+                if (ignoreResource || ignoreResourceType) {
+                    // a resource or its type has been tagged to be ignored - we need to remove it from our inventory
                     deletedResourceIds.add(syncInfo.getId());
                 } else {
                     if (resource.getInventoryStatus() != InventoryStatus.COMMITTED
@@ -2848,7 +2867,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
                 // Recurse...
                 for (ResourceSyncInfo childSyncInfo : syncInfo.getChildSyncInfos()) {
-                    processSyncInfo(childSyncInfo, ignoredTypes, syncedResources, unknownResourceSyncInfos,
+                    processSyncInfo(childSyncInfo, syncedResources, unknownResourceSyncInfos,
                         modifiedResourceIds, deletedResourceIds, newlyCommittedResources);
                 }
             }
