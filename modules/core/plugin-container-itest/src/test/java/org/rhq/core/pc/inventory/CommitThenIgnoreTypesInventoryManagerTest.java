@@ -27,36 +27,41 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.test.arquillian.RunDiscovery;
 
 /**
- * Test the server ignoring resource types and notifying the {@link InventoryManager} about it.
+ * Tests committing a full inventory then having resource types ignored server-side and
+ * watching that the agent is told about that and that the ignored resources are removed
+ * from agent inventory.
  *
  * @author John Mazzitelli
  */
 @Test(groups = { "ignoreTypesTests" }, singleThreaded = true)
-public class IgnoreTypesInventoryManagerTest extends AbstractIgnoreTypesInventoryManagerBaseTest {
+public class CommitThenIgnoreTypesInventoryManagerTest extends AbstractIgnoreTypesInventoryManagerBaseTest {
 
     protected void initializeIgnoredTypes() {
         this.ignoredTypes = new HashSet<ResourceType>();
-        ignoredTypes.add(new ResourceType("Test Service GrandChild", "test", null, null));
-        ignoredTypes.add(new ResourceType("Manual Add Server", "test", null, null));
         return;
     }
 
     @RunDiscovery
-    public void testIgnoreTypes() throws Exception {
-        // make sure the agent inventory does not have any resources of the ignored types
-        validatePartiallyIgnoredInventory();
+    public void testIgnoreTypesAfterFullCommit() throws Exception {
+        // make sure the agent inventory has a full inventory
+        validateFullInventory();
 
-        // simulate the unignoring of all types (i.e. don't ignore any types anymore)
-        ignoredTypes.clear();
+        // simulate the ignoring of types
+        resetSimulatedServerSideInventory();
+        ignoredTypes.add(new ResourceType("Test Service GrandChild", "test", null, null));
+        ignoredTypes.add(new ResourceType("Manual Add Server", "test", null, null));
 
-        // Now execute a full discovery again, this time, we should see the full inventory come in
-        System.out.println("Executing full discovery...");
+        // the agent side will have the committed resources removed when they are ignored by the server
         InventoryManager inventoryManager = this.pluginContainer.getInventoryManager();
+        inventoryManager.getPlatform().getChildResources().clear(); // just clear everything, sync'ing should give us back unignored ones
+
+        // Now execute a full discovery again, this time, we should see the ignored resources go away
+        System.out.println("Executing full discovery...");
         InventoryReport report = inventoryManager.executeServerScanImmediately();
         inventoryManager.handleReport(report);
         report = inventoryManager.executeServiceScanImmediately();
         inventoryManager.handleReport(report);
-        waitForInventory(5);
-        validateFullInventory();
+        waitForInventory(3);
+        validatePartiallyIgnoredInventory();
     }
 }
