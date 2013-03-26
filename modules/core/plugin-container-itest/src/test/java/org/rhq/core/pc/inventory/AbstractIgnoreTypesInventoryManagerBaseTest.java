@@ -21,6 +21,7 @@ package org.rhq.core.pc.inventory;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.concurrent.CountDownLatch;
@@ -29,6 +30,7 @@ import java.util.concurrent.TimeUnit;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
 
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.TargetsContainer;
@@ -47,6 +49,7 @@ import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.inventory.testplugin.ManualAddDiscoveryComponent;
 import org.rhq.core.pc.inventory.testplugin.TestResourceComponent;
 import org.rhq.core.pc.inventory.testplugin.TestResourceDiscoveryComponent;
+import org.rhq.core.util.file.FileUtil;
 import org.rhq.test.arquillian.AfterDiscovery;
 import org.rhq.test.arquillian.BeforeDiscovery;
 import org.rhq.test.arquillian.MockingServerServices;
@@ -86,6 +89,14 @@ public abstract class AbstractIgnoreTypesInventoryManagerBaseTest extends Arquil
     private CountDownLatch gotIgnoredTypeFromAgent;
 
     protected abstract void initializeIgnoredTypes();
+
+    @AfterMethod
+    public void cleanUpPluginContainer() {
+        File dataDir = pluginContainerConfiguration.getDataDirectory();
+        System.out.println("Purging data directory: " + dataDir);
+        pluginContainer.getInventoryManager().shutdown();
+        FileUtil.purge(dataDir, true);
+    }
 
     @BeforeDiscovery
     public void resetServerServices() throws Exception {
