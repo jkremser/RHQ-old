@@ -450,8 +450,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
      * version.
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public void updateInventoryStatus(Subject user, InventoryStatus status, List<Resource> platforms,
-        List<Resource> servers) {
+    public void updateInventoryStatusInNewTransaction(Subject user, List<Resource> platforms, List<Resource> servers,
+        InventoryStatus status) {
         for (Resource platform : platforms) {
             resourceManager.setResourceStatus(user, platform, status, false);
         }

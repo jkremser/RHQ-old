@@ -149,11 +149,12 @@ public interface DiscoveryBossLocal extends DiscoveryBossRemote {
      * {@link #updateInventoryStatus(Subject, List, List, InventoryStatus)} for the "public" version.
      *
      * @param user      the user that wants to change the status
-     * @param status    the new status the given resources will have
      * @param platforms identifies the platforms that are to be updated
      * @param servers   identifies the servers that are to be updated
+     * @param status    the new status the given resources will have
      */
-    void updateInventoryStatus(Subject user, InventoryStatus status, List<Resource> platforms, List<Resource> servers);
+    void updateInventoryStatusInNewTransaction(Subject user, List<Resource> platforms, List<Resource> servers,
+        InventoryStatus status);
 
     /**
      * Manually add the resource of the specified type to inventory using the specified plugin configuration (i.e.
