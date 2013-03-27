@@ -688,18 +688,21 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public Resource setResourceStatus(Subject user, Resource resource, InventoryStatus newStatus, boolean setDescendents) {
-        if ((resource.getParentResource() != null)
-            && (resource.getParentResource().getInventoryStatus() != InventoryStatus.COMMITTED)) {
-            throw new IllegalStateException("Cannot commit resource [" + resource
-                + "] to inventory, because its parent resource [" + resource.getParentResource()
-                + "] has not yet been committed.");
+        // do special processing if we are being asked to commit the resource to inventory
+        if (newStatus == InventoryStatus.COMMITTED) {
+            if ((resource.getParentResource() != null)
+                && (resource.getParentResource().getInventoryStatus() != InventoryStatus.COMMITTED)) {
+                throw new IllegalStateException("Cannot commit resource [" + resource
+                    + "] to inventory, because its parent resource [" + resource.getParentResource()
+                    + "] has not yet been committed.");
+            }
+
+            if ((resource.getResourceType() == null) || (resource.getResourceType().isIgnored())) {
+                log.debug("Not commiting resource [" + resource + "] to inventory because its type is ignored");
+                return resource;
+            }
         }
 
-        if (newStatus == InventoryStatus.COMMITTED
-            && ((resource.getResourceType() == null) || (resource.getResourceType().isIgnored()))) {
-            log.debug("Not commiting resource [" + resource + "] to inventory because its type is ignored");
-            return resource;
-        }
 
         long now = System.currentTimeMillis();
         updateInventoryStatus(resource, newStatus, now);

@@ -1218,7 +1218,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         if (resourceIds == null || resourceIds.length == 0) {
             return;
         }
-        checkStatus(subject, resourceIds, InventoryStatus.IGNORED, EnumSet.of(InventoryStatus.NEW));
+        checkStatus(subject, resourceIds, InventoryStatus.IGNORED,
+            EnumSet.of(InventoryStatus.NEW, InventoryStatus.COMMITTED));
     }
 
     public void unignoreResources(Subject subject, int[] resourceIds) {
@@ -1282,11 +1283,13 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         for (Resource resource : resources) {
             ResourceCategory category = resource.getResourceType().getCategory();
             if (category == ResourceCategory.PLATFORM) {
-                platforms.add(resource);
-            } else if (category == ResourceCategory.SERVER) {
-                servers.add(resource);
+                if (target == InventoryStatus.IGNORED && (resource.getInventoryStatus() == InventoryStatus.COMMITTED)) {
+                    log.warn("Cannot ignore a committed platform - skipping request to ignore:" + resource);
+                } else {
+                    platforms.add(resource);
+                }
             } else {
-                throw new IllegalArgumentException("Can not directly change the inventory status of a service");
+                servers.add(resource); // we include services in here now (see BZ 535289)
             }
         }
 
