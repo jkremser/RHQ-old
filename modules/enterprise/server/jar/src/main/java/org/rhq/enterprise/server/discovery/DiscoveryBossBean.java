@@ -336,7 +336,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 
         // Update and persist the actual inventory statuses
         // This is done is a separate transaction to stop failures in the agent from rolling back the transaction
-        discoveryBoss.updateInventoryStatus(user, status, platforms, servers);
+        discoveryBoss.updateInventoryStatusInNewTransaction(user, platforms, servers, status);
 
         scheduleAgentInventoryOperationJob(platforms, servers);
 
