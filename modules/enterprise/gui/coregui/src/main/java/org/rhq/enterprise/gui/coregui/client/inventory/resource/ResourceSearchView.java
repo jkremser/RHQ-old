@@ -331,6 +331,105 @@ public class ResourceSearchView extends Table {
                 }
             });
 
+        addTableAction(MSG.common_button_ignore(), MSG.view_inventory_resources_ignoreConfirm(),
+            new ResourceAuthorizedTableAction(ResourceSearchView.this, TableActionEnablement.ANY,
+                Permission.DELETE_RESOURCE, new RecordExtractor<Integer>() {
+                    public Collection<Integer> extract(Record[] records) {
+                        List<Integer> result = new ArrayList<Integer>(records.length);
+                        for (Record record : records) {
+                            // we only care about those that are not platforms since you cannot ignore platforms outside of discovery queue anyway
+                            String resCat = record.getAttribute(CATEGORY.propertyName());
+                            if (ResourceCategory.valueOf(resCat) != ResourceCategory.PLATFORM) {
+                                result.add(record.getAttributeAsInt("id"));
+                            }
+                        }
+                        return result;
+                    }
+                }) {
+
+                public boolean isEnabled(ListGridRecord[] selection) {
+                    if (selection == null || selection.length == 0) {
+                        return false;
+                    }
+
+                    // do not enable the ignore button if everything selected is a platform
+                    boolean nonPlatformSelected = false;
+                    for (Record record : selection) {
+                        // we only care about those that are not platforms since you cannot ignore platforms outside of discovery queue anyway
+                        String resCat = record.getAttribute(CATEGORY.propertyName());
+                        if (ResourceCategory.valueOf(resCat) != ResourceCategory.PLATFORM) {
+                            nonPlatformSelected = true;
+                            break;
+                        }
+                    }
+
+                    if (!nonPlatformSelected) {
+                        return false; // everything selected is a platform - you can't ignore them
+                    }
+
+                    // at least one non-platform was selected, let's ask what our superclass thinks
+                    return super.isEnabled(selection);
+                }
+
+                public void executeAction(final ListGridRecord[] selection, Object actionValue) {
+                    if (selection == null || selection.length == 0) {
+                        return; // should never happen, but ignore it if it does
+                    }
+
+                    final int[] numberOfPlatformsSelected = new int[] { 0 };
+                    final ArrayList<Integer> resourceIdsList = new ArrayList<Integer>(selection.length);
+                    for (ListGridRecord selectedRecord : selection) {
+                        // we only include those that are not platforms (you cannot ignore platforms outside of discovery queue)
+                        String resCat = selectedRecord.getAttribute(CATEGORY.propertyName());
+                        if (ResourceCategory.valueOf(resCat) != ResourceCategory.PLATFORM) {
+                            resourceIdsList.add(selectedRecord.getAttributeAsInt("id"));
+                        } else {
+                            numberOfPlatformsSelected[0]++;
+                        }
+                    }
+
+                    if (resourceIdsList.isEmpty()) {
+                        CoreGUI.getMessageCenter().notify(
+                            new Message(MSG.view_inventory_resources_ignoreSkipAllPlatforms(), Severity.Warning));
+                        return;
+                    } else if (numberOfPlatformsSelected[0] > 0) {
+                        String n = Integer.toString(numberOfPlatformsSelected[0]);
+                        CoreGUI.getMessageCenter().notify(
+                            new Message(MSG.view_inventory_resources_ignoreSkipSomePlatforms(n), Severity.Warning));
+                    }
+
+                    // the remote API requires int[]
+                    int[] resourceIds = new int[resourceIdsList.size()];
+                    int i = 0;
+                    for (Integer id : resourceIdsList) {
+                        resourceIds[i++] = id;
+                    }
+
+                    // ask the server to ignore the selected non-platform resources
+                    ResourceGWTServiceAsync resourceManager = GWTServiceLookup.getResourceService();
+                    resourceManager.ignoreResources(resourceIds, new AsyncCallback<Void>() {
+                        public void onFailure(Throwable caught) {
+                            CoreGUI.getErrorHandler().handleError(MSG.view_inventory_resources_ignoreFailed(), caught);
+                            refreshTableInfo();
+                        }
+
+                        public void onSuccess(Void result) {
+                            String msg;
+                            if (numberOfPlatformsSelected[0] > 0) {
+                                String n = Integer.toString(numberOfPlatformsSelected[0]);
+                                msg = MSG.view_inventory_resources_ignoreSuccessfulSkipPlatforms(n);
+                            } else {
+                                msg = MSG.view_inventory_resources_ignoreSuccessful();
+                            }
+                            CoreGUI.getMessageCenter().notify(new Message(msg, Severity.Info));
+                            onUninventorySuccess(); // do the same thing as if we uninventoried the resource
+                        }
+                    });
+
+                    return;
+                }
+            });
+
         if (exportable) {
             addExportAction();
         }
