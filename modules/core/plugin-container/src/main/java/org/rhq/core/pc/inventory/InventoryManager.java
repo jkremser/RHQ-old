@@ -1148,13 +1148,14 @@ public class InventoryManager extends AgentService implements ContainerService, 
      */
     private void synchInventory(ResourceSyncInfo syncInfo, boolean partialInventory) {
         log.info("Syncing local inventory with Server inventory...");
-        long startTime = System.currentTimeMillis();
-        Set<Resource> syncedResources = new LinkedHashSet<Resource>();
-        Set<ResourceSyncInfo> unknownResourceSyncInfos = new LinkedHashSet<ResourceSyncInfo>();
-        Set<Integer> modifiedResourceIds = new LinkedHashSet<Integer>();
-        Set<Integer> deletedResourceIds = new LinkedHashSet<Integer>();
-        Set<Resource> newlyCommittedResources = new LinkedHashSet<Resource>();
-        Set<String> allServerSideUuids = new HashSet<String>();
+        final long startTime = System.currentTimeMillis();
+        final Set<Resource> syncedResources = new LinkedHashSet<Resource>();
+        final Set<ResourceSyncInfo> unknownResourceSyncInfos = new LinkedHashSet<ResourceSyncInfo>();
+        final Set<Integer> modifiedResourceIds = new LinkedHashSet<Integer>();
+        final Set<Integer> deletedResourceIds = new LinkedHashSet<Integer>();
+        final Set<Resource> newlyCommittedResources = new LinkedHashSet<Resource>();
+        final Set<Resource> ignoredResources = new LinkedHashSet<Resource>();
+        final Set<String> allServerSideUuids = new HashSet<String>();
 
         // rhq-980 Adding agent-side logging to report any unexpected synch failure.
         try {
@@ -1167,16 +1168,17 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
             log.debug("Processing Server sync info...");
             processSyncInfo(syncInfo, syncedResources, unknownResourceSyncInfos, modifiedResourceIds,
-                deletedResourceIds, newlyCommittedResources);
+                deletedResourceIds, newlyCommittedResources, ignoredResources);
             if (log.isDebugEnabled()) {
-                log.debug(String.format("DONE Processing sync info - took [%d] ms - synced [%d] Resources "
-                    + "- found [%d] unknown Resources and [%d] modified Resources.",
+                log.debug(String.format("DONE Processing sync info: [%d] ms: synced [%d] resources: "
+                    + "[%d] unknown, [%d] modified, [%d] deleted, [%d] newly committed",
                     (System.currentTimeMillis() - startTime), syncedResources.size(), unknownResourceSyncInfos.size(),
-                    modifiedResourceIds.size()));
+                    modifiedResourceIds.size(), deletedResourceIds.size(), newlyCommittedResources.size()));
             }
 
             mergeUnknownResources(unknownResourceSyncInfos);
             mergeModifiedResources(modifiedResourceIds);
+            purgeIgnoredResources(ignoredResources);
             if (!partialInventory) {
                 purgeObsoleteResources(allServerSideUuids);
             }
@@ -2796,7 +2798,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
     private void processSyncInfo(ResourceSyncInfo syncInfo, Set<Resource> syncedResources,
         Set<ResourceSyncInfo> unknownResourceSyncInfos, Set<Integer> modifiedResourceIds,
-        Set<Integer> deletedResourceIds, Set<Resource> newlyCommittedResources) {
+        Set<Integer> deletedResourceIds, Set<Resource> newlyCommittedResources, Set<Resource> ignoredResources) {
 
         if (InventoryStatus.DELETED == syncInfo.getInventoryStatus()) {
             // A previously deleted resource still being reported by the server. Support for this option can
@@ -2832,7 +2834,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                     .isDisabledOrIgnoredResourceType(resource.getResourceType());
                 if (ignoreResource || ignoreResourceType) {
                     // a resource or its type has been tagged to be ignored - we need to remove it from our inventory
-                    deletedResourceIds.add(syncInfo.getId());
+                    ignoredResources.add(resource);
                 } else {
                     if (resource.getInventoryStatus() != InventoryStatus.COMMITTED
                         && syncInfo.getInventoryStatus() == InventoryStatus.COMMITTED) {
@@ -2867,33 +2869,37 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
                 // Recurse...
                 for (ResourceSyncInfo childSyncInfo : syncInfo.getChildSyncInfos()) {
-                    processSyncInfo(childSyncInfo, syncedResources, unknownResourceSyncInfos,
-                        modifiedResourceIds, deletedResourceIds, newlyCommittedResources);
+                    processSyncInfo(childSyncInfo, syncedResources, unknownResourceSyncInfos, modifiedResourceIds,
+                        deletedResourceIds, newlyCommittedResources, ignoredResources);
                 }
             }
         }
     }
 
     private void mergeModifiedResources(Set<Integer> modifiedResourceIds) {
-        if (log.isDebugEnabled()) {
-            log.debug("Merging [" + modifiedResourceIds.size() + "] modified Resources into local inventory...");
+        if (modifiedResourceIds != null && !modifiedResourceIds.isEmpty()) {
+            if (log.isDebugEnabled()) {
+                log.debug("Merging [" + modifiedResourceIds.size() + "] modified Resources into local inventory...");
+            }
+
+            Set<Resource> modifiedResources = configuration.getServerServices().getDiscoveryServerService()
+                .getResources(modifiedResourceIds, false);
+            syncSchedules(modifiedResources); // RHQ-792, mtime is the indicator that schedules should be sync'ed too
+            syncDriftDefinitions(modifiedResources);
+            for (Resource modifiedResource : modifiedResources) {
+                mergeResource(modifiedResource);
+            }
         }
-        Set<Resource> modifiedResources = configuration.getServerServices().getDiscoveryServerService()
-            .getResources(modifiedResourceIds, false);
-        syncSchedules(modifiedResources); // RHQ-792, mtime is the indicator that schedules should be sync'ed too
-        syncDriftDefinitions(modifiedResources);
-        for (Resource modifiedResource : modifiedResources) {
-            mergeResource(modifiedResource);
-        }
+        return;
     }
 
     private void mergeUnknownResources(Set<ResourceSyncInfo> unknownResourceSyncInfos) {
-        if (log.isDebugEnabled()) {
-            log.debug("Merging [" + unknownResourceSyncInfos.size()
-                + "] unknown resources and descendants into inventory...");
-        }
+        if (unknownResourceSyncInfos != null && !unknownResourceSyncInfos.isEmpty()) {
+            if (log.isDebugEnabled()) {
+                log.debug("Merging [" + unknownResourceSyncInfos.size()
+                    + "] unknown resources and descendants into inventory...");
+            }
 
-        if (!unknownResourceSyncInfos.isEmpty()) {
             PluginMetadataManager pmm = this.pluginManager.getMetadataManager();
 
             Set<Resource> unknownResources = getResourcesFromSyncInfos(unknownResourceSyncInfos);
@@ -3220,6 +3226,22 @@ public class InventoryManager extends AgentService implements ContainerService, 
         return pluginConfigUpdated;
     }
 
+    private void purgeIgnoredResources(Set<Resource> ignoredResources) {
+        if (ignoredResources == null || ignoredResources.isEmpty()) {
+            return;
+        }
+
+        log.debug("Purging [" + ignoredResources.size() + "] ignored resources...");
+        this.inventoryLock.writeLock().lock();
+        try {
+            for (Resource ignoredResource : ignoredResources) {
+                uninventoryResource(ignoredResource.getId());
+            }
+        } finally {
+            this.inventoryLock.writeLock().unlock();
+        }
+    }
+
     private void purgeObsoleteResources(Set<String> allUuids) {
         // Remove previously synchronized Resources that no longer exist in the Server's inventory...
         log.debug("Purging obsolete Resources...");
@@ -3247,7 +3269,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                             removedResources++;
                         }
                     } else {
-                        log.debug("No container found for uuid: " + uuid);
+                        log.debug("No obsolete resource to purge - no container for uuid: " + uuid);
                     }
                 }
             }
