@@ -289,16 +289,9 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
         int[] arrayOfServerIds = ArrayUtils.unwrapCollection(serverIds);
 
         // Now test ignore, unignore and import behavior
-
-        try {
-            discoveryBoss.ignoreResources(subjectManager.getOverlord(), arrayOfServerIds);
-            fail("Ignore resources should fail as platform resource has not yet been comitted");
-        } catch (EJBException e) {
-            assertEquals(String.valueOf(e.getCause()), IllegalStateException.class, e.getCause().getClass());
-            assertTrue(String.valueOf(e.getCause()), e.getCause().getMessage().contains("has not yet been committed"));
-        }
         discoveryBoss.importResources(subjectManager.getOverlord(), new int[] { platformId });
         discoveryBoss.ignoreResources(subjectManager.getOverlord(), arrayOfServerIds);
+
         try {
             discoveryBoss.importResources(subjectManager.getOverlord(), arrayOfServerIds);
             fail("Import resources should fail for ignored resources");
