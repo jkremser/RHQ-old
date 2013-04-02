@@ -559,7 +559,9 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
         List<ResourceType> results = new ArrayList<ResourceType>(uniqueTypes);
 
         if (sawTopLevelServer) {
+            // get all platform types, whether or not they are ignored
             ResourceTypeCriteria criteria = new ResourceTypeCriteria();
+            criteria.addFilterIgnored(null);
             criteria.addFilterCategory(ResourceCategory.PLATFORM);
             criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
 
@@ -576,7 +578,9 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
         ResourceType first = entityManager.find(ResourceType.class, resourceTypeId);
 
         if (first.getCategory() == ResourceCategory.PLATFORM) {
+            // get all platform types, whether or not they are ignored
             ResourceTypeCriteria criteria = new ResourceTypeCriteria();
+            criteria.addFilterIgnored(null);
             criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
 
             List<ResourceType> allResourceTypes = findResourceTypesByCriteria(subject, criteria);

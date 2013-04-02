@@ -55,10 +55,8 @@ public class ResourceTypeCriteria extends Criteria {
     private Boolean filterSupportsManualAdd;
     private String filterPluginName; // needs overrides
     private Integer filterBundleTypeId; // needs overrides
-    // by default, we don't want to fetch resource types that
-    // are marked deleted
-    private Boolean filterDeleted = false;
-    private Boolean filterIgnored;
+    private Boolean filterDeleted = false; // by default, we don't want to fetch resource types that are marked deleted
+    private Boolean filterIgnored = false; // by default, we don't want to fetch types the user requested to be ignored
     private Set<ResourceCategory> filterCategories; // needs overrides
     private Boolean filterParentResourceTypesEmpty; // needs overrides
 

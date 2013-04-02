@@ -421,7 +421,7 @@ public class ResourceOperationNotificationSenderForm extends AbstractNotificatio
      */
     private void setOperationDropDownMenuValues(int resourceTypeId, final Integer selectedOpId, final Configuration args) {
         ResourceTypeCriteria criteria = new ResourceTypeCriteria();
-        criteria.addFilterId(resourceTypeId);
+        criteria.addFilterId(resourceTypeId); // we are filtering directly on ID, we assume its unignored
         criteria.fetchOperationDefinitions(true);
         GWTServiceLookup.getResourceTypeGWTService().findResourceTypesByCriteria(criteria,
             new AsyncCallback<PageList<ResourceType>>() {

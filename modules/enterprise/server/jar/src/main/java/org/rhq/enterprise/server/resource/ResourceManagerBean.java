@@ -971,6 +971,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
         ResourceTypeCriteria resourceTypeCriteria = new ResourceTypeCriteria();
         resourceTypeCriteria.addFilterIds(typesSet.toArray(new Integer[typesSet.size()]));
+        resourceTypeCriteria.addFilterIgnored(null); // don't worry if they are ignored or not, get the ancestry anyway
         List<ResourceType> types = typeManager.findResourceTypesByCriteria(subject, resourceTypeCriteria);
 
         for (Resource resource : resources) {
