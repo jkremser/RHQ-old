@@ -308,7 +308,7 @@ public class ResourceDatasource extends RPCDataSource<Resource, ResourceCriteria
         record.setAttribute(ITIME.propertyName(), from.getItime());
         record.setAttribute(MTIME.propertyName(), from.getMtime());
         record.setAttribute(MODIFIER.propertyName(), from.getModifiedBy());
-        record.setAttribute(INVENTORY_STATUS.propertyName(), from.getInventoryStatus());
+        record.setAttribute(INVENTORY_STATUS.propertyName(), from.getInventoryStatus().name());
 
         record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY, from.getAncestry());
         record.setAttribute(AncestryUtil.RESOURCE_TYPE_ID, from.getResourceType().getId());

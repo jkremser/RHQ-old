@@ -87,6 +87,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         "modifiedBy", //
         "location", //
         "resourceType", //
+        "inventoryStatus", //
         "childResources", //
         "parentResource", //
         //                    "resourceConfiguration           \n" +

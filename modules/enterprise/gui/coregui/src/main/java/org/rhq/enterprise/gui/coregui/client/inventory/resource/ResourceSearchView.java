@@ -54,6 +54,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.search.SearchSubsystem;
@@ -440,8 +441,11 @@ public class ResourceSearchView extends Table {
                 ListGrid listGrid = (ListGrid) event.getSource();
                 ListGridRecord[] selectedRows = listGrid.getSelectedRecords();
                 if (selectedRows != null && selectedRows.length == 1) {
-                    String selectedId = selectedRows[0].getAttribute("id");
-                    CoreGUI.goToView(LinkManager.getResourceLink(Integer.valueOf(selectedId)));
+                    String invStatus = selectedRows[0].getAttribute(INVENTORY_STATUS.propertyName());
+                    if (InventoryStatus.COMMITTED == InventoryStatus.valueOf(invStatus)) {
+                        String selectedId = selectedRows[0].getAttribute("id");
+                        CoreGUI.goToView(LinkManager.getResourceLink(Integer.valueOf(selectedId)));
+                    }
                 }
             }
         });
@@ -505,9 +509,14 @@ public class ResourceSearchView extends Table {
         ListGridField nameField = new ListGridField(NAME.propertyName(), NAME.title(), 250);
         nameField.setCellFormatter(new CellFormatter() {
             public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
-                String url = LinkManager.getResourceLink(record.getAttributeAsInt("id"));
-                String name = StringUtility.escapeHtml(value.toString());
-                return LinkManager.getHref(url, name);
+                String invStatus = record.getAttribute(INVENTORY_STATUS.propertyName());
+                if (InventoryStatus.COMMITTED == InventoryStatus.valueOf(invStatus)) {
+                    String url = LinkManager.getResourceLink(record.getAttributeAsInt("id"));
+                    String name = StringUtility.escapeHtml(value.toString());
+                    return LinkManager.getHref(url, name);
+                } else {
+                    return value.toString();
+                }
             }
         });
         nameField.setShowHover(true);
