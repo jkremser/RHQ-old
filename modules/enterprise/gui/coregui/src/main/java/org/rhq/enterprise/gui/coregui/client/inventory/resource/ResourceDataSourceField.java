@@ -54,7 +54,9 @@ public enum ResourceDataSourceField {
 
     MTIME("mtime", CoreGUI.getMessages().dataSource_resources_field_lastModifiedTime()),
 
-    MODIFIER("modifiedBy", CoreGUI.getMessages().dataSource_resources_field_lastModifier());
+    MODIFIER("modifiedBy", CoreGUI.getMessages().dataSource_resources_field_lastModifier()),
+
+    INVENTORY_STATUS("inventoryStatus", CoreGUI.getMessages().common_title_inventoryStatus());
 
     /**
      * Corresponds to a property name of Resource (e.g. resourceType.name).

@@ -26,6 +26,7 @@ import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceD
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CATEGORY;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CTIME;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.DESCRIPTION;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.INVENTORY_STATUS;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.ITIME;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.KEY;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.LOCATION;
@@ -52,6 +53,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
@@ -183,6 +185,7 @@ public class ResourceCompositeDataSource extends RPCDataSource<ResourceComposite
         criteria.addFilterName(getFilter(request, NAME.propertyName(), String.class));
         criteria.addFilterResourceTypeId(getFilter(request, TYPE.propertyName(), Integer.class));
         criteria.addFilterPluginName(getFilter(request, PLUGIN.propertyName(), String.class));
+        criteria.addFilterInventoryStatus(getFilter(request, INVENTORY_STATUS.propertyName(), InventoryStatus.class));
         criteria.addFilterTagNamespace(getFilter(request, "tagNamespace", String.class));
         criteria.addFilterTagSemantic(getFilter(request, "tagSemantic", String.class));
         criteria.addFilterTagName(getFilter(request, "tagName", String.class));
@@ -221,6 +224,7 @@ public class ResourceCompositeDataSource extends RPCDataSource<ResourceComposite
         record.setAttribute(ITIME.propertyName(), res.getItime());
         record.setAttribute(MTIME.propertyName(), res.getMtime());
         record.setAttribute(MODIFIER.propertyName(), res.getModifiedBy());
+        record.setAttribute(INVENTORY_STATUS.propertyName(), res.getInventoryStatus());
 
         record.setAttribute("resourcePermission", from.getResourcePermission());
 

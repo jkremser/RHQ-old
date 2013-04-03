@@ -22,6 +22,7 @@ import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceD
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CATEGORY;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CTIME;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.DESCRIPTION;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.INVENTORY_STATUS;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.ITIME;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.KEY;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.LOCATION;
@@ -562,6 +563,10 @@ public class ResourceSearchView extends Table {
 
         ListGridField modifiedByField = new ListGridField(MODIFIER.propertyName(), MODIFIER.title(), 100);
         fields.add(modifiedByField);
+
+        ListGridField inventoryStatusField = new ListGridField(INVENTORY_STATUS.propertyName(),
+            INVENTORY_STATUS.title(), 100);
+        fields.add(inventoryStatusField);
 
         return fields;
     }
