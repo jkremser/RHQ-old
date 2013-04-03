@@ -102,24 +102,6 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
         return;
     }
 
-    private void ignoreType(String typeName, String pluginName) {
-        SubjectManagerLocal subjectMgr = LookupUtil.getSubjectManager();
-        ResourceTypeManagerLocal typeMgr = LookupUtil.getResourceTypeManager();
-        ResourceType rt = typeMgr.getResourceTypeByNameAndPlugin(typeName, pluginName);
-        if (rt == null) {
-            fail("Should have had a resource type named [" + typeName + "] from plugin [" + pluginName + "]");
-        }
-        typeMgr.setResourceTypeIgnoreFlagAndUninventoryResources(subjectMgr.getOverlord(), rt.getId(), true);
-
-        // sanity check - make sure the type really got ignored
-        rt = typeMgr.getResourceTypeByNameAndPlugin(typeName, pluginName);
-        if (!rt.isIgnored()) {
-            fail("Should have ignored resource type [" + rt + "]");
-        }
-
-        return;
-    }
-
     @Test(dependsOnMethods = { "registerPlugins" })
     public void scanAndRegisterTest() throws Exception {
         Plugin plugin = getPlugin(PLUGIN_1);
