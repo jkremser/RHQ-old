@@ -257,12 +257,19 @@ public class ResourceDatasource extends RPCDataSource<Resource, ResourceCriteria
         criteria.addFilterName(getFilter(request, NAME.propertyName(), String.class));
         criteria.addFilterResourceTypeId(getFilter(request, TYPE.propertyName(), Integer.class));
         criteria.addFilterPluginName(getFilter(request, PLUGIN.propertyName(), String.class));
-        criteria.addFilterInventoryStatus(getFilter(request, INVENTORY_STATUS.propertyName(), InventoryStatus.class));
         criteria.addFilterTagNamespace(getFilter(request, "tagNamespace", String.class));
         criteria.addFilterTagSemantic(getFilter(request, "tagSemantic", String.class));
         criteria.addFilterTagName(getFilter(request, "tagName", String.class));
         criteria.addFilterVersion(getFilter(request, "version", String.class));
         criteria.addFilterParentResourceCategory(getFilter(request, FILTER_PARENT_CATEGORY, ResourceCategory.class));
+
+        // we never want to filter on null status - that would return resources for every status (committed, new, deleted, etc).
+        // we want to rely on whatever the default setting is for the criteria and only override that if we explicitly have a status to filter.
+        InventoryStatus invStatusFilter = getFilter(request, INVENTORY_STATUS.propertyName(), InventoryStatus.class);
+        if (invStatusFilter != null) {
+            criteria.addFilterInventoryStatus(invStatusFilter);
+        }
+
         //@todo: Remove me when finished debugging search expression
         Log.debug(" *** ResourceCriteria Search String: " + getFilter(request, "search", String.class));
         criteria.setSearchExpression(getFilter(request, "search", String.class));
