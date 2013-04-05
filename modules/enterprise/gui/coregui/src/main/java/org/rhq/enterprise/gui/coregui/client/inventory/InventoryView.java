@@ -141,6 +141,11 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
         return new ResourceSearchViewWrapper(viewName, initialCriteria, viewName.getIcon().getIcon24x24Path());
     }
 
+    private ResourceSearchView createIgnoredResourceSearchView(ViewName viewName, Criteria initialCriteria) {
+        return new ResourceSearchViewWrapper(false, true, viewName, initialCriteria, viewName.getIcon()
+            .getIcon24x24Path());
+    }
+
     private NavigationSection buildResourcesSection() {
         NavigationItem autodiscoveryQueueItem = new NavigationItem(ResourceAutodiscoveryView.VIEW_ID,
             new ViewFactory() {
@@ -197,8 +202,10 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
             public Canvas createView() {
                 Criteria initialCriteria = new Criteria(ResourceDataSourceField.INVENTORY_STATUS.propertyName(),
                     InventoryStatus.IGNORED.name());
+                initialCriteria.addCriteria(ResourceDataSourceField.PARENT_INVENTORY_STATUS.propertyName(),
+                    InventoryStatus.COMMITTED.name());
 
-                return createResourceSearchView(PAGE_IGNORED_RESOURCES, initialCriteria);
+                return createIgnoredResourceSearchView(PAGE_IGNORED_RESOURCES, initialCriteria);
             }
         });
 
@@ -262,15 +269,34 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
 
         private ViewName viewName;
 
+        private final boolean showIgnoreButton;
+        private final boolean showUnignoreButton;
+
         public ResourceSearchViewWrapper(ViewName viewName, Criteria criteria, String... headerIcons) {
+            this(true, false, viewName, criteria, headerIcons);
+        }
+
+        public ResourceSearchViewWrapper(boolean showIgnoredButton, boolean showUnignoreButton, ViewName viewName,
+            Criteria criteria, String... headerIcons) {
             super(criteria, viewName.getTitle(), headerIcons);
             this.viewName = viewName;
+            this.showIgnoreButton = showIgnoredButton;
+            this.showUnignoreButton = showUnignoreButton;
         }
 
         @Override
         public ViewName getViewName() {
             return viewName;
         }
-    }
 
+        @Override
+        protected boolean shouldShowIgnoreButton() {
+            return this.showIgnoreButton;
+        }
+
+        @Override
+        protected boolean shouldShowUnignoreButton() {
+            return this.showUnignoreButton;
+        }
+    }
 }

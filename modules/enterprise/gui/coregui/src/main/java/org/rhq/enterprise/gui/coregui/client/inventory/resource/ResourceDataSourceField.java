@@ -56,7 +56,9 @@ public enum ResourceDataSourceField {
 
     MODIFIER("modifiedBy", CoreGUI.getMessages().dataSource_resources_field_lastModifier()),
 
-    INVENTORY_STATUS("inventoryStatus", CoreGUI.getMessages().common_title_inventoryStatus());
+    INVENTORY_STATUS("inventoryStatus", CoreGUI.getMessages().common_title_inventoryStatus()),
+
+    PARENT_INVENTORY_STATUS("parentResource.inventoryStatus", "parent resource inventory status"); // this is not for display
 
     /**
      * Corresponds to a property name of Resource (e.g. resourceType.name).

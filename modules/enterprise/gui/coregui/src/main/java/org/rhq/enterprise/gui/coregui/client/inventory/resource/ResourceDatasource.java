@@ -29,11 +29,13 @@ import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceD
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.MODIFIER;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.MTIME;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.NAME;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.PARENT_INVENTORY_STATUS;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.PLUGIN;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.TYPE;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.TYPE_ID;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.VERSION;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -268,6 +270,14 @@ public class ResourceDatasource extends RPCDataSource<Resource, ResourceCriteria
         InventoryStatus invStatusFilter = getFilter(request, INVENTORY_STATUS.propertyName(), InventoryStatus.class);
         if (invStatusFilter != null) {
             criteria.addFilterInventoryStatus(invStatusFilter);
+        }
+
+        InventoryStatus parentInvStatusFilter = getFilter(request, PARENT_INVENTORY_STATUS.propertyName(),
+            InventoryStatus.class);
+        if (parentInvStatusFilter != null) {
+            List<InventoryStatus> statuses = new ArrayList<InventoryStatus>(1);
+            statuses.add(parentInvStatusFilter);
+            criteria.addFilterParentInventoryStatuses(statuses);
         }
 
         //@todo: Remove me when finished debugging search expression

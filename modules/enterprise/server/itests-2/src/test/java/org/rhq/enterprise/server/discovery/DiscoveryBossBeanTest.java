@@ -57,6 +57,7 @@ import org.xml.sax.InputSource;
 import org.rhq.core.clientapi.agent.discovery.DiscoveryAgentService;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.discovery.MergeInventoryReportResults;
 import org.rhq.core.domain.discovery.MergeInventoryReportResults.ResourceTypeFlyweight;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
@@ -290,6 +291,27 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
 
         // Now test ignore, unignore and import behavior
         discoveryBoss.importResources(subjectManager.getOverlord(), new int[] { platformId });
+
+        // excursus: take this time to do a side test of the resource criteria filtering on parent inv status
+        List<InventoryStatus> committedStatus = new ArrayList<InventoryStatus>(1);
+        List<InventoryStatus> ignoredStatus = new ArrayList<InventoryStatus>(1);
+        committedStatus.add(InventoryStatus.COMMITTED);
+        ignoredStatus.add(InventoryStatus.IGNORED);
+        ResourceCriteria criteria = new ResourceCriteria();
+        criteria.addFilterParentInventoryStatuses(committedStatus);
+        criteria.addFilterId(serverIds.get(0));
+
+        // excursus: look for the server with the given ID but only if the parent is committed (this should return the resource)
+        List<Resource> lookup = resourceManager.findResourcesByCriteria(subjectManager.getOverlord(), criteria);
+        assert 1 == lookup.size() : lookup;
+        assert lookup.get(0).getId() == serverIds.get(0) : lookup;
+
+        // excursus: look for the server with the given ID but only if the parent is ignored (this should return nothing)
+        criteria.addFilterParentInventoryStatuses(ignoredStatus);
+        lookup = resourceManager.findResourcesByCriteria(subjectManager.getOverlord(), criteria);
+        assert lookup.isEmpty() : lookup;
+
+        // ok, back to the main test - now ignore the resources
         discoveryBoss.ignoreResources(subjectManager.getOverlord(), arrayOfServerIds);
 
         try {

@@ -197,7 +197,7 @@ public class ResourceSearchView extends Table {
                         public void onSuccess(List<Integer> result) {
                             CoreGUI.getMessageCenter().notify(
                                 new Message(MSG.view_inventory_resources_uninventorySuccessful(), Severity.Info));
-                            onUninventorySuccess();
+                            onActionSuccess();
                         }
                     });
                 }
@@ -262,7 +262,7 @@ public class ResourceSearchView extends Table {
                                 new Message(
                                     MSG.view_inventory_resources_disableSuccessful(String.valueOf(result.size())),
                                     Severity.Info));
-                            onUninventorySuccess();
+                            onActionSuccess();
                         }
                     });
                 }
@@ -327,12 +327,66 @@ public class ResourceSearchView extends Table {
                                 new Message(
                                     MSG.view_inventory_resources_enableSuccessful(String.valueOf(result.size())),
                                     Severity.Info));
-                            onUninventorySuccess();
+                            onActionSuccess();
                         }
                     });
                 }
             });
 
+        if (shouldShowIgnoreButton()) {
+            addIgnoreButton();
+        }
+
+        if (shouldShowUnignoreButton()) {
+            addUnignoreButton();
+        }
+
+        if (exportable) {
+            addExportAction();
+        }
+
+        setListGridDoubleClickHandler(new DoubleClickHandler() {
+            public void onDoubleClick(DoubleClickEvent event) {
+                ListGrid listGrid = (ListGrid) event.getSource();
+                ListGridRecord[] selectedRows = listGrid.getSelectedRecords();
+                if (selectedRows != null && selectedRows.length == 1) {
+                    String invStatus = selectedRows[0].getAttribute(INVENTORY_STATUS.propertyName());
+                    if (InventoryStatus.COMMITTED == InventoryStatus.valueOf(invStatus)) {
+                        String selectedId = selectedRows[0].getAttribute("id");
+                        CoreGUI.goToView(LinkManager.getResourceLink(Integer.valueOf(selectedId)));
+                    }
+                }
+            }
+        });
+    }
+
+    /**
+     * If returns true, the ignore button will be added to the list of table buttons.
+     * Subclasses can remove the ignore button by overriding this and returning false.
+     * The only time you normally do not want an ignore button is if you know your
+     * criteria will only ever show ignored resources (in which case, its useless
+     * showing an ignore button since everything will already have been ignored).
+     */
+    protected boolean shouldShowIgnoreButton() {
+        return true; // by default, show the ignore button
+    }
+
+    /**
+     * If returns true, the unignore button will be added to the list of table buttons.
+     * Subclasses can add the unignore button by overriding this and returning true.
+     * The only time you normally want an unignore button is if you know your
+     * criteria will only ever show ignored resources (so it makes sense to allow someone
+     * to unignore those resources).
+     */
+    protected boolean shouldShowUnignoreButton() {
+        return false; // by default, do not show the unignore button
+    }
+
+    /**
+     * Adds an ignore button to the list of table buttons. Subclasses normally do not have to override
+     * this - instead, look at {@link #shouldShowIgnoreButton()}.
+     */
+    protected void addIgnoreButton() {
         addTableAction(MSG.common_button_ignore(), MSG.view_inventory_resources_ignoreConfirm(),
             new ResourceAuthorizedTableAction(ResourceSearchView.this, TableActionEnablement.ANY,
                 Permission.DELETE_RESOURCE, new RecordExtractor<Integer>() {
@@ -424,31 +478,59 @@ public class ResourceSearchView extends Table {
                                 msg = MSG.view_inventory_resources_ignoreSuccessful();
                             }
                             CoreGUI.getMessageCenter().notify(new Message(msg, Severity.Info));
-                            onUninventorySuccess(); // do the same thing as if we uninventoried the resource
+                            onActionSuccess(); // do the same thing as if we uninventoried the resource
                         }
                     });
 
                     return;
                 }
             });
+    }
 
-        if (exportable) {
-            addExportAction();
-        }
+    /**
+     * Adds an unignore button to the list of table buttons. Subclasses normally do not have to override
+     * this - instead, look at {@link #shouldShowUnignoreButton()}.
+     */
+    protected void addUnignoreButton() {
+        addTableAction(MSG.common_button_unignore(), MSG.view_inventory_resources_unignoreConfirm(),
+            new ResourceAuthorizedTableAction(ResourceSearchView.this, TableActionEnablement.ANY,
+                Permission.DELETE_RESOURCE, new RecordExtractor<Integer>() {
+                    public Collection<Integer> extract(Record[] records) {
+                        List<Integer> result = new ArrayList<Integer>(records.length);
+                        for (Record record : records) {
+                            result.add(record.getAttributeAsInt("id"));
+                        }
 
-        setListGridDoubleClickHandler(new DoubleClickHandler() {
-            public void onDoubleClick(DoubleClickEvent event) {
-                ListGrid listGrid = (ListGrid) event.getSource();
-                ListGridRecord[] selectedRows = listGrid.getSelectedRecords();
-                if (selectedRows != null && selectedRows.length == 1) {
-                    String invStatus = selectedRows[0].getAttribute(INVENTORY_STATUS.propertyName());
-                    if (InventoryStatus.COMMITTED == InventoryStatus.valueOf(invStatus)) {
-                        String selectedId = selectedRows[0].getAttribute("id");
-                        CoreGUI.goToView(LinkManager.getResourceLink(Integer.valueOf(selectedId)));
+                        return result;
                     }
+                }) {
+
+                public void executeAction(final ListGridRecord[] selection, Object actionValue) {
+                    if (selection == null || selection.length == 0) {
+                        return; // should never happen, but ignore it if it does
+                    }
+
+                    int[] resourceIds = TableUtility.getIds(selection);
+
+                    // ask the server to unignore the selected resources
+                    ResourceGWTServiceAsync resourceManager = GWTServiceLookup.getResourceService();
+                    resourceManager.unignoreResources(resourceIds, new AsyncCallback<Void>() {
+                        public void onFailure(Throwable caught) {
+                            CoreGUI.getErrorHandler()
+                                .handleError(MSG.view_inventory_resources_unignoreFailed(), caught);
+                            refreshTableInfo();
+                        }
+
+                        public void onSuccess(Void result) {
+                            String msg = MSG.view_inventory_resources_unignoreSuccessful();
+                            CoreGUI.getMessageCenter().notify(new Message(msg, Severity.Info));
+                            onActionSuccess();
+                        }
+                    });
+
+                    return;
                 }
-            }
-        });
+            });
     }
 
     private void addExportAction() {
@@ -479,7 +561,7 @@ public class ResourceSearchView extends Table {
         });
     }
 
-    protected void onUninventorySuccess() {
+    protected void onActionSuccess() {
         refresh(true);
         // the group type may have changed
         CoreGUI.refresh();
