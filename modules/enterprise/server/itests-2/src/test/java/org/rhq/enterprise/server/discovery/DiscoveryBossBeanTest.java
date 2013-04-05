@@ -291,6 +291,19 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
 
         // Now test ignore, unignore and import behavior
         discoveryBoss.importResources(subjectManager.getOverlord(), new int[] { platformId });
+        discoveryBoss.ignoreResources(subjectManager.getOverlord(), arrayOfServerIds);
+
+        try {
+            discoveryBoss.importResources(subjectManager.getOverlord(), arrayOfServerIds);
+            fail("Import resources should fail for ignored resources");
+        } catch (EJBException e) {
+            assertEquals(String.valueOf(e.getCause()), IllegalArgumentException.class, e.getCause().getClass());
+            assertTrue(String.valueOf(e.getCause()),
+                e.getCause().getMessage().startsWith("Can only set inventory status to"));
+        }
+
+        discoveryBoss.unignoreResources(subjectManager.getOverlord(), arrayOfServerIds);
+        discoveryBoss.importResources(subjectManager.getOverlord(), arrayOfServerIds);
 
         // excursus: take this time to do a side test of the resource criteria filtering on parent inv status
         List<InventoryStatus> committedStatus = new ArrayList<InventoryStatus>(1);
@@ -310,20 +323,6 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
         criteria.addFilterParentInventoryStatuses(ignoredStatus);
         lookup = resourceManager.findResourcesByCriteria(subjectManager.getOverlord(), criteria);
         assert lookup.isEmpty() : lookup;
-
-        // ok, back to the main test - now ignore the resources
-        discoveryBoss.ignoreResources(subjectManager.getOverlord(), arrayOfServerIds);
-
-        try {
-            discoveryBoss.importResources(subjectManager.getOverlord(), arrayOfServerIds);
-            fail("Import resources should fail for ignored resources");
-        } catch (EJBException e) {
-            assertEquals(String.valueOf(e.getCause()), IllegalArgumentException.class, e.getCause().getClass());
-            assertTrue(String.valueOf(e.getCause()),
-                e.getCause().getMessage().startsWith("Can only set inventory status to"));
-        }
-        discoveryBoss.unignoreResources(subjectManager.getOverlord(), arrayOfServerIds);
-        discoveryBoss.importResources(subjectManager.getOverlord(), arrayOfServerIds);
     }
 
     @Test(groups = "integration.ejb3")

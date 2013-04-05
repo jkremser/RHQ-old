@@ -33,6 +33,7 @@ import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceD
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.MODIFIER;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.MTIME;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.NAME;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.PARENT_INVENTORY_STATUS;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.PLUGIN;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.TYPE;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.VERSION;
@@ -185,12 +186,26 @@ public class ResourceCompositeDataSource extends RPCDataSource<ResourceComposite
         criteria.addFilterName(getFilter(request, NAME.propertyName(), String.class));
         criteria.addFilterResourceTypeId(getFilter(request, TYPE.propertyName(), Integer.class));
         criteria.addFilterPluginName(getFilter(request, PLUGIN.propertyName(), String.class));
-        criteria.addFilterInventoryStatus(getFilter(request, INVENTORY_STATUS.propertyName(), InventoryStatus.class));
         criteria.addFilterTagNamespace(getFilter(request, "tagNamespace", String.class));
         criteria.addFilterTagSemantic(getFilter(request, "tagSemantic", String.class));
         criteria.addFilterTagName(getFilter(request, "tagName", String.class));
         criteria.addFilterVersion(getFilter(request, "version", String.class));
         criteria.setSearchExpression(getFilter(request, "search", String.class));
+
+        // we never want to filter on null status - that would return resources for every status (committed, new, deleted, etc).
+        // we want to rely on whatever the default setting is for the criteria and only override that if we explicitly have a status to filter.
+        InventoryStatus invStatusFilter = getFilter(request, INVENTORY_STATUS.propertyName(), InventoryStatus.class);
+        if (invStatusFilter != null) {
+            criteria.addFilterInventoryStatus(invStatusFilter);
+        }
+
+        InventoryStatus parentInvStatusFilter = getFilter(request, PARENT_INVENTORY_STATUS.propertyName(),
+            InventoryStatus.class);
+        if (parentInvStatusFilter != null) {
+            List<InventoryStatus> statuses = new ArrayList<InventoryStatus>(1);
+            statuses.add(parentInvStatusFilter);
+            criteria.addFilterParentInventoryStatuses(statuses);
+        }
 
         return criteria;
     }
