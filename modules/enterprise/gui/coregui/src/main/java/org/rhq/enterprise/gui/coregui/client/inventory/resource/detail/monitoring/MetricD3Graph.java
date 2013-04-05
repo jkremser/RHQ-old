@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,38 +16,35 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.common;
+package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring;
 
 import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.widgets.HTMLFlow;
 
 import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.HasD3MetricJsniChart;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
- * Provide common functionality for graph views. Such as setting up the divs with
- * specific ids that the jsni svn graphs can bind to and place their svg definitions
- * of the charts directly under this chart div. Essentially, it creates the placeholder
- * for the graphs to later render themselves.
- *
- * @author Mike Thompson
+ * A D3 graph implementation for graphing Resource metrics.
  */
-public abstract class AbstractMetricD3GraphView extends EnhancedVLayout {
+public class MetricD3Graph extends EnhancedVLayout {
 
     protected AbstractGraph graph;
-    private int entityId;
-    private int definitionId;
     private HTMLFlow graphDiv = null;
     protected Timer refreshTimer;
 
-    public AbstractMetricD3GraphView() {
+    /**
+     * This constructor is for the use case in the Dashboard where we dont actually
+     * have a entity or measurement yet.
+     */
+    public MetricD3Graph() {
         super();
     }
 
-    public AbstractMetricD3GraphView(AbstractGraph graph) {
-        this();
+    public MetricD3Graph(AbstractGraph graph) {
+        super();
         this.graph = graph;
         setHeight100();
         setWidth100();
@@ -74,8 +71,7 @@ public abstract class AbstractMetricD3GraphView extends EnhancedVLayout {
             + "               <pattern id=\"downStripes\" patternUnits=\"userSpaceOnUse\" x=\"0\" y=\"0\""
             + "                        width=\"6\" height=\"3\">"
             + "                   <path d=\"M 0 0 6 0\" style=\"stroke:#ff8a9a; fill:none;\"/>"
-            + "               </pattern>"
-            + "</defs>";
+            + "               </pattern>" + "</defs>";
     }
 
     @Override
@@ -93,22 +89,6 @@ public abstract class AbstractMetricD3GraphView extends EnhancedVLayout {
         drawGraph();
     }
 
-    public void setEntityId(int entityId) {
-        this.entityId = entityId;
-    }
-
-    public void setDefinitionId(int definitionId) {
-        this.definitionId = definitionId;
-    }
-
-    public int getEntityId() {
-        return entityId;
-    }
-
-    public int getDefinitionId() {
-        return definitionId;
-    }
-
     /**
      * Setup the page elements especially the div and svg elements that serve as
      * placeholders for the d3 stuff to grab onto and add svg tags to render the chart.
@@ -117,15 +97,14 @@ public abstract class AbstractMetricD3GraphView extends EnhancedVLayout {
      *
      */
     protected void drawGraph() {
-        Log.debug("drawGraph marker in AbstractMetricD3GraphView for: " + getFullChartId() + " "
-            + graph.getChartTitle());
+        Log.debug("drawGraph marker in MetricD3Graph for: " + getFullChartId() + " " + graph.getChartTitle());
 
         StringBuilder divAndSvgDefs = new StringBuilder();
         divAndSvgDefs
             .append("<div id=\""
-                + getFullChartId()
-                + "\" ><svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" style=\"height:"
-                + getChartHeight() + "px;\">");
+                    + getFullChartId()
+                    + "\" ><svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" style=\"height:"
+                    + getChartHeight() + "px;\">");
         divAndSvgDefs.append(getSvgDefs());
         divAndSvgDefs.append("</svg></div>");
 
@@ -147,29 +126,30 @@ public abstract class AbstractMetricD3GraphView extends EnhancedVLayout {
         }.schedule(200);
     }
 
-    public String getFullChartId(){
-        return "rChart-"+ graph.getMetricGraphData().getChartId();
+    /**
+     * Delegate the call to rendering the JSNI chart.
+     * This way the chart type can be swapped out at any time.
+     */
+    public void drawJsniChart() {
+        graph.drawJsniChart();
+    }
+
+    public HasD3MetricJsniChart getJsniChart() {
+        return graph;
+    }
+
+    public String getFullChartId() {
+        return "rChart-" + graph.getMetricGraphData().getChartId();
 
     }
+
     public void setGraph(AbstractGraph graph) {
         this.graph = graph;
     }
 
-    public abstract void drawJsniChart();
-
 
     public Integer getChartHeight() {
         return graph.getMetricGraphData().getChartHeight();
-    }
-
-
-    /**
-     * This is only necessary to set this for the ResourceGraphPortlet case where
-     * configuration is deferred.
-     * @param metricGraphData
-     */
-    public void setMetricGraphData(MetricGraphData metricGraphData) {
-        graph.setMetricGraphData(metricGraphData);
     }
 
     @Override
