@@ -302,8 +302,7 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
                 e.getCause().getMessage().startsWith("Can only set inventory status to"));
         }
 
-        discoveryBoss.unignoreResources(subjectManager.getOverlord(), arrayOfServerIds);
-        discoveryBoss.importResources(subjectManager.getOverlord(), arrayOfServerIds);
+        discoveryBoss.unignoreAndImportResources(subjectManager.getOverlord(), arrayOfServerIds);
 
         // excursus: take this time to do a side test of the resource criteria filtering on parent inv status
         List<InventoryStatus> committedStatus = new ArrayList<InventoryStatus>(1);
