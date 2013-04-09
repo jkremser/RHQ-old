@@ -512,9 +512,9 @@ public class ResourceSearchView extends Table {
 
                     int[] resourceIds = TableUtility.getIds(selection);
 
-                    // ask the server to unignore the selected resources
+                    // ask the server to unignore the selected resources and immediately commit them to inventory again
                     ResourceGWTServiceAsync resourceManager = GWTServiceLookup.getResourceService();
-                    resourceManager.unignoreResources(resourceIds, new AsyncCallback<Void>() {
+                    resourceManager.unignoreAndImportResources(resourceIds, new AsyncCallback<Void>() {
                         public void onFailure(Throwable caught) {
                             CoreGUI.getErrorHandler()
                                 .handleError(MSG.view_inventory_resources_unignoreFailed(), caught);

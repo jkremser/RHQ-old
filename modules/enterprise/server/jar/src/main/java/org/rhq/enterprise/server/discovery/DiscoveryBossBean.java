@@ -1229,6 +1229,13 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         checkStatus(subject, resourceIds, InventoryStatus.NEW, EnumSet.of(InventoryStatus.IGNORED));
     }
 
+    public void unignoreAndImportResources(Subject subject, int[] resourceIds) {
+        if (resourceIds == null || resourceIds.length == 0) {
+            return;
+        }
+        checkStatus(subject, resourceIds, InventoryStatus.COMMITTED, EnumSet.of(InventoryStatus.IGNORED));
+    }
+
     @SuppressWarnings("unchecked")
     private void checkStatus(Subject subject, int[] resourceIds, InventoryStatus target,
         EnumSet<InventoryStatus> validStatuses) {

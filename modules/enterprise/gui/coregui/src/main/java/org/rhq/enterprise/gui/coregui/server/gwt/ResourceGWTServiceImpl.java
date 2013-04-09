@@ -423,6 +423,14 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         }
     }
 
+    public void unignoreAndImportResources(int[] resourceIds) throws RuntimeException {
+        try {
+            discoveryBoss.unignoreAndImportResources(getSessionSubject(), resourceIds);
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
     public List<ResourceError> findResourceErrors(int resourceId) throws RuntimeException {
         try {
             return SerialUtility.prepare(resourceManager.findResourceErrors(getSessionSubject(), resourceId),
