@@ -39,6 +39,7 @@ import javax.ejb.TransactionAttribute;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.resource.Resource;
@@ -97,6 +98,7 @@ public class PlatformUtilizationManagerBean implements PlatformUtilizationManage
         final ResourceCriteria resourceCriteria = new ResourceCriteria();
         resourceCriteria.addFilterResourceCategories(PLATFORM);
         resourceCriteria.addFilterInventoryStatus(COMMITTED);
+        resourceCriteria.fetchCurrentAvailability(true);
 
         //Use CriteriaQuery to automatically chunk/page through criteria query results
         CriteriaQueryExecutor<Resource, ResourceCriteria> resourceQueryExecutor = new CriteriaQueryExecutor<Resource, ResourceCriteria>() {
@@ -114,9 +116,15 @@ public class PlatformUtilizationManagerBean implements PlatformUtilizationManage
         for (Resource platform : platforms) {
             Set<Integer> metricDefIds = platformMetricDefs.get(platform.getResourceType().getId());
             try {
-                Set<MeasurementData> measurementDataSet = platformUtilizationMgr.loadLiveMetricsForPlatform(subject,
-                    platform, metricDefIds);
-                summaries.add(createSummary(platform, measurementDataSet));
+                // don't try to contact platforms that are down or questionable. In that case, just return the
+                // platform marked with no metrics available
+                if (AvailabilityType.UP == platform.getCurrentAvailability().getAvailabilityType()) {
+                    Set<MeasurementData> measurementDataSet = platformUtilizationMgr
+                        .loadLiveMetricsForPlatformInNewTransaction(subject, platform, metricDefIds);
+                    summaries.add(createSummary(platform, measurementDataSet));
+                } else {
+                    summaries.add(createSummary(platform, null));
+                }
             } catch (RuntimeException e) {
                 PlatformMetricsSummary summary = new PlatformMetricsSummary();
                 summary.setResource(platform);
@@ -130,10 +138,10 @@ public class PlatformUtilizationManagerBean implements PlatformUtilizationManage
 
     @Override
     @TransactionAttribute(REQUIRES_NEW)
-    public Set<MeasurementData> loadLiveMetricsForPlatform(Subject subject, Resource platform,
+    public Set<MeasurementData> loadLiveMetricsForPlatformInNewTransaction(Subject subject, Resource platform,
         Set<Integer> metricDefinitionIds) {
-        return measurementDataMgr.findLiveData(subject, platform.getId(), ArrayUtils.unwrapArray(
-            metricDefinitionIds.toArray(new Integer[metricDefinitionIds.size()])));
+        return measurementDataMgr.findLiveData(subject, platform.getId(),
+            ArrayUtils.unwrapArray(metricDefinitionIds.toArray(new Integer[metricDefinitionIds.size()])));
     }
 
     private Set<Integer> getPlatformMetricDefIds(ResourceType resourceType) {
@@ -166,19 +174,24 @@ public class PlatformUtilizationManagerBean implements PlatformUtilizationManage
         PlatformMetricsSummary summary = new PlatformMetricsSummary();
         summary.setResource(resource);
 
-        summary.setIdleCPU(findMeasurementData(measurementDataSet, CPUMetric.Idle.getProperty()));
-        summary.setSystemCPU(findMeasurementData(measurementDataSet, CPUMetric.System.getProperty()));
-        summary.setUserCPU(findMeasurementData(measurementDataSet, CPUMetric.User.getProperty()));
+        if (null == measurementDataSet || measurementDataSet.isEmpty()) {
+            summary.setMetricsAvailable(false);
 
-        summary.setFreeMemory(findMeasurementData(measurementDataSet, MemoryMetric.Free.getProperty()));
-        summary.setActualFreeMemory(findMeasurementData(measurementDataSet, MemoryMetric.ActualFree.getProperty()));
-        summary.setUsedMemory(findMeasurementData(measurementDataSet, MemoryMetric.Used.getProperty()));
-        summary.setActualUsedMemory(findMeasurementData(measurementDataSet, MemoryMetric.ActualUsed.getProperty()));
-        summary.setTotalMemory(findMeasurementData(measurementDataSet, MemoryMetric.Total.getProperty()));
+        } else {
+            summary.setIdleCPU(findMeasurementData(measurementDataSet, CPUMetric.Idle.getProperty()));
+            summary.setSystemCPU(findMeasurementData(measurementDataSet, CPUMetric.System.getProperty()));
+            summary.setUserCPU(findMeasurementData(measurementDataSet, CPUMetric.User.getProperty()));
 
-        summary.setFreeSwap(findMeasurementData(measurementDataSet, SwapMetric.Free.getProperty()));
-        summary.setTotalSwap(findMeasurementData(measurementDataSet, SwapMetric.Total.getProperty()));
-        summary.setUsedSwap(findMeasurementData(measurementDataSet, SwapMetric.Used.getProperty()));
+            summary.setFreeMemory(findMeasurementData(measurementDataSet, MemoryMetric.Free.getProperty()));
+            summary.setActualFreeMemory(findMeasurementData(measurementDataSet, MemoryMetric.ActualFree.getProperty()));
+            summary.setUsedMemory(findMeasurementData(measurementDataSet, MemoryMetric.Used.getProperty()));
+            summary.setActualUsedMemory(findMeasurementData(measurementDataSet, MemoryMetric.ActualUsed.getProperty()));
+            summary.setTotalMemory(findMeasurementData(measurementDataSet, MemoryMetric.Total.getProperty()));
+
+            summary.setFreeSwap(findMeasurementData(measurementDataSet, SwapMetric.Free.getProperty()));
+            summary.setTotalSwap(findMeasurementData(measurementDataSet, SwapMetric.Total.getProperty()));
+            summary.setUsedSwap(findMeasurementData(measurementDataSet, SwapMetric.Used.getProperty()));
+        }
 
         return summary;
     }
