@@ -845,10 +845,9 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
      *
      * @return a clone of this configuration
      *
-     * @throws CloneNotSupportedException
-     *
      * @see    #deepCopy()
      */
+    @SuppressWarnings("override")
     //@Override //GWT trips over this, WTH!
     public Configuration clone() {
         return deepCopy();
@@ -997,7 +996,7 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
     /**
      * Getter for the properties reference.
      *
-     * @return Map<String, Property>
+     * @return {@code Map&lt;String, Property&gt;}
      */
     public Map<String, Property> getAllProperties() {
         return this.properties;
