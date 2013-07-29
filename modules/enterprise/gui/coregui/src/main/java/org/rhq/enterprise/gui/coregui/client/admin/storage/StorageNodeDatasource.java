@@ -224,29 +224,6 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
         record.setAttribute(FIELD_DISK.propertyName(), disk);
         return record;
     }
-    
-    
-    private ListGridRecord makeListGridRecord(MeasurementAggregateWithUnits aggregateWithUnits, String name,
-        String hover, String id) {
-        ListGridRecord record = new ListGridRecord();
-        record.setAttribute("id", id);
-        record.setAttribute(StorageNodeLoadCompositeDatasourceField.FIELD_NAME.propertyName(), name);
-        record.setAttribute(
-            StorageNodeLoadCompositeDatasourceField.FIELD_MIN.propertyName(),
-            MeasurementConverterClient.format(aggregateWithUnits.getAggregate().getMin(),
-                aggregateWithUnits.getUnits(), true));
-        record.setAttribute("avgFloat", aggregateWithUnits.getAggregate().getAvg());
-        record.setAttribute(
-            StorageNodeLoadCompositeDatasourceField.FIELD_AVG.propertyName(),
-            MeasurementConverterClient.format(aggregateWithUnits.getAggregate().getAvg(),
-                aggregateWithUnits.getUnits(), true));
-        record.setAttribute(
-            StorageNodeLoadCompositeDatasourceField.FIELD_MAX.propertyName(),
-            MeasurementConverterClient.format(aggregateWithUnits.getAggregate().getMax(),
-                aggregateWithUnits.getUnits(), true));
-        record.setAttribute("hover", hover);
-        return record;
-    }
 
     @Override
     protected StorageNodeCriteria getFetchCriteria(DSRequest request) {
@@ -353,38 +330,47 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
         }
 
         private ListGridRecord[] makeListGridRecords(StorageNodeLoadComposite loadComposite) {
-            List<ListGridRecord> recordsList = new ArrayList<ListGridRecord>(6);
-            List<List<Object>> loadFields = Arrays
-                .<List<Object>> asList(
-                    Arrays.<Object> asList(loadComposite.getHeapCommitted(), "Heap Maximum",
-                        "The limit the RHQ storage node was started with. This corresponds with the -Xmx JVM option.",
-                        "heapMax"),
-                    Arrays.<Object> asList(loadComposite.getHeapUsed(), "Heap Used",
-                        "Amount of memory actually used by the RHQ storage node", "heapUsed"),
-                    Arrays.<Object> asList(loadComposite.getHeapPercentageUsed(), "Heap Percent Used",
-                        "This value is calculated by dividing Heap Used by Heap Maximum.", HEAP_PERCENTAGE_KEY),
-                    Arrays.<Object> asList(loadComposite.getLoad(), "Load", "Data stored on the node", "load"),
-                    Arrays.<Object> asList(
-                        loadComposite.getDataDiskUsedPercentage(),
-                        "Data Disk Space Percent Used",
-                        "Percentage of disk space used by data files on the partitions that contain the data files. If multiple data locations are specified then the aggregate accross all the partitions that contain data files is reported.",
-                        DATA_DISK_SPACE_PERCENTAGE_KEY),
-                    Arrays.<Object> asList(
-                        loadComposite.getTotalDiskUsedPercentage(),
-                        "Total Disk Space Percent Used",
-                        "Percentage of total disk space used (system and Storage Node) on the partitions that contain the data files. If multiple data locations are specified then the aggregate accross all the partitions that contain data files is reported.",
-                        TOTAL_DISK_SPACE_PERCENTAGE_KEY), Arrays.<Object> asList(loadComposite.getDataDiskUsed(),
-                        "Total Disk Space Used",
-                        "Total space used on disk by all data files, commit logs, and saved caches.", "totaldisk"),
-                    Arrays.<Object> asList(loadComposite.getActuallyOwns(), "Ownership",
-                        "Refers to the percentage of keys that a node owns.", "ownership"));
-            for (List<Object> aggregateWithUnitsList : loadFields) {
-                if (aggregateWithUnitsList.get(0) != null) {
-                    recordsList.add(makeListGridRecord((MeasurementAggregateWithUnits) aggregateWithUnitsList.get(0),
-                        (String) aggregateWithUnitsList.get(1), (String) aggregateWithUnitsList.get(2),
-                        (String) aggregateWithUnitsList.get(3)));
+            List<ListGridRecord> recordsList = new ArrayList<ListGridRecord>(6) {
+                private static final long serialVersionUID = 1L;
+
+                @Override
+                public boolean add(ListGridRecord record) {
+                    if (record != null)
+                        return super.add(record);
+                    return false;
                 }
-            }
+            };
+//            List<List<Object>> loadFields = Arrays
+//                .<List<Object>> asList(/*
+//                    Arrays.<Object> asList(loadComposite.getHeapCommitted(), "Heap Maximum", "The limit the RHQ storage node was started with. This corresponds with the -Xmx JVM option.", "heapMax"),*/
+//                    Arrays.<Object> asList(loadComposite.getHeapUsed(), "Heap Used", "Amount of memory actually used by the RHQ storage node", "heapUsed"),
+//                    Arrays.<Object> asList(loadComposite.getHeapPercentageUsed(), "Heap Percent Used", "This value is calculated by dividing Heap Used by Heap Maximum.", HEAP_PERCENTAGE_KEY),/*
+//                    Arrays.<Object> asList(loadComposite.getLoad(), "Load", "Data stored on the node", "load"),*/
+//                    Arrays.<Object> asList(loadComposite.getDataDiskUsedPercentage(), "Data Disk Space Percent Used","Percentage of disk space used by data files on the partitions that contain the data files. If multiple data locations are specified then the aggregate accross all the partitions that contain data files is reported.",DATA_DISK_SPACE_PERCENTAGE_KEY),
+//                    Arrays.<Object> asList(loadComposite.getTotalDiskUsedPercentage(),"Total Disk Space Percent Used",
+//                        "Percentage of total disk space used (system and Storage Node) on the partitions that contain the data files. If multiple data locations are specified then the aggregate accross all the partitions that contain data files is reported.",
+//                        TOTAL_DISK_SPACE_PERCENTAGE_KEY), Arrays.<Object> asList(loadComposite.getDataDiskUsed(),
+//                        "Total Disk Space Used",
+//                        "Total space used on disk by all data files, commit logs, and saved caches.", "totaldisk"),
+//                    Arrays.<Object> asList(loadComposite.getActuallyOwns(), "Ownership",
+//                        "Refers to the percentage of keys that a node owns.", "ownership"));
+            
+//            recordsList.add(makeListGridRecord(loadComposite.getHeapCommitted(), "Heap Maximum", "The limit the RHQ storage node was started with. This corresponds with the -Xmx JVM option.", "heapMax"));
+            recordsList.add(makeListGridRecord(loadComposite.getHeapUsed(), "Heap Used", "Amount of memory actually used by the RHQ storage node", "heapUsed"));
+            recordsList.add(makeListGridRecord(loadComposite.getHeapPercentageUsed(), "Heap Percent Used", "This value is calculated by dividing Heap Used by Heap Maximum.", HEAP_PERCENTAGE_KEY));
+//            recordsList.add(makeListGridRecord(loadComposite.getLoad(), "Load", "Data stored on the node", "load"));
+            recordsList.add(makeListGridRecord(loadComposite.getDataDiskUsedPercentage(), "Data Disk Space Percent Used","Percentage of disk space used by data files on the partitions that contain the data files. If multiple data locations are specified then the aggregate accross all the partitions that contain data files is reported.", DATA_DISK_SPACE_PERCENTAGE_KEY));
+            recordsList.add(makeListGridRecord(loadComposite.getTotalDiskUsedPercentage(),"Total Disk Space Percent Used", "Percentage of total disk space used (system and Storage Node) on the partitions that contain the data files. If multiple data locations are specified then the aggregate accross all the partitions that contain data files is reported.", TOTAL_DISK_SPACE_PERCENTAGE_KEY));
+            recordsList.add(makeListGridRecord(loadComposite.getDataDiskUsed(), "Total Disk Space Used", "Total space used on disk by all data files, commit logs, and saved caches.", "totaldisk"));
+            recordsList.add(makeListGridRecord(loadComposite.getActuallyOwns(), "Ownership", "Refers to the percentage of keys that a node owns.", "ownership"));
+            
+//            for (List<Object> aggregateWithUnitsList : loadFields) {
+//                if (aggregateWithUnitsList.get(0) != null) {
+//                    recordsList.add(makeListGridRecord((MeasurementAggregateWithUnits) aggregateWithUnitsList.get(0),
+//                        (String) aggregateWithUnitsList.get(1), (String) aggregateWithUnitsList.get(2),
+//                        (String) aggregateWithUnitsList.get(3)));
+//                }
+//            }
             if (loadComposite.getTokens() != null) {
                 ListGridRecord tokens = new ListGridRecord();
                 tokens.setAttribute("id", "tokens");
@@ -418,6 +404,7 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
 
         private ListGridRecord makeListGridRecord(MeasurementAggregateWithUnits aggregateWithUnits, String name,
             String hover, String id) {
+            if (aggregateWithUnits == null) return null;
             ListGridRecord record = new ListGridRecord();
             record.setAttribute("id", id);
             record.setAttribute(StorageNodeLoadCompositeDatasourceField.FIELD_NAME.propertyName(), name);

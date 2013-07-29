@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.admin.storage;
 
 import java.util.List;
 
+import com.smartgwt.client.types.Autofit;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
@@ -82,7 +83,8 @@ public class StorageNodeLoadComponent extends EnhancedVLayout {
             }
         };
         loadGrid.setWidth100();
-        loadGrid.setHeight(230);
+        loadGrid.setHeight(200);
+        loadGrid.setAutoFitData(Autofit.VERTICAL);
         StorageNodeLoadCompositeDatasource datasource = StorageNodeLoadCompositeDatasource.getInstance(storageNodeId);
         List<ListGridField> fields = datasource.getListGridFields();
         loadGrid.setFields(fields.toArray(new ListGridField[fields.size()]));
