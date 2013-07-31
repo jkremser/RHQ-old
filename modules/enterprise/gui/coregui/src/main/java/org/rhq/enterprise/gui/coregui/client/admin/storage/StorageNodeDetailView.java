@@ -98,7 +98,7 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
         sectionStack.setVisibilityMode(VisibilityMode.MULTIPLE);
         sectionStack.setWidth100();
         sectionStack.setHeight100();
-        sectionStack.setMargin(5);
+//        sectionStack.setMargin(5);
 //        sectionStack.setOverflow(Overflow.VISIBLE);
     }
     
