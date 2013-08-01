@@ -40,6 +40,7 @@ import java.util.regex.Pattern;
 import javax.ejb.EJB;
 import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
+import javax.management.ObjectInstance;
 import javax.management.ObjectName;
 import javax.naming.Context;
 import javax.naming.InitialContext;
@@ -330,6 +331,8 @@ public abstract class AbstractEJB3Test extends Arquillian {
         testClassesJar.addAsResource("test/metadata/resource-type/updateResourceTypeBundleTarget-v1.xml");
         testClassesJar.addAsResource("test/metadata/resource-type/updateResourceTypeBundleTarget-v2.xml");
 
+        testClassesJar.addAsResource("org/rhq/enterprise/server/plugins/ant/recipe-no-manageRootDir.xml");
+
         // create test ear by starting with rhq.ear and thinning it
         String projectVersion = System.getProperty("project.version");
         MavenResolverSystem earResolver = Resolvers.use(MavenResolverSystem.class);
@@ -341,7 +344,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
         // merge rhq.ear into testEar but include only the EJB jars and the supporting libraries. Note that we
         // don't include the services sar because tests are responsible for prepare/unprepare of all required services,
         // we don't want the production services performing any unexpected work.
-        testEar = testEar.merge(rhqEar, Filters.include("/lib.*|/rhq.*ejb3\\.jar.*"));
+        testEar = testEar.merge(rhqEar, Filters.include("/lib.*|/rhq.*ejb3\\.jar.*|/rhq-server\\.jar/.*"));
         // remove startup beans and shutdown listeners, we don't want this to be a full server deployment. The tests
         // start/stop what they need, typically with test services or mocks.
         testEar.delete(ArchivePaths
