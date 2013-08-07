@@ -453,11 +453,8 @@ public class ConfigurationEditor extends EnhancedVLayout {
                 //            com.allen_sauer.gwt.log.client.Log.info("building: " + definition.getDisplayName());
                 sectionStack.addSection(buildGroupSection(definition));
             }
-
-//            if (groupDefinitions.size() > 1) {
-                this.toolStrip = buildToolStrip(layout, sectionStack);
-                layout.addMember(toolStrip);
-//            }
+            this.toolStrip = buildToolStrip(layout, sectionStack);
+            layout.addMember(toolStrip);
             layout.addMember(sectionStack);
         }
 
@@ -617,10 +614,8 @@ public class ConfigurationEditor extends EnhancedVLayout {
         List<FormItem> fieldsForThisProperty;
 
         if (propertyDefinition instanceof PropertyDefinitionSimple) {
-            final PropertyDefinitionSimple propertyDefinitionSimple = (PropertyDefinitionSimple) propertyDefinition;
             PropertySimple propertySimple = (PropertySimple) property;
-            fieldsForThisProperty = buildFieldsForPropertySimple(propertyDefinition, propertyDefinitionSimple,
-                propertySimple);
+            fieldsForThisProperty = buildFieldsForPropertySimple(propertyDefinition, propertySimple);
         } else if (propertyDefinition instanceof PropertyDefinitionList) {
             ///@TODO
             PropertyDefinitionList propertyDefinitionList = (PropertyDefinitionList) propertyDefinition;
@@ -653,7 +648,8 @@ public class ConfigurationEditor extends EnhancedVLayout {
     }
 
     protected List<FormItem> buildFieldsForPropertySimple(PropertyDefinition propertyDefinition,
-        PropertyDefinitionSimple propertyDefinitionSimple, PropertySimple propertySimple) {
+        PropertySimple propertySimple) {
+        final PropertyDefinitionSimple propertyDefinitionSimple = (PropertyDefinitionSimple) propertyDefinition;
         List<FormItem> fields = new ArrayList<FormItem>();
 
         StaticTextItem nameItem = buildNameItem(propertyDefinition);

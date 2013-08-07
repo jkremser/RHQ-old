@@ -103,7 +103,11 @@ public class StorageClientManagerBean {
                     + "result of running dbsetup or deleting rows from rhq_storage_node table. Please re-install the "
                     + "storage node to fix this issue.");
         }
-        session = createSession(username, password, storageNodes);
+        Session wrappedSession = createSession(username, password, storageNodes);
+        session = new StorageSession(wrappedSession);
+        
+        session.addStorageStateListener(new StorageClusterMonitor());
+        
         metricsDAO = new MetricsDAO(session, metricsConfiguration);
 
         Server server = serverManager.getServer();

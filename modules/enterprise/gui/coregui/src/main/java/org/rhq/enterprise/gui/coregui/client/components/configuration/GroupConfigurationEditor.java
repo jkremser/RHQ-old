@@ -113,9 +113,8 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
 
     @Override
     protected List<FormItem> buildFieldsForPropertySimple(PropertyDefinition propertyDefinition,
-        PropertyDefinitionSimple propertyDefinitionSimple, PropertySimple propertySimple) {
-        List<FormItem> fields = super.buildFieldsForPropertySimple(propertyDefinition, propertyDefinitionSimple,
-            propertySimple);
+        PropertySimple propertySimple) {
+        List<FormItem> fields = super.buildFieldsForPropertySimple(propertyDefinition, propertySimple);
 
         if (isAggregateProperty(propertySimple)) {
             // Create the "MEMBER VALUES DIFFER" label that is displayed when member values are heterogeneous.
@@ -128,7 +127,7 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
             staticItem.setVisible(!isHomogeneous);
 
             FormItem valueItem = fields.get(2);
-            FormItemIcon icon = buildEditMemberValuesIcon(propertyDefinitionSimple, propertySimple, valueItem);
+            FormItemIcon icon = buildEditMemberValuesIcon((PropertyDefinitionSimple) propertyDefinition, propertySimple, valueItem);
             staticItem.setIcons(icon);
 
             valueItem.setAttribute(RHQ_STATIC_ITEM_NAME_ATTRIBUTE, staticItem.getName());
