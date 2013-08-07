@@ -337,7 +337,7 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
         }
 
         private static void executeFetch(final StorageNode node, final AsyncCallback<StorageNodeLoadComposite> callback) {
-            GWTServiceLookup.getStorageService().getLoad(node, 1, MeasurementUtils.UNIT_HOURS, callback);
+            GWTServiceLookup.getStorageService().getLoad(node, 8, MeasurementUtils.UNIT_HOURS, callback);
         }
 
         private ListGridRecord[] makeListGridRecords(StorageNodeLoadComposite loadComposite) {
