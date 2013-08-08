@@ -454,10 +454,8 @@ public class ConfigurationEditor extends EnhancedVLayout {
                 sectionStack.addSection(buildGroupSection(definition));
             }
 
-//            if (groupDefinitions.size() > 1) {
-                this.toolStrip = buildToolStrip(layout, sectionStack);
-                layout.addMember(toolStrip);
-//            }
+            this.toolStrip = buildToolStrip(layout, sectionStack);
+            layout.addMember(toolStrip);
             layout.addMember(sectionStack);
         }
 
