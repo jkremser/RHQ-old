@@ -66,6 +66,7 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
     private static String FIELD_CQL_PORT = "cql_port";
     private static String FIELD_GOSSIP_PORT = "gossip_port";
     private static String FIELD_AUTOMATIC_DEPLOYMENT = "automatic_deployment";
+    private static String FIELD_USERNAME = "username";
     private static String FIELD_PASSWORD = "password";
     private static String FIELD_PASSWORD_VERIFY = "verify_password";
 
@@ -155,6 +156,13 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
             .withValidator(validator).build();
         items.addAll(gossipPortItems);
         
+        // username field
+        // TODO: add validator for the username length (jkremser: 2013/10/18)
+        builder = new FormItemBuilder();
+        List<FormItem> usernameItems = builder.withName(FIELD_USERNAME).withTitle("Username")
+            .withValue(settings.getUsername()).withDescription("Username").withReadOnlySetTo(readOnly).build();
+        items.addAll(usernameItems);
+        
         // password field
         builder = new FormItemBuilder();
         List<FormItem> passwordItems = builder.withName(FIELD_PASSWORD).withTitle("Password")
@@ -168,8 +176,9 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
         passwordValidator.setOtherField(FIELD_PASSWORD);
         passwordValidator.setErrorMessage("This should be the same string as the Password.");
         List<FormItem> passwordVerifyItems = builder.withName(FIELD_PASSWORD_VERIFY).withTitle("Verify Password")
-            .withValue(settings.getPasswordHash()).withDescription("This should be the same string as the Password.").withReadOnlySetTo(readOnly)
-            .withValidator(passwordValidator).build((FormItem) GWT.create(PasswordItem.class));
+            .withValue(settings.getPasswordHash()).withDescription("This should be the same string as the Password.")
+            .withReadOnlySetTo(readOnly).withValidator(passwordValidator)
+            .build((FormItem) GWT.create(PasswordItem.class));
         items.addAll(passwordVerifyItems);
 
         // automatic deployment field
@@ -241,8 +250,12 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
         settings.setCqlPort(Integer.parseInt(form.getValueAsString(FIELD_CQL_PORT)));
         settings.setGossipPort(Integer.parseInt(form.getValueAsString(FIELD_GOSSIP_PORT)));
         settings.setAutomaticDeployment(Boolean.parseBoolean(form.getValueAsString(FIELD_AUTOMATIC_DEPLOYMENT)));
+        
+        // set the credentials only if there was a change
+        String wannabeUsername = form.getValueAsString(FIELD_USERNAME);
+        settings.setUsername(wannabeUsername.equals(settings.getUsername()) ? null : wannabeUsername);
         String wannabePassword = form.getValueAsString(FIELD_PASSWORD);
-        settings.setPasswordHash(wannabePassword.equals(settings.getPasswordHash() ? null : wannabePassword));
+        settings.setPasswordHash(wannabePassword.equals(settings.getPasswordHash()) ? null : wannabePassword);
         return settings;
     }
     
