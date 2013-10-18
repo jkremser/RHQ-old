@@ -15,7 +15,7 @@ public class StorageClusterSettings implements Serializable {
     
     private Boolean automaticDeployment;
     
-    private String password;
+    private String passwordHash;
 
     public int getCqlPort() {
         return cqlPort;
@@ -41,12 +41,12 @@ public class StorageClusterSettings implements Serializable {
         this.automaticDeployment = automaticDeployment;
     }
 
-    public String getPassword() {
-        return password;
+    public String getPasswordHash() {
+        return passwordHash;
     }
 
-    public void setPassword(String password) {
-        this.password = password;
+    public void setPasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
     }
 
     @Override
@@ -59,7 +59,7 @@ public class StorageClusterSettings implements Serializable {
         if (cqlPort != that.cqlPort) return false;
         if (gossipPort != that.gossipPort) return false;
         if (automaticDeployment != that.automaticDeployment) return false;
-        if (password != that.password) return false;
+        if (passwordHash != that.passwordHash) return false;
 
         return true;
     }
@@ -69,13 +69,13 @@ public class StorageClusterSettings implements Serializable {
         int result = cqlPort;
         result = 29 * result + gossipPort;
         result = 29 * result + (automaticDeployment ? 1231 : 1237);
-        result = 29 * result + (password == null ? 0 : password.hashCode());
+        result = 29 * result + (passwordHash == null ? 0 : passwordHash.hashCode());
         return result;
     }
 
     @Override
     public String toString() {
         return "StorageClusterSettings[cqlPort=" + cqlPort + ", gossipPort=" + gossipPort + ", automaticDeployment="
-            + automaticDeployment + ", password=********]";
+            + automaticDeployment + ", passwordHash=********]";
     }
 }

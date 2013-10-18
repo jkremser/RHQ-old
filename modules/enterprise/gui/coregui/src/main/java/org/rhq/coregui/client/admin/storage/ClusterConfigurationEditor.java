@@ -158,7 +158,7 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
         // password field
         builder = new FormItemBuilder();
         List<FormItem> passwordItems = builder.withName(FIELD_PASSWORD).withTitle("Password")
-            .withValue(settings.getPassword()).withDescription("bla bla").withReadOnlySetTo(readOnly)
+            .withValue(settings.getPasswordHash()).withDescription("Password").withReadOnlySetTo(readOnly)
             .build((FormItem) GWT.create(PasswordItem.class));
         items.addAll(passwordItems);
 
@@ -166,16 +166,21 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
         builder = new FormItemBuilder();
         MatchesFieldValidator passwordValidator = new MatchesFieldValidator();
         passwordValidator.setOtherField(FIELD_PASSWORD);
+        passwordValidator.setErrorMessage("This should be the same string as the Password.");
         List<FormItem> passwordVerifyItems = builder.withName(FIELD_PASSWORD_VERIFY).withTitle("Verify Password")
-            .withValue(settings.getPassword()).withDescription("sldf sddd").withReadOnlySetTo(readOnly)
+            .withValue(settings.getPasswordHash()).withDescription("This should be the same string as the Password.").withReadOnlySetTo(readOnly)
             .withValidator(passwordValidator).build((FormItem) GWT.create(PasswordItem.class));
         items.addAll(passwordVerifyItems);
 
         // automatic deployment field
         builder = new FormItemBuilder();
-        List<FormItem> automaticDeploymentItems = builder.withName(FIELD_AUTOMATIC_DEPLOYMENT).withTitle("Automatic Deployment")
-            .withValue(Boolean.toString(settings.getAutomaticDeployment())).withDescription("If this is set, the newly installed storage nodes will be automatically deployed to the storage cluster.")
-            .build((FormItem) GWT.create(RadioGroupItem.class));
+        List<FormItem> automaticDeploymentItems = builder
+            .withName(FIELD_AUTOMATIC_DEPLOYMENT)
+            .withTitle("Automatic Deployment")
+            .withValue(Boolean.toString(settings.getAutomaticDeployment()))
+            .withDescription(
+                "If this is set, the newly installed storage nodes will be automatically deployed to the storage cluster.")
+            .withReadOnlySetTo(readOnly).build((FormItem) GWT.create(RadioGroupItem.class));
         RadioGroupItem autoDeployRadio = (RadioGroupItem) automaticDeploymentItems.get(1);
         autoDeployRadio.setVertical(false);
         LinkedHashMap<String, String> values = new LinkedHashMap<String, String>(2);
@@ -236,7 +241,8 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
         settings.setCqlPort(Integer.parseInt(form.getValueAsString(FIELD_CQL_PORT)));
         settings.setGossipPort(Integer.parseInt(form.getValueAsString(FIELD_GOSSIP_PORT)));
         settings.setAutomaticDeployment(Boolean.parseBoolean(form.getValueAsString(FIELD_AUTOMATIC_DEPLOYMENT)));
-        settings.setPassword(form.getValueAsString(FIELD_PASSWORD));
+        String wannabePassword = form.getValueAsString(FIELD_PASSWORD);
+        settings.setPasswordHash(wannabePassword.equals(settings.getPasswordHash() ? null : wannabePassword));
         return settings;
     }
     
@@ -284,7 +290,7 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
             return build(new TextItem());
         }
         
-        // GWT doesn't support reflection 
+        // GWT doesn't support reflection by default, therefore this "hack"
         public List<FormItem> build(FormItem valueItem) {
             List<FormItem> fields = new ArrayList<FormItem>();
             StaticTextItem nameItem = new StaticTextItem();
