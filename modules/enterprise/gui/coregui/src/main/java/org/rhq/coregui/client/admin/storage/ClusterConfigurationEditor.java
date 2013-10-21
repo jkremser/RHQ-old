@@ -45,6 +45,7 @@ import org.rhq.core.domain.cloud.StorageClusterSettings;
 import org.rhq.coregui.client.CoreGUI;
 import org.rhq.coregui.client.RefreshableView;
 import org.rhq.coregui.client.components.form.EnhancedDynamicForm;
+import org.rhq.coregui.client.components.form.StringLengthValidator;
 import org.rhq.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.coregui.client.util.enhanced.EnhancedIButton;
 import org.rhq.coregui.client.util.enhanced.EnhancedToolStrip;
@@ -59,6 +60,7 @@ import org.rhq.coregui.client.util.message.Message;
 public class ClusterConfigurationEditor extends EnhancedVLayout implements RefreshableView {
 
     private EnhancedDynamicForm form;
+    private EnhancedDynamicForm credentialsForm;
     private EnhancedIButton saveButton;
     private StorageClusterSettings settings;
     private final boolean readOnly;
@@ -86,7 +88,7 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
             @Override
             public void onSuccess(StorageClusterSettings settings) {
                 ClusterConfigurationEditor.this.settings = settings;
-                prepareForm();
+                prepareForms();
             }
         });
     }
@@ -127,7 +129,8 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
         refresh();
     }
 
-    private void prepareForm() {
+    private void prepareForms() {
+        setWidth100();
         form = new EnhancedDynamicForm();
         form.setHiliteRequiredFields(true);
         form.setNumCols(3);
@@ -136,6 +139,9 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
         form.setIsGroup(true);
         form.setGroupTitle("Cluster Wide Settings");
         form.setBorder("1px solid #AAA");
+        form.setWidth100();
+        form.setOverflow(Overflow.VISIBLE);
+        form.setExtraSpace(10);
 
         List<FormItem> items = buildHeaderItems();
         IsIntegerValidator validator = new IsIntegerValidator();
@@ -145,7 +151,7 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
         List<FormItem> cqlPortItems = builder.withName(FIELD_CQL_PORT).withTitle("CQL Port")
             .withValue(String.valueOf(settings.getCqlPort()))
             .withDescription("The port on which the Storage Nodes listens for CQL client connections.")
-            .withValidator(validator).build();
+            .withValidators(validator).build();
         items.addAll(cqlPortItems);
 
         // gossip port field
@@ -153,33 +159,10 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
         List<FormItem> gossipPortItems = builder.withName(FIELD_GOSSIP_PORT).withTitle("Gossip Port")
             .withValue(String.valueOf(settings.getGossipPort()))
             .withDescription("The port used for internode communication in the storage cluster.")
-            .withValidator(validator).build();
+            .withValidators(validator).build();
         items.addAll(gossipPortItems);
         
-        // username field
-        // TODO: add validator for the username length (jkremser: 2013/10/18)
-        builder = new FormItemBuilder();
-        List<FormItem> usernameItems = builder.withName(FIELD_USERNAME).withTitle("Username")
-            .withValue(settings.getUsername()).withDescription("Username").withReadOnlySetTo(readOnly).build();
-        items.addAll(usernameItems);
         
-        // password field
-        builder = new FormItemBuilder();
-        List<FormItem> passwordItems = builder.withName(FIELD_PASSWORD).withTitle("Password")
-            .withValue(settings.getPasswordHash()).withDescription("Password").withReadOnlySetTo(readOnly)
-            .build((FormItem) GWT.create(PasswordItem.class));
-        items.addAll(passwordItems);
-
-        // password_verify field
-        builder = new FormItemBuilder();
-        MatchesFieldValidator passwordValidator = new MatchesFieldValidator();
-        passwordValidator.setOtherField(FIELD_PASSWORD);
-        passwordValidator.setErrorMessage("This should be the same string as the Password.");
-        List<FormItem> passwordVerifyItems = builder.withName(FIELD_PASSWORD_VERIFY).withTitle("Verify Password")
-            .withValue(settings.getPasswordHash()).withDescription("This should be the same string as the Password.")
-            .withReadOnlySetTo(readOnly).withValidator(passwordValidator)
-            .build((FormItem) GWT.create(PasswordItem.class));
-        items.addAll(passwordVerifyItems);
 
         // automatic deployment field
         builder = new FormItemBuilder();
@@ -200,16 +183,57 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
         items.addAll(automaticDeploymentItems);
         
         form.setFields(items.toArray(new FormItem[items.size()]));
-        form.setWidth100();
-        form.setOverflow(Overflow.VISIBLE);
-        setWidth100();
 
+        credentialsForm = new EnhancedDynamicForm();
+        credentialsForm.setHiliteRequiredFields(true);
+        credentialsForm.setNumCols(3);
+        credentialsForm.setCellPadding(5);
+        credentialsForm.setColWidths(190, 220, "*");
+        credentialsForm.setIsGroup(true);
+        credentialsForm.setGroupTitle("Storage Cluster Credentials");
+        credentialsForm.setBorder("1px solid #AAA");
+        credentialsForm.setWidth100();
+        credentialsForm.setOverflow(Overflow.VISIBLE);
+        
+        FormItemBuilder.resetOddRow();
+        items = buildHeaderItems();
+
+        // username field
+        StringLengthValidator usernameValidator = new StringLengthValidator(4, 100, false);
+        builder = new FormItemBuilder();
+        List<FormItem> usernameItems = builder.withName(FIELD_USERNAME).withTitle("Username")
+            .withValue(settings.getUsername()).withDescription("Username").withReadOnlySetTo(readOnly)
+            .withValidators(usernameValidator).build();
+        items.addAll(usernameItems);
+
+        // password field
+        StringLengthValidator passwordValidator1 = new StringLengthValidator(6, 100, false);
+        builder = new FormItemBuilder();
+        List<FormItem> passwordItems = builder.withName(FIELD_PASSWORD).withTitle("Password")
+            .withValue(settings.getPasswordHash()).withDescription("Password").withReadOnlySetTo(readOnly)
+            .withValidators(passwordValidator1).build((FormItem) GWT.create(PasswordItem.class));
+        items.addAll(passwordItems);
+
+        // password_verify field
+        builder = new FormItemBuilder();
+        MatchesFieldValidator passwordValidator2 = new MatchesFieldValidator();
+        passwordValidator2.setOtherField(FIELD_PASSWORD);
+        passwordValidator2.setErrorMessage("This should be the same string as the Password.");
+        List<FormItem> passwordVerifyItems = builder.withName(FIELD_PASSWORD_VERIFY).withTitle("Verify Password")
+            .withValue(settings.getPasswordHash()).withDescription("This should be the same string as the Password.")
+            .withReadOnlySetTo(readOnly).withValidators(passwordValidator1, passwordValidator2)
+            .build((FormItem) GWT.create(PasswordItem.class));
+        
+        items.addAll(passwordVerifyItems);
+        credentialsForm.setFields(items.toArray(new FormItem[items.size()]));
+        
         LayoutSpacer spacer = new LayoutSpacer();
         spacer.setWidth100();
 
         ToolStrip toolStrip = buildToolStrip();
-        setMembers(form, spacer, toolStrip);
+        setMembers(form, credentialsForm, spacer, toolStrip);
         form.validate();
+        credentialsForm.validate();
         markForRedraw();
     }
 
@@ -222,7 +246,7 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
         saveButton = new EnhancedIButton(MSG.common_button_save());
         saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
-                if (form.validate()) {
+                if (form.validate() && credentialsForm.validate()) {
                     SC.ask(
                         "Changing the cluster wide configuration will eventually affect all the storage nodes. Do you want to continue?",
                         new BooleanCallback() {
@@ -252,9 +276,9 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
         settings.setAutomaticDeployment(Boolean.parseBoolean(form.getValueAsString(FIELD_AUTOMATIC_DEPLOYMENT)));
         
         // set the credentials only if there was a change
-        String wannabeUsername = form.getValueAsString(FIELD_USERNAME);
+        String wannabeUsername = credentialsForm.getValueAsString(FIELD_USERNAME);
         settings.setUsername(wannabeUsername.equals(settings.getUsername()) ? null : wannabeUsername);
-        String wannabePassword = form.getValueAsString(FIELD_PASSWORD);
+        String wannabePassword = credentialsForm.getValueAsString(FIELD_PASSWORD);
         settings.setPasswordHash(wannabePassword.equals(settings.getPasswordHash()) ? null : wannabePassword);
         return settings;
     }
@@ -264,10 +288,14 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
         private String title;
         private String value;
         private String description;
-        private Validator validator;
+        private Validator[] validators;
         private boolean readOnly;
         
         private static boolean oddRow = true;
+        
+        public static void resetOddRow() {
+            oddRow = true;
+        }
         
         public FormItemBuilder withName(String name) {
             this.name = name;
@@ -289,8 +317,8 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
             return this;
         }
         
-        public FormItemBuilder withValidator(Validator validator) {
-            this.validator = validator;
+        public FormItemBuilder withValidators(Validator... validators) {
+            this.validators = validators;
             return this;
         }
         
@@ -316,8 +344,8 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
             valueItem.setName(name);
             valueItem.setValue(value);
             valueItem.setWidth(220);
-            if (validator != null) {
-                valueItem.setValidators(validator);
+            if (validators != null && validators.length > 0) {
+                valueItem.setValidators(validators);
             }
             valueItem.setValidateOnChange(true);
             valueItem.setAlign(Alignment.CENTER);
