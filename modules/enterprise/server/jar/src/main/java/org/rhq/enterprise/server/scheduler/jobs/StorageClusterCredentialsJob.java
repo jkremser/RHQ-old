@@ -34,7 +34,7 @@ public class StorageClusterCredentialsJob extends AbstractStatefulJob {
 
     @Override
     public void executeJobCode(JobExecutionContext context) throws JobExecutionException {
-        log.info("Preparing to run init job on storage cluster");
+        log.debug("Run credential update job for the storage cluster.");
         boolean success = LookupUtil.getStorageClientManager().refreshCredentialsAndSession();
         if (!success) {
             log.error("Storage session credentials not succesfully refreshed");
