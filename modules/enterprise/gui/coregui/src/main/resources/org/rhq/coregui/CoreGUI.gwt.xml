@@ -8,8 +8,13 @@
     <inherits name="com.google.gwt.logging.Logging"/>
     <inherits name='org.rhq.core.RHQDomain'/>
 
+<!--
     <inherits name='com.smartgwt.SmartGwt' />
+-->
     <inherits name="com.smartgwt.tools.SmartGwtTools"/>
+   <!-- <inherits name="com.smartclient.theme.enterprise.Enterprise"/>-->
+<!--    <inherits name="com.smartgwt.SmartGwtNoTheme" />-->
+    <inherits name="com.smartgwt.SmartGwtNoScript"/>
 
     <!-- ============================ gwt logging ============================= -->
     <set-property name="gwt.logging.enabled" value="TRUE"/>
@@ -49,17 +54,18 @@
     <generate-with class="org.rhq.coregui.user.rebind.rpc.TrackingServiceInterfaceProxyGenerator">
         <when-type-assignable class="com.google.gwt.user.client.rpc.RemoteService"/>
     </generate-with>
-
+<!--
     <script src="/coregui/js/moment-2.0.0.min.js"/>
     <script src="/coregui/js/rhq-4.10.0.js"/>
+-->
     <!-- External javascript libraries -->
     <!-- jquery.sparkline requires jquery.
     -->
+<!--
     <script src="/coregui/js/jquery-1.7.2.min.js"/>
     <script src="/coregui/js/jquery.sparkline-2.1.min.js"/>
     <script src="/coregui/js/d3.v3.3.13.min.js"/>
-
-
+-->
     <!--
          Limit compilation to your preferred browser(s) to speed up compile time.
          As of GWT 2.5.0 the recognized agents (defined in
@@ -78,7 +84,8 @@
          To override this value, specify the gwt.userAgent property on the mvn
          command line (e.g. -Dgwt.userAgent=gecko1_8) or in your ~/.m2/settings.xml.
     -->
-    <set-property name="user.agent" value="${gwt.userAgent}"/>
+<!--    <set-property name="user.agent" value="${gwt.userAgent}"/>-->
+        <set-property name="user.agent" value="gecko1_8"/>
 
     <!--
          A comma-separated list of the supported locales.
@@ -94,7 +101,9 @@
          mvn command line (e.g. -Dgwt.locale=default) or in your ~/.m2/settings.xml.
     -->
 
-    <extend-property name="locale" values="${gwt.locale}" />
+<!--    <extend-property name="locale" values="${gwt.locale}" />-->
+    <extend-property name="locale" values="default" /> 
+
     <!-- we want meta to override useragent so that we can set the <meta name="gwt:property" content="locale=en">
         queryparam is still first priority so that ?locale=de overrides everything else.
     -->
@@ -106,8 +115,13 @@
          "en", rather than the "default" locale. -->
     <!-- NOTE (ips, 11/09/11): Though the set-property-fallback element is not defined by gwt-module.dtd, it is
                                an element that GWT 2.x supports. -->
-    <set-property-fallback name="locale" value="${gwt.fallback.locale}"/>
+<!--<set-property-fallback name="locale" value="${gwt.fallback.locale}"/>-->
+    <set-property-fallback name="locale" value="default"/>
 
     <entry-point class='org.rhq.coregui.client.CoreGUI'/>
+
+    <add-linker name="xsiframe"/>
+    <set-configuration-property name="devModeRedirectEnabled" value="true"/>
+    <set-property name="compiler.useSourceMaps" value="true" />
 
 </module>
