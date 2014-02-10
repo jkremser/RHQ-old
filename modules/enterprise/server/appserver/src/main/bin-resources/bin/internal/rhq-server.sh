@@ -405,6 +405,13 @@ export JAVA
 # ----------------------------------------------------------------------
 
 if [ -z "$RHQ_SERVER_JAVA_OPTS" ]; then
+   _JAVA_VERSION=`java -version 2>&1 | awk 'NR==1{ gsub(/"/,""); print $3 }'`
+   _JAVA_VERSION=`java -version 2>&1 | grep "java version" | sed -e 's/java version \"1\.\([0-9]\).*/\1/g'`
+   if [ "$_JAVA_VERSION" -lt "7" ]; then
+      echo "mensi nez 7"
+   else
+      echo "vetsi nez 7"
+   fi
    RHQ_SERVER_JAVA_OPTS="-Xms1024M -Xmx1024M -XX:PermSize=256M -XX:MaxPermSize=256M -Djava.net.preferIPv4Stack=true -Dorg.jboss.resolver.warning=true -Dsun.rmi.dgc.client.gcInterval=3600000 -Dsun.rmi.dgc.server.gcInterval=3600000"
 fi
 
@@ -417,7 +424,7 @@ fi
 # Add the JVM opts that we always want to specify, whether or not the user set RHQ_SERVER_JAVA_OPTS.
 # Note that the double equals for the policy file specification IS INTENTIONAL
 _HTTP_COMPRESSION="-Dorg.apache.coyote.http11.Http11Protocol.COMPRESSION=on -Dorg.apache.coyote.http11.Http11Protocol.COMPRESSION_MIME_TYPES=text/javascript,text/css,text/html"
-RHQ_SERVER_JAVA_OPTS="-Dapp.name=rhq-server ${RHQ_SERVER_JAVA_OPTS} -Drhq.server.home=${RHQ_SERVER_HOME} -Djboss.server.log.dir=${_LOG_DIR_PATH} -Djava.awt.headless=true -Dsun.lang.ClassLoader.allowArraySyntax=true -Djboss.server.default.config=standalone-full.xml -Djboss.modules.system.pkgs=org.jboss.byteman -Djava.security.manager -Djava.security.policy==${RHQ_SERVER_HOME}/bin/internal/rhq-server.security-policy ${_HTTP_COMPRESSION} ${_JBOSS_DEBUG_LOGGING} -XX:StringTableSize=1000003"
+RHQ_SERVER_JAVA_OPTS="-Dapp.name=rhq-server ${RHQ_SERVER_JAVA_OPTS} -Drhq.server.home=${RHQ_SERVER_HOME} -Djboss.server.log.dir=${_LOG_DIR_PATH} -Djava.awt.headless=true -Dsun.lang.ClassLoader.allowArraySyntax=true -Djboss.server.default.config=standalone-full.xml -Djboss.modules.system.pkgs=org.jboss.byteman -Djava.security.manager -Djava.security.policy==${RHQ_SERVER_HOME}/bin/internal/rhq-server.security-policy ${_HTTP_COMPRESSION} ${_JBOSS_DEBUG_LOGGING}"
 
 debug_msg "RHQ_SERVER_JAVA_OPTS: $RHQ_SERVER_JAVA_OPTS"
 debug_msg "RHQ_SERVER_ADDITIONAL_JAVA_OPTS: $RHQ_SERVER_ADDITIONAL_JAVA_OPTS"
